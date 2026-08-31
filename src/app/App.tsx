@@ -61,7 +61,7 @@ export function App() {
           <div>
             <h1 id="debug-title">Build State Debug</h1>
             <p>
-              Step 3 renders the same shared Build State in a minimal 3D scene.
+              Stage 4 renders the same shared Build State in a minimal 3D scene.
             </p>
           </div>
           <span className="status-badge">BoxGeometry prototype</span>
