@@ -9,6 +9,9 @@ import { useBuildStore } from "../store/buildStore";
 const GPU_ID = "gpu-01";
 const GPU_MOUNT_ID = "pcie-slot-1";
 
+const formatMountLabel = (mountId: string): string =>
+  mountId.replaceAll("-", "_").toUpperCase();
+
 const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "The command could not be completed.";
 
@@ -46,7 +49,7 @@ export function App() {
 
   const debugOutput = [
     `GPU: ${gpuPlacement ? "Installed" : "Not installed"}`,
-    `Mount: ${gpuMount?.label ?? "NONE"}`,
+    `Mount: ${gpuMount ? formatMountLabel(gpuMount.id) : "NONE"}`,
   ].join("\n");
 
   return (

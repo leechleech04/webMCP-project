@@ -30,7 +30,7 @@ export const installComponent = ({
   if (state.placements.some((item) => item.mountId === mountId)) {
     throw new DomainCommandError(
       "MOUNT_OCCUPIED",
-      `${mount.label} is already occupied`,
+      `${mount.id} is already occupied`,
     );
   }
 

@@ -54,7 +54,7 @@ export const assertComponentFitsMount = (
   if (!mount.supportedComponentTypes.includes(component.type)) {
     throw new DomainCommandError(
       "UNSUPPORTED_COMPONENT_TYPE",
-      `${component.type} cannot be installed in ${mount.label}`,
+      `${component.type} cannot be installed in ${mount.id}`,
     );
   }
 
@@ -70,7 +70,7 @@ export const assertComponentFitsMount = (
   if (exceedsDimensions) {
     throw new DomainCommandError(
       "COMPONENT_DOES_NOT_FIT",
-      `${component.name} does not fit in ${mount.label}`,
+      `${component.name} does not fit in ${mount.id}`,
     );
   }
 };

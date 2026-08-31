@@ -1,7 +1,16 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { getBuildState, resetBuildStore } from "../../store/buildStore";
-import { DomainCommandError } from "./commandGuards";
+import type { MountDefinition } from "../types/mount";
+import {
+  buildStore,
+  getBuildState,
+  resetBuildStore,
+} from "../../store/buildStore";
+import {
+  assertComponentFitsMount,
+  DomainCommandError,
+} from "./commandGuards";
+import { componentRegistry } from "../data/components";
 import { installComponent } from "./installComponent";
 import { moveComponent } from "./moveComponent";
 import { removeComponent } from "./removeComponent";
@@ -22,6 +31,40 @@ describe("build commands", () => {
     ]);
   });
 
+  it("keeps MountDefinition compatible with the frozen Stage 01 contract", () => {
+    const mount: MountDefinition = {
+      id: "contract-pcie-slot",
+      type: "PCIE",
+      supportedComponentTypes: ["GPU"],
+    };
+
+    expect(mount).toEqual({
+      id: "contract-pcie-slot",
+      type: "PCIE",
+      supportedComponentTypes: ["GPU"],
+    });
+  });
+
+  it("rejects unknown component and mount identifiers without changing state", () => {
+    const before = getBuildState();
+
+    expect(() =>
+      installComponent({ componentId: "missing", mountId: "pcie-slot-1" }),
+    ).toThrowError(
+      expect.objectContaining<Partial<DomainCommandError>>({
+        code: "COMPONENT_NOT_FOUND",
+      }),
+    );
+    expect(() =>
+      installComponent({ componentId: "gpu-01", mountId: "missing" }),
+    ).toThrowError(
+      expect.objectContaining<Partial<DomainCommandError>>({
+        code: "MOUNT_NOT_FOUND",
+      }),
+    );
+    expect(getBuildState()).toEqual(before);
+  });
+
   it("moves an installed component without duplicating it", () => {
     installComponent({
       componentId: "radiator-01",
@@ -38,6 +81,45 @@ describe("build commands", () => {
     ]);
   });
 
+  it("returns the existing placement when moved to the same mount", () => {
+    installComponent({ componentId: "gpu-01", mountId: "pcie-slot-1" });
+
+    const placement = moveComponent({
+      componentId: "gpu-01",
+      mountId: "pcie-slot-1",
+    });
+
+    expect(placement).toEqual({
+      componentId: "gpu-01",
+      mountId: "pcie-slot-1",
+    });
+    expect(getBuildState().placements).toHaveLength(1);
+  });
+
+  it("rejects moving an uninstalled component", () => {
+    expect(() =>
+      moveComponent({ componentId: "gpu-01", mountId: "pcie-slot-1" }),
+    ).toThrowError(
+      expect.objectContaining<Partial<DomainCommandError>>({
+        code: "COMPONENT_NOT_INSTALLED",
+      }),
+    );
+  });
+
+  it("rejects moving into an incompatible mount without changing state", () => {
+    installComponent({ componentId: "gpu-01", mountId: "pcie-slot-1" });
+    const before = getBuildState();
+
+    expect(() =>
+      moveComponent({ componentId: "gpu-01", mountId: "radiator-front" }),
+    ).toThrowError(
+      expect.objectContaining<Partial<DomainCommandError>>({
+        code: "UNSUPPORTED_COMPONENT_TYPE",
+      }),
+    );
+    expect(getBuildState()).toEqual(before);
+  });
+
   it("removes the placement for an installed component", () => {
     installComponent({
       componentId: "gpu-01",
@@ -47,6 +129,46 @@ describe("build commands", () => {
     removeComponent({ componentId: "gpu-01" });
 
     expect(getBuildState().placements).toEqual([]);
+  });
+
+  it("removes incident connections and fan configuration atomically", () => {
+    buildStore.setState({
+      placements: [
+        { componentId: "fan-top-01", mountId: "fan-top-1" },
+        { componentId: "motherboard-01", mountId: "motherboard-tray" },
+      ],
+      connections: [
+        {
+          id: "fan-pwm-link",
+          from: { componentId: "motherboard-01", connectorId: "fan-header" },
+          to: { componentId: "fan-top-01", connectorId: "fan-pwm" },
+        },
+      ],
+      fanConfigs: [{ componentId: "fan-top-01", direction: "EXHAUST" }],
+      activity: [],
+    });
+
+    removeComponent({ componentId: "fan-top-01" });
+
+    expect(getBuildState()).toEqual({
+      placements: [
+        { componentId: "motherboard-01", mountId: "motherboard-tray" },
+      ],
+      connections: [],
+      fanConfigs: [],
+      activity: [],
+    });
+  });
+
+  it("returns a detached BuildState snapshot", () => {
+    installComponent({ componentId: "gpu-01", mountId: "pcie-slot-1" });
+    const snapshot = getBuildState();
+
+    snapshot.placements.length = 0;
+
+    expect(getBuildState().placements).toEqual([
+      { componentId: "gpu-01", mountId: "pcie-slot-1" },
+    ]);
   });
 
   it("rejects a component that is incompatible with the mount", () => {
@@ -78,6 +200,39 @@ describe("build commands", () => {
     ).toThrowError(
       expect.objectContaining<Partial<DomainCommandError>>({
         code: "COMPONENT_ALREADY_INSTALLED",
+      }),
+    );
+  });
+
+  it("rejects an occupied mount without changing state", () => {
+    buildStore.setState({
+      placements: [{ componentId: "occupant", mountId: "pcie-slot-1" }],
+    });
+    const before = getBuildState();
+
+    expect(() =>
+      installComponent({ componentId: "gpu-01", mountId: "pcie-slot-1" }),
+    ).toThrowError(
+      expect.objectContaining<Partial<DomainCommandError>>({
+        code: "MOUNT_OCCUPIED",
+      }),
+    );
+    expect(getBuildState()).toEqual(before);
+  });
+
+  it("rejects dimension overflow through the shared mount guard", () => {
+    const compactSlot: MountDefinition = {
+      id: "compact-pcie-slot",
+      type: "PCIE",
+      supportedComponentTypes: ["GPU"],
+      constraints: { maxDepth: 300 },
+    };
+
+    expect(() =>
+      assertComponentFitsMount(componentRegistry["gpu-01"], compactSlot),
+    ).toThrowError(
+      expect.objectContaining<Partial<DomainCommandError>>({
+        code: "COMPONENT_DOES_NOT_FIT",
       }),
     );
   });

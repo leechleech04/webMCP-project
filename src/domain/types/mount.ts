@@ -10,7 +10,6 @@ export type MountType =
 export interface MountDefinition {
   id: string;
   type: MountType;
-  label: string;
   supportedComponentTypes: ComponentType[];
   constraints?: {
     maxDepth?: number;
