@@ -1,0 +1,312 @@
+{
+  "componentId": "CASE_LIAN_LI_LANCOOL_216_LANCOOL_216X",
+  "productionComponentId": "CASE_LIAN_LI_LANCOOL_216_LANCOOL_216X",
+  "rendererAliases": [
+    "case-01"
+  ],
+  "brand": "Lian Li",
+  "commercialModelName": "Lancool 216",
+  "manufacturerPartNumber": "LANCOOL 216X",
+  "category": "CASE",
+  "assetTier": "PRODUCTION",
+  "frozenAtKST": "2026-08-31T19:30:00+09:00",
+  "frozenExternalDimensionsMm": {
+    "widthX": 235,
+    "heightY": 491.7,
+    "depthZ": 480.9
+  },
+  "frozenRuleFields": {
+    "gpuMaximumMm": 392,
+    "frontRadiatorSupportMm": [
+      "360",
+      "280",
+      "240"
+    ],
+    "topRadiatorSupportMm": [
+      "360",
+      "280",
+      "240"
+    ],
+    "bottomRadiatorSupportMm": [
+      "240"
+    ],
+    "validDemoConflictLocation": "Front",
+    "validRepairLocation": "Top"
+  },
+  "coordinateSystem": "GLTF_Y_UP",
+  "boundsOrder": [
+    "widthX",
+    "heightY",
+    "depthZ"
+  ],
+  "anchor": "CENTER",
+  "units": {
+    "glTF": "meters",
+    "validationReport": "millimetres"
+  },
+  "frameBoundsMm": [
+    235,
+    491.7,
+    480.9
+  ],
+  "visualBoundsMm": [
+    235,
+    491.7,
+    480.9
+  ],
+  "centroidMm": [
+    0,
+    0,
+    0
+  ],
+  "centroidToleranceMm": 0.5,
+  "boundsToleranceMm": {
+    "LOD0": 1.0,
+    "LOD1": 1.0,
+    "LOD2": 1.5
+  },
+  "axisConvention": {
+    "+X": "chassis width, left (-X) to right (+X) when viewed from front",
+    "+Y": "chassis height, bottom (-Y) to top (+Y)",
+    "+Z": "chassis depth, rear (-Z) to front (+Z)"
+  },
+  "origin": "CENTER at [0,0,0] in glTF Y-up",
+  "glbUrls": {
+    "lod0": "/assets/case-lian-li-lancool-216/lod0.glb",
+    "lod1": "/assets/case-lian-li-lancool-216/lod1.glb",
+    "lod2": "/assets/case-lian-li-lancool-216/lod2.glb"
+  },
+  "fileInfo": {
+    "lod0": {
+      "bytes": 49640,
+      "sha256": "8634ced3a99809058e580822c91fd5c4ed6bce4a5414ec83f498e0aa007d5d40",
+      "triangles": 564,
+      "vertices": 960
+    },
+    "lod1": {
+      "bytes": 40024,
+      "sha256": "f2c7f1c7e37a35ec271fc686f4450484cf09af77b3327b34f101a3ae3a427db0",
+      "triangles": 372,
+      "vertices": 672
+    },
+    "lod2": {
+      "bytes": 37612,
+      "sha256": "0c9004d47bf8503ba82556fed1f49ea35aa82e9b6e06518cdd26d7fea2dd84a9",
+      "triangles": 324,
+      "vertices": 600
+    }
+  },
+  "anchorNodes": [
+    {
+      "name": "MOUNT::motherboard-tray",
+      "position": [
+        0.07,
+        0.02,
+        -0.01
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "coordinateSpace": "GLTF_Y_UP",
+      "evidence": "VISUAL_ESTIMATE",
+      "uncertaintyMm": 5,
+      "description": "Motherboard tray center, estimated 70mm right of center, 20mm above center, 10mm rear"
+    },
+    {
+      "name": "MOUNT::pcie-slot-1",
+      "position": [
+        0.04,
+        -0.02,
+        -0.22
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "coordinateSpace": "GLTF_Y_UP",
+      "evidence": "VISUAL_ESTIMATE",
+      "uncertaintyMm": 5,
+      "description": "First PCIe slot at rear, near motherboard tray bottom"
+    },
+    {
+      "name": "MOUNT::radiator-front",
+      "position": [
+        0.0,
+        0.02,
+        0.18
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "coordinateSpace": "GLTF_Y_UP",
+      "evidence": "VISUAL_ESTIMATE",
+      "uncertaintyMm": 5,
+      "description": "Front radiator mount plane 18cm forward of center, behind front mesh"
+    },
+    {
+      "name": "MOUNT::radiator-top",
+      "position": [
+        0.0,
+        0.22,
+        0.0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "coordinateSpace": "GLTF_Y_UP",
+      "evidence": "VISUAL_ESTIMATE",
+      "uncertaintyMm": 5,
+      "description": "Top radiator mount plane near top panel interior"
+    },
+    {
+      "name": "MOUNT::psu-bay",
+      "position": [
+        0.0,
+        -0.18,
+        -0.14
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "coordinateSpace": "GLTF_Y_UP",
+      "evidence": "VISUAL_ESTIMATE",
+      "uncertaintyMm": 5,
+      "description": "PSU bay at bottom rear, 18cm below center"
+    },
+    {
+      "name": "MOUNT::fan-top-1",
+      "position": [
+        0.0,
+        0.22,
+        0.1
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "coordinateSpace": "GLTF_Y_UP",
+      "evidence": "VISUAL_ESTIMATE",
+      "uncertaintyMm": 5,
+      "description": "Top fan mount 1, 10cm forward of center on top"
+    }
+  ],
+  "rendererMapping": {
+    "productionComponentId": "CASE_LIAN_LI_LANCOOL_216_LANCOOL_216X",
+    "rendererAliases": [
+      "case-01"
+    ]
+  },
+  "webRenderingContract": {
+    "loader": "React Three Fiber / Drei useGLTF",
+    "draco": false,
+    "remoteDecoder": false,
+    "absoluteTexturePaths": false,
+    "staticUrlAfterCopy": "/public/assets/case-lian-li-lancool-216/lod0.glb",
+    "deterministicNodeNames": true,
+    "sidePanelVisibilityControl": "Glass_Side_Panel",
+    "material": "meshStandardMaterial",
+    "blenderRuntimeRequired": false,
+    "anchorsPreservedAfterRoundTrip": true
+  },
+  "recommendedWebsiteTransform": {
+    "position": [
+      0,
+      4.5,
+      0
+    ],
+    "rotation": [
+      0,
+      0,
+      0
+    ],
+    "scale": [
+      0.02,
+      0.02,
+      0.02
+    ],
+    "derivedScaleNote": "At scale 0.02, external bounds become 4.7 (W) x 9.83 (H) x 9.61 (D) scene units, closely matching current demo approx 10x9x10 envelope (height 9.8 vs 9). Alternative scale 0.019 would give 4.46x9.34x9.13. Recommend starting at 0.02 and fine-tuning per camera.",
+    "envelopeMatch": "Approximately 10x9x10 case envelope at scale 0.02"
+  },
+  "actualScaleDerivation": {
+    "glTFSizesMetres": [
+      0.235,
+      0.4917,
+      0.4809
+    ],
+    "targetEnvelopeSceneUnits": [
+      10,
+      9,
+      10
+    ],
+    "scale0_02Results": [
+      0.0047,
+      0.009834,
+      0.009618
+    ],
+    "units": "scene units (Three.js)"
+  },
+  "proceduralFallbackAvailable": true,
+  "fallbackDescription": "Procedural box fallback possible: a centered box 235x491.7x480.9mm with distinct front mesh dark panel and transparent side if GLB fails. No runtime Blender dependency.",
+  "productionMethod": "MANUAL_DETERMINISTIC_RECONSTRUCTION",
+  "sourceEvidence": {
+    "sourceVerdictPath": "D:\\컴퓨터 조립\\.workflow\\scratch\\asset_builds\\CASE_LIAN_LI_LANCOOL_216_LANCOOL_216X\\r1\\evidence\\source_verdict.json",
+    "officialProductPage": "https://lian-li.com/product/lancool-216/",
+    "licenseSummary": "No licensed full 3D model found; manual reconstruction from official specs; no unlicensed photo embedding; attribution required for official spec values via provenance"
+  },
+  "materialSummary": {
+    "count": 11,
+    "limit": "restrained original materials: painted metal, dark mesh, transparent glass, rubber feet; 11 materials includes shared fan material duplication - restrained, no textures, max 2048 no textures used",
+    "textures": {
+      "count": 0,
+      "maxDimensions": "2048x2048",
+      "note": "Procedural/material colors only, no external texture paths, no 4K/8K"
+    }
+  },
+  "lodBudgets": {
+    "LOD0": {
+      "maxTriangles": 80000,
+      "maxBytes": 5242880,
+      "actualTriangles": 564,
+      "actualBytes": 49640
+    },
+    "LOD1": {
+      "maxTriangles": 40000,
+      "maxBytes": 3145728,
+      "actualTriangles": 372,
+      "actualBytes": 40024
+    },
+    "LOD2": {
+      "maxTriangles": 20000,
+      "maxBytes": 2097152,
+      "actualTriangles": 324,
+      "actualBytes": 37612
+    }
+  },
+  "contactSheets": {
+    "lod0": "D:\\컴퓨터 조립\\.workflow\\scratch\\asset_builds\\CASE_LIAN_LI_LANCOOL_216_LANCOOL_216X\\r1\\final\\contact_sheet_lod0.png",
+    "lod1": "D:\\컴퓨터 조립\\.workflow\\scratch\\asset_builds\\CASE_LIAN_LI_LANCOOL_216_LANCOOL_216X\\r1\\final\\contact_sheet_lod1.png",
+    "lod2": "D:\\컴퓨터 조립\\.workflow\\scratch\\asset_builds\\CASE_LIAN_LI_LANCOOL_216_LANCOOL_216X\\r1\\final\\contact_sheet_lod2.png",
+    "comparison": "D:\\컴퓨터 조립\\.workflow\\scratch\\asset_builds\\CASE_LIAN_LI_LANCOOL_216_LANCOOL_216X\\r1\\final\\lod_comparison.png",
+    "rendererPreview": "D:\\컴퓨터 조립\\.workflow\\scratch\\asset_builds\\CASE_LIAN_LI_LANCOOL_216_LANCOOL_216X\\r1\\final\\renderer_preview.png"
+  },
+  "validationReport": "D:\\컴퓨터 조립\\.workflow\\scratch\\asset_builds\\CASE_LIAN_LI_LANCOOL_216_LANCOOL_216X\\r1\\final\\validation_report.json",
+  "attributionFile": "D:\\컴퓨터 조립\\.workflow\\scratch\\asset_builds\\CASE_LIAN_LI_LANCOOL_216_LANCOOL_216X\\r1\\final\\ATTRIBUTION.md",
+  "toolVersions": {
+    "blender": "5.2.0 LTS fbe6228777e7 — C:/Program Files/Blender Foundation/Blender 5.2/blender.exe",
+    "trimesh": "5.1.0",
+    "python": "3.11.15"
+  },
+  "buildScripts": [
+    "D:\\컴퓨터 조립\\.workflow\\scratch\\asset_builds\\CASE_LIAN_LI_LANCOOL_216_LANCOOL_216X\\r1\\scripts\\build_case_fixed.py"
+  ]
+}

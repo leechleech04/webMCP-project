@@ -3,8 +3,15 @@ import type { ComponentDefinition } from "../types/component";
 const case01: ComponentDefinition = {
   id: "case-01",
   type: "CASE",
-  name: "Demo Mid Tower",
-  dimensions: { width: 240, height: 500, depth: 480 },
+  name: "Lian Li Lancool 216",
+  dimensions: { width: 235, height: 491.7, depth: 480.9 },
+  visualAsset: {
+    mode: "GLB",
+    assetId: "CASE_LIAN_LI_LANCOOL_216_LANCOOL_216X",
+    url: "/assets/case-lian-li-lancool-216/lod0.glb",
+    license: "Original manual reconstruction; official specifications cited",
+    attributionPath: "assets/case-lian-li-lancool-216/ATTRIBUTION.md",
+  },
 };
 
 const motherboard01: ComponentDefinition = {

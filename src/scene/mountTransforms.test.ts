@@ -11,19 +11,19 @@ import {
 describe("mount transforms", () => {
   it("maps the PCIE domain mount to a stable 3D position", () => {
     expect(getMountTransform("pcie-slot-1")).toEqual({
-      position: [-1, 2.6, -0.15],
+      position: [-0.5, 3, 0],
       rotation: [0, 0, 0],
     });
   });
 
   it("maps radiator mount IDs to distinct position and rotation transforms", () => {
     expect(getRequiredMountTransform("radiator-front")).toEqual({
-      position: [4.45, 4.45, 0],
+      position: [0, 4.9, 4.35],
       rotation: [0, 0, Math.PI / 2],
     });
     expect(getRequiredMountTransform("radiator-top")).toEqual({
-      position: [0, 8.35, 0],
-      rotation: [Math.PI / 2, 0, 0],
+      position: [0, 9.3, 0],
+      rotation: [Math.PI / 2, 0, Math.PI / 2],
     });
   });
 

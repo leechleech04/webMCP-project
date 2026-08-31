@@ -120,7 +120,7 @@ describe("PcScene mount-based placement", () => {
     const html = renderScene();
 
     expect([...html.matchAll(/data-scene-object="gpu-01"/g)]).toHaveLength(1);
-    expect(html).toContain('data-mount-position="-1,2.6,-0.15"');
+    expect(html).toContain('data-mount-position="-0.5,3,0"');
     expect(html).toContain('data-mount-rotation="0,0,0"');
     expect(html).toContain("GPU is installed");
   });
@@ -160,7 +160,7 @@ describe("PcScene mount-based placement", () => {
     const frontHtml = renderScene();
 
     expect(frontHtml).toContain('data-scene-object="radiator-01"');
-    expect(frontHtml).toContain('data-mount-position="4.45,4.45,0"');
+    expect(frontHtml).toContain('data-mount-position="0,4.9,4.35"');
     expect(frontHtml).toContain(
       `data-mount-rotation="0,0,${Math.PI / 2}"`,
     );
@@ -177,9 +177,9 @@ describe("PcScene mount-based placement", () => {
     const topHtml = renderScene();
 
     expect([...topHtml.matchAll(/data-scene-object="radiator-01"/g)]).toHaveLength(1);
-    expect(topHtml).toContain('data-mount-position="0,8.35,0"');
+    expect(topHtml).toContain('data-mount-position="0,9.3,0"');
     expect(topHtml).toContain(
-      `data-mount-rotation="${Math.PI / 2},0,0"`,
+      `data-mount-rotation="${Math.PI / 2},0,${Math.PI / 2}"`,
     );
     expect(topHtml).toContain("Radiator is installed at radiator-top");
   });
@@ -189,8 +189,8 @@ describe("PcScene mount-based placement", () => {
     installComponent({ componentId: RADIATOR_ID, mountId: RADIATOR_FRONT_MOUNT_ID });
 
     const html = renderScene({ highlightedComponentIds: [GPU_ID, RADIATOR_ID] });
-    expect(html).toContain('data-scene-object="gpu-01" data-mount-position="-1,2.6,-0.15" data-mount-rotation="0,0,0" data-highlight="true"');
-    expect(html).toContain('data-scene-object="radiator-01" data-mount-position="4.45,4.45,0" data-mount-rotation="0,0,1.5707963267948966" data-highlight="true"');
+    expect(html).toContain('data-scene-object="gpu-01" data-mount-position="-0.5,3,0" data-mount-rotation="0,0,0" data-highlight="true"');
+    expect(html).toContain('data-scene-object="radiator-01" data-mount-position="0,4.9,4.35" data-mount-rotation="0,0,1.5707963267948966" data-highlight="true"');
 
     const gpuOnly = renderScene({ highlightedComponentIds: [GPU_ID] });
     expect(gpuOnly).toContain('data-scene-object="gpu-01"');

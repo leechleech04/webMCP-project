@@ -1,0 +1,86 @@
+{
+  "MOUNT::motherboard-tray": {
+    "pos": [
+      0.07,
+      0.02,
+      -0.01
+    ],
+    "rot": [
+      0,
+      0,
+      0
+    ],
+    "evidence": "VISUAL_ESTIMATE",
+    "uncertainty_mm": 5
+  },
+  "MOUNT::pcie-slot-1": {
+    "pos": [
+      0.04,
+      -0.02,
+      -0.22
+    ],
+    "rot": [
+      0,
+      0,
+      0
+    ],
+    "evidence": "VISUAL_ESTIMATE",
+    "uncertainty_mm": 5
+  },
+  "MOUNT::radiator-front": {
+    "pos": [
+      0.0,
+      0.02,
+      0.18
+    ],
+    "rot": [
+      0,
+      0,
+      0
+    ],
+    "evidence": "VISUAL_ESTIMATE",
+    "uncertainty_mm": 5
+  },
+  "MOUNT::radiator-top": {
+    "pos": [
+      0.0,
+      0.22,
+      0.0
+    ],
+    "rot": [
+      0,
+      0,
+      0
+    ],
+    "evidence": "VISUAL_ESTIMATE",
+    "uncertainty_mm": 5
+  },
+  "MOUNT::psu-bay": {
+    "pos": [
+      0.0,
+      -0.18,
+      -0.14
+    ],
+    "rot": [
+      0,
+      0,
+      0
+    ],
+    "evidence": "VISUAL_ESTIMATE",
+    "uncertainty_mm": 5
+  },
+  "MOUNT::fan-top-1": {
+    "pos": [
+      0.0,
+      0.22,
+      0.1
+    ],
+    "rot": [
+      0,
+      0,
+      0
+    ],
+    "evidence": "VISUAL_ESTIMATE",
+    "uncertainty_mm": 5
+  }
+}

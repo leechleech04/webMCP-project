@@ -1,0 +1,149 @@
+{
+  "asset": "CASE_LIAN_LI_LANCOOL_216_LANCOOL_216X",
+  "verdict": "PASS",
+  "failures": [],
+  "lods": {
+    "lod0": {
+      "file_size_bytes": 49640,
+      "sha256": "8634ced3a99809058e580822c91fd5c4ed6bce4a5414ec83f498e0aa007d5d40",
+      "triangles": 564,
+      "vertices": 960,
+      "extents_mm": [
+        235.0,
+        491.7,
+        480.9
+      ],
+      "centroid_mm": [
+        -0.0,
+        -0.0,
+        0.0
+      ],
+      "ext_diff_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "cen_diff_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "ext_pass": true,
+      "cen_pass": true,
+      "tri_pass": true,
+      "size_pass": true,
+      "degenerate_faces": 0,
+      "tiny_islands": 0,
+      "materials_count": 11,
+      "images": 0,
+      "textures": 0,
+      "anchors_found": [
+        "MOUNT::fan-top-1",
+        "MOUNT::motherboard-tray",
+        "MOUNT::pcie-slot-1",
+        "MOUNT::psu-bay",
+        "MOUNT::radiator-front",
+        "MOUNT::radiator-top"
+      ],
+      "anchors_missing": [],
+      "has_glass_side_panel": true,
+      "pass": true
+    },
+    "lod1": {
+      "file_size_bytes": 40024,
+      "sha256": "f2c7f1c7e37a35ec271fc686f4450484cf09af77b3327b34f101a3ae3a427db0",
+      "triangles": 372,
+      "vertices": 672,
+      "extents_mm": [
+        235.0,
+        491.7,
+        480.9
+      ],
+      "centroid_mm": [
+        -0.0,
+        -0.0,
+        0.0
+      ],
+      "ext_diff_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "cen_diff_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "ext_pass": true,
+      "cen_pass": true,
+      "tri_pass": true,
+      "size_pass": true,
+      "degenerate_faces": 0,
+      "tiny_islands": 0,
+      "materials_count": 11,
+      "images": 0,
+      "textures": 0,
+      "anchors_found": [
+        "MOUNT::fan-top-1",
+        "MOUNT::motherboard-tray",
+        "MOUNT::pcie-slot-1",
+        "MOUNT::psu-bay",
+        "MOUNT::radiator-front",
+        "MOUNT::radiator-top"
+      ],
+      "anchors_missing": [],
+      "has_glass_side_panel": true,
+      "pass": true
+    },
+    "lod2": {
+      "file_size_bytes": 37612,
+      "sha256": "0c9004d47bf8503ba82556fed1f49ea35aa82e9b6e06518cdd26d7fea2dd84a9",
+      "triangles": 324,
+      "vertices": 600,
+      "extents_mm": [
+        235.0,
+        491.7,
+        480.9
+      ],
+      "centroid_mm": [
+        -0.0,
+        -0.0,
+        0.0
+      ],
+      "ext_diff_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "cen_diff_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "ext_pass": true,
+      "cen_pass": true,
+      "tri_pass": true,
+      "size_pass": true,
+      "degenerate_faces": 0,
+      "tiny_islands": 0,
+      "materials_count": 11,
+      "images": 0,
+      "textures": 0,
+      "anchors_found": [
+        "MOUNT::fan-top-1",
+        "MOUNT::motherboard-tray",
+        "MOUNT::pcie-slot-1",
+        "MOUNT::psu-bay",
+        "MOUNT::radiator-front",
+        "MOUNT::radiator-top"
+      ],
+      "anchors_missing": [],
+      "has_glass_side_panel": true,
+      "pass": true
+    }
+  },
+  "checks": {
+    "copy_loadability": "PASS",
+    "manifest": "PASS"
+  }
+}
