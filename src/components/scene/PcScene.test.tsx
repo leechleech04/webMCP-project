@@ -3,6 +3,7 @@ import { Children, isValidElement, type ReactNode } from "react";
 import { renderToString } from "react-dom/server";
 
 import { installComponent } from "../../domain/commands/installComponent";
+import { moveComponent } from "../../domain/commands/moveComponent";
 import { removeComponent } from "../../domain/commands/removeComponent";
 import { buildStore, resetBuildStore } from "../../store/buildStore";
 
@@ -25,13 +26,36 @@ vi.mock("./GpuModel", () => ({
   GpuModel: ({
     transform,
   }: {
-    transform: { position: [number, number, number] };
+    transform: {
+      position: [number, number, number];
+      rotation: [number, number, number];
+    };
   }) => (
     <div
       data-scene-object="gpu-01"
       data-mount-position={transform.position.join(",")}
+      data-mount-rotation={transform.rotation.join(",")}
     >
       GPU-01
+    </div>
+  ),
+}));
+
+vi.mock("./RadiatorModel", () => ({
+  RadiatorModel: ({
+    transform,
+  }: {
+    transform: {
+      position: [number, number, number];
+      rotation: [number, number, number];
+    };
+  }) => (
+    <div
+      data-scene-object="radiator-01"
+      data-mount-position={transform.position.join(",")}
+      data-mount-rotation={transform.rotation.join(",")}
+    >
+      RADIATOR-01
     </div>
   ),
 }));
@@ -50,6 +74,9 @@ import { PcScene } from "./PcScene";
 
 const GPU_ID = "gpu-01";
 const GPU_MOUNT_ID = "pcie-slot-1";
+const RADIATOR_ID = "radiator-01";
+const RADIATOR_FRONT_MOUNT_ID = "radiator-front";
+const RADIATOR_TOP_MOUNT_ID = "radiator-top";
 
 // Zustand's useStore uses getInitialState during server rendering. Point that
 // read at the current shared store state for this SSR-only integration check;
@@ -65,7 +92,7 @@ const renderScene = (): string => {
   }
 };
 
-describe("PcScene GPU vertical slice", () => {
+describe("PcScene mount-based placement", () => {
   beforeEach(() => {
     resetBuildStore();
   });
@@ -88,6 +115,7 @@ describe("PcScene GPU vertical slice", () => {
 
     expect([...html.matchAll(/data-scene-object="gpu-01"/g)]).toHaveLength(1);
     expect(html).toContain('data-mount-position="-1,2.6,-0.15"');
+    expect(html).toContain('data-mount-rotation="0,0,0"');
     expect(html).toContain("GPU is installed");
   });
 
@@ -115,5 +143,38 @@ describe("PcScene GPU vertical slice", () => {
     expect(buildStore.getState().placements).toEqual([
       { componentId: GPU_ID, mountId: GPU_MOUNT_ID },
     ]);
+  });
+
+  it("moves the radiator by Mount ID and resolves a new transform", () => {
+    installComponent({
+      componentId: RADIATOR_ID,
+      mountId: RADIATOR_FRONT_MOUNT_ID,
+    });
+
+    const frontHtml = renderScene();
+
+    expect(frontHtml).toContain('data-scene-object="radiator-01"');
+    expect(frontHtml).toContain('data-mount-position="4.45,4.45,0"');
+    expect(frontHtml).toContain(
+      `data-mount-rotation="0,0,${Math.PI / 2}"`,
+    );
+
+    moveComponent({
+      componentId: RADIATOR_ID,
+      mountId: RADIATOR_TOP_MOUNT_ID,
+    });
+
+    expect(buildStore.getState().placements).toEqual([
+      { componentId: RADIATOR_ID, mountId: RADIATOR_TOP_MOUNT_ID },
+    ]);
+
+    const topHtml = renderScene();
+
+    expect([...topHtml.matchAll(/data-scene-object="radiator-01"/g)]).toHaveLength(1);
+    expect(topHtml).toContain('data-mount-position="0,8.35,0"');
+    expect(topHtml).toContain(
+      `data-mount-rotation="${Math.PI / 2},0,0"`,
+    );
+    expect(topHtml).toContain("Radiator is installed at radiator-top");
   });
 });

@@ -128,11 +128,17 @@ h2 {
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 1rem;
-  margin: 0 0 1.25rem;
+  margin: 0 0 0.85rem;
   padding: 1rem;
   border: 1px solid #28354a;
   border-radius: 14px;
   background: #0c1320;
+}
+
+.component-control + .component-control {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #223047;
 }
 
 .component-summary strong,
@@ -158,6 +164,11 @@ h2 {
   font-weight: 900;
 }
 
+.component-icon.radiator {
+  color: #c4b5fd;
+  background: #2e1065;
+}
+
 .install-state.installed {
   border-color: #155e75;
   color: #67e8f9;
@@ -166,7 +177,12 @@ h2 {
 
 .command-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+.radiator-commands button {
+  flex: 1 1 calc(50% - 0.75rem);
 }
 
 .command-message {

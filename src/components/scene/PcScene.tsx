@@ -2,32 +2,32 @@ import { Grid, OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 
 import {
-  getMountTransform,
   getRequiredMountTransform,
 } from "../../scene/mountTransforms";
+import { getSceneModel } from "../../scene/modelRegistry";
 import { useBuildStore } from "../../store/buildStore";
 import { CaseModel } from "./CaseModel";
-import { GpuModel } from "./GpuModel";
 import { MotherboardModel } from "./MotherboardModel";
 
 const motherboardTransform = getRequiredMountTransform("motherboard-tray");
 
 export function PcScene() {
-  const gpuPlacement = useBuildStore((state) =>
-    state.placements.find((placement) => placement.componentId === "gpu-01"),
+  const placements = useBuildStore((state) => state.placements);
+  const gpuInstalled = placements.some(
+    (placement) => placement.componentId === "gpu-01",
   );
-  const gpuTransform = gpuPlacement
-    ? getMountTransform(gpuPlacement.mountId)
-    : undefined;
+  const radiatorPlacement = placements.find(
+    (placement) => placement.componentId === "radiator-01",
+  );
 
   return (
     <div
       className="scene-canvas"
       role="img"
-      aria-label={`Minimal PC assembly scene. GPU is ${gpuTransform ? "installed" : "not installed"}.`}
+      aria-label={`Mount-based PC assembly scene. GPU is ${gpuInstalled ? "installed" : "not installed"}. Radiator is ${radiatorPlacement ? `installed at ${radiatorPlacement.mountId}` : "not installed"}.`}
     >
       <Canvas
-        shadows
+        shadows="basic"
         camera={{ position: [15, 11, 16], fov: 38, near: 0.1, far: 100 }}
         gl={{ antialias: true }}
       >
@@ -46,7 +46,22 @@ export function PcScene() {
 
         <CaseModel />
         <MotherboardModel transform={motherboardTransform} />
-        {gpuTransform ? <GpuModel transform={gpuTransform} /> : null}
+        {placements.map((placement) => {
+          const Model = getSceneModel(placement.componentId);
+
+          if (!Model) {
+            return null;
+          }
+
+          const transform = getRequiredMountTransform(placement.mountId);
+
+          return (
+            <Model
+              key={placement.componentId}
+              transform={transform}
+            />
+          );
+        })}
 
         <Grid
           position={[0, -0.02, 0]}
