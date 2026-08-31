@@ -2,11 +2,12 @@ import { Edges } from "@react-three/drei";
 
 import type { SceneTransform } from "../../scene/mountTransforms";
 
-interface RadiatorModelProps {
+export interface RadiatorModelProps {
   transform: SceneTransform;
+  highlight?: boolean;
 }
 
-export function RadiatorModel({ transform }: RadiatorModelProps) {
+export function RadiatorModel({ transform, highlight = false }: RadiatorModelProps) {
   return (
     <group
       name="radiator-01"
@@ -16,8 +17,8 @@ export function RadiatorModel({ transform }: RadiatorModelProps) {
     >
       <mesh castShadow receiveShadow>
         <boxGeometry args={[7.8, 2.4, 0.5]} />
-        <meshStandardMaterial color="#7c3aed" metalness={0.45} roughness={0.4} />
-        <Edges color="#c4b5fd" threshold={15} />
+        <meshStandardMaterial color={highlight ? "#ef4444" : "#7c3aed"} emissive={highlight ? "#7f1d1d" : "#000000"} emissiveIntensity={highlight ? 0.65 : 0} metalness={0.45} roughness={0.4} />
+        <Edges color={highlight ? "#fecaca" : "#c4b5fd"} threshold={15} />
       </mesh>
 
       {[-2.5, 0, 2.5].map((offset) => (

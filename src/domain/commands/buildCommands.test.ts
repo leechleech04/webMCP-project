@@ -150,14 +150,15 @@ describe("build commands", () => {
 
     removeComponent({ componentId: "fan-top-01" });
 
-    expect(getBuildState()).toEqual({
+    expect(getBuildState()).toMatchObject({
       placements: [
         { componentId: "motherboard-01", mountId: "motherboard-tray" },
       ],
       connections: [],
       fanConfigs: [],
-      activity: [],
     });
+    expect(getBuildState().activity).toHaveLength(1);
+    expect(getBuildState().activity[0]).toMatchObject({ actor: "USER" });
   });
 
   it("returns a detached BuildState snapshot", () => {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Children, isValidElement, type ReactNode } from "react";
+import { Children, isValidElement, type ComponentProps, type ReactNode } from "react";
 import { renderToString } from "react-dom/server";
 
 import { installComponent } from "../../domain/commands/installComponent";
@@ -25,16 +25,19 @@ vi.mock("@react-three/drei", () => ({
 vi.mock("./GpuModel", () => ({
   GpuModel: ({
     transform,
+    highlight,
   }: {
     transform: {
       position: [number, number, number];
       rotation: [number, number, number];
     };
+    highlight?: boolean;
   }) => (
     <div
       data-scene-object="gpu-01"
       data-mount-position={transform.position.join(",")}
       data-mount-rotation={transform.rotation.join(",")}
+      data-highlight={String(!!highlight)}
     >
       GPU-01
     </div>
@@ -44,16 +47,19 @@ vi.mock("./GpuModel", () => ({
 vi.mock("./RadiatorModel", () => ({
   RadiatorModel: ({
     transform,
+    highlight,
   }: {
     transform: {
       position: [number, number, number];
       rotation: [number, number, number];
     };
+    highlight?: boolean;
   }) => (
     <div
       data-scene-object="radiator-01"
       data-mount-position={transform.position.join(",")}
       data-mount-rotation={transform.rotation.join(",")}
+      data-highlight={String(!!highlight)}
     >
       RADIATOR-01
     </div>
@@ -81,12 +87,12 @@ const RADIATOR_TOP_MOUNT_ID = "radiator-top";
 // Zustand's useStore uses getInitialState during server rendering. Point that
 // read at the current shared store state for this SSR-only integration check;
 // production code and the real useBuildStore hook remain untouched.
-const renderScene = (): string => {
+const renderScene = (props: ComponentProps<typeof PcScene> = {}): string => {
   const initialState = buildStore.getInitialState;
   buildStore.getInitialState = buildStore.getState;
 
   try {
-    return renderToString(<PcScene />);
+    return renderToString(<PcScene {...props} />);
   } finally {
     buildStore.getInitialState = initialState;
   }
@@ -176,5 +182,20 @@ describe("PcScene mount-based placement", () => {
       `data-mount-rotation="${Math.PI / 2},0,0"`,
     );
     expect(topHtml).toContain("Radiator is installed at radiator-top");
+  });
+
+  it("passes only selected affected IDs to the scene/model layer", () => {
+    installComponent({ componentId: GPU_ID, mountId: GPU_MOUNT_ID });
+    installComponent({ componentId: RADIATOR_ID, mountId: RADIATOR_FRONT_MOUNT_ID });
+
+    const html = renderScene({ highlightedComponentIds: [GPU_ID, RADIATOR_ID] });
+    expect(html).toContain('data-scene-object="gpu-01" data-mount-position="-1,2.6,-0.15" data-mount-rotation="0,0,0" data-highlight="true"');
+    expect(html).toContain('data-scene-object="radiator-01" data-mount-position="4.45,4.45,0" data-mount-rotation="0,0,1.5707963267948966" data-highlight="true"');
+
+    const gpuOnly = renderScene({ highlightedComponentIds: [GPU_ID] });
+    expect(gpuOnly).toContain('data-scene-object="gpu-01"');
+    expect(gpuOnly).toContain('data-highlight="true"');
+    expect(gpuOnly).toContain('data-scene-object="radiator-01"');
+    expect(gpuOnly).toContain('data-highlight="false"');
   });
 });

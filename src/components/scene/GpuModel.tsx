@@ -2,11 +2,12 @@ import { Edges } from "@react-three/drei";
 
 import type { SceneTransform } from "../../scene/mountTransforms";
 
-interface GpuModelProps {
+export interface GpuModelProps {
   transform: SceneTransform;
+  highlight?: boolean;
 }
 
-export function GpuModel({ transform }: GpuModelProps) {
+export function GpuModel({ transform, highlight = false }: GpuModelProps) {
   return (
     <group
       name="gpu-01"
@@ -16,8 +17,8 @@ export function GpuModel({ transform }: GpuModelProps) {
     >
       <mesh castShadow receiveShadow>
         <boxGeometry args={[3, 1, 8]} />
-        <meshStandardMaterial color="#2563eb" metalness={0.55} roughness={0.34} />
-        <Edges color="#93c5fd" threshold={15} />
+        <meshStandardMaterial color={highlight ? "#ef4444" : "#2563eb"} emissive={highlight ? "#7f1d1d" : "#000000"} emissiveIntensity={highlight ? 0.65 : 0} metalness={0.55} roughness={0.34} />
+        <Edges color={highlight ? "#fecaca" : "#93c5fd"} threshold={15} />
       </mesh>
 
       <mesh position={[0, 0.54, 0]} castShadow>

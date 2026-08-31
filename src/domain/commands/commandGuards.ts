@@ -1,7 +1,10 @@
 import { componentRegistry } from "../data/components";
 import { mountRegistry } from "../data/mounts";
-import type { ComponentDefinition } from "../types/component";
-import type { MountDefinition } from "../types/mount";
+import type {
+  ComponentDefinition,
+  ComponentRegistry,
+} from "../types/component";
+import type { MountDefinition, MountRegistry } from "../types/mount";
 
 export type DomainCommandErrorCode =
   | "COMPONENT_NOT_FOUND"
@@ -10,7 +13,10 @@ export type DomainCommandErrorCode =
   | "COMPONENT_NOT_INSTALLED"
   | "MOUNT_OCCUPIED"
   | "UNSUPPORTED_COMPONENT_TYPE"
-  | "COMPONENT_DOES_NOT_FIT";
+  | "COMPONENT_DOES_NOT_FIT"
+  | "CONNECTOR_NOT_FOUND"
+  | "CONNECTION_ALREADY_EXISTS"
+  | "CONNECTION_NOT_FOUND";
 
 export class DomainCommandError extends Error {
   constructor(
@@ -24,8 +30,9 @@ export class DomainCommandError extends Error {
 
 export const getComponentOrThrow = (
   componentId: string,
+  registry: ComponentRegistry = componentRegistry,
 ): ComponentDefinition => {
-  const component = componentRegistry[componentId];
+  const component = registry[componentId];
 
   if (!component) {
     throw new DomainCommandError(
@@ -37,8 +44,11 @@ export const getComponentOrThrow = (
   return component;
 };
 
-export const getMountOrThrow = (mountId: string): MountDefinition => {
-  const mount = mountRegistry[mountId];
+export const getMountOrThrow = (
+  mountId: string,
+  registry: MountRegistry = mountRegistry,
+): MountDefinition => {
+  const mount = registry[mountId];
 
   if (!mount) {
     throw new DomainCommandError("MOUNT_NOT_FOUND", `Unknown mount: ${mountId}`);

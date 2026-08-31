@@ -21,6 +21,11 @@ export const mountTransforms: Readonly<Record<string, SceneTransform>> = {
     position: [0, 8.35, 0],
     rotation: [Math.PI / 2, 0, 0],
   },
+  "fan-top-1": {
+    position: [0, 8.05, 0],
+    rotation: [Math.PI / 2, 0, 0],
+    scale: [0.012, 0.012, 0.012],
+  },
 };
 
 export const getMountTransform = (

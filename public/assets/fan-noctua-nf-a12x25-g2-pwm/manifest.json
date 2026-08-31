@@ -1,0 +1,175 @@
+{
+  "componentId": "FAN_NOCTUA_NF_A12X25_G2_PWM",
+  "commercialModelName": "Noctua NF-A12x25 G2 PWM",
+  "category": "CASE_FAN",
+  "assetTier": "SUPPORTING",
+  "ean": "9010018100686",
+  "upc": "841501110689",
+  "glbUrl": "/assets/fan-noctua-nf-a12x25-g2-pwm/lod0.glb",
+  "source": "LICENSED",
+  "productionMethod": "PHOTO_AI_ASSISTED_BLENDER_RECONSTRUCTION",
+  "rejectedAiDraftRetained": true,
+  "sourceEvidence": {
+    "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Noctua_NF-A12x25_G2_fans_at_Computex_2025.jpg",
+    "permanentRevisionUrl": "https://commons.wikimedia.org/w/index.php?title=File:Noctua_NF-A12x25_G2_fans_at_Computex_2025.jpg&oldid=1236478225",
+    "directFileUrl": "https://upload.wikimedia.org/wikipedia/commons/f/f7/Noctua_NF-A12x25_G2_fans_at_Computex_2025.jpg",
+    "photographerOrRightsholder": "Wikimedia Commons user 4300streetcar",
+    "sourceStatement": "own work",
+    "licenseNameVersion": "CC BY 4.0 International",
+    "licenseTermsUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "permissions": {
+      "adaptation": "PERMITTED",
+      "redistribution": "PERMITTED",
+      "commercialUse": "PERMITTED",
+      "attributionRequired": true,
+      "shareAlikeRequired": false,
+      "notes": "Commercial use, redistribution, and adaptation permitted under CC BY 4.0. Transformed into 3D asset with full attribution."
+    },
+    "attributionText": "Noctua NF-A12x25 G2 fans at Computex 2025 by Wikimedia Commons user 4300streetcar, used under CC BY 4.0 International (https://creativecommons.org/licenses/by/4.0/). Cropped to isolate centered brown/beige fan, background removed, historical AI draft retained as reference, and reconstructed into clean production 3D asset by SyncBuild.",
+    "sha256Original": "a608c5f69702151187cb090b75924e2d5ff569b8a5cac9cb080228d75baa9069",
+    "sha256Cropped": "c1769c6ce4dd8870b7a5c236016964c7bf40663561a042c2be28a83d2ce23e78",
+    "sha256DerivedNoBg": "eae119a02a37114008c8754ddfaf7a319078b1668266839679a97fcd59bd9b85",
+    "evidencePaths": {
+      "original": "D:/\ucef4\ud4e8\ud130 \uc870\ub9bd/.workflow/scratch/evidence/FAN_NOCTUA_NF_A12X25_G2_PWM/original.jpg",
+      "cropped": "D:/\ucef4\ud4e8\ud130 \uc870\ub9bd/.workflow/scratch/evidence/FAN_NOCTUA_NF_A12X25_G2_PWM/cropped_original.jpg",
+      "derivedNoBg": "D:/\ucef4\ud4e8\ud130 \uc870\ub9bd/.workflow/scratch/evidence/FAN_NOCTUA_NF_A12X25_G2_PWM/derived_no_bg.png",
+      "sourcePageHtml": "D:/\ucef4\ud4e8\ud130 \uc870\ub9bd/.workflow/scratch/evidence/FAN_NOCTUA_NF_A12X25_G2_PWM/source_page.html",
+      "licensePageHtml": "D:/\ucef4\ud4e8\ud130 \uc870\ub9bd/.workflow/scratch/evidence/FAN_NOCTUA_NF_A12X25_G2_PWM/license_CC_BY_4.0.html",
+      "rejectedTriposrDraft": "D:/\ucef4\ud4e8\ud130 \uc870\ub9bd/.workflow/scratch/triposr_draft/FAN_NOCTUA_NF_A12X25_G2_PWM/0/mesh.obj",
+      "sourceVerdictJson": "D:/\ucef4\ud4e8\ud130 \uc870\ub9bd/.workflow/scratch/evidence/FAN_NOCTUA_NF_A12X25_G2_PWM/source_verdict.json"
+    },
+    "verdict": "ACCEPT"
+  },
+  "historicalAiEvidence": {
+    "modelId": "stabilityai/TripoSR",
+    "modelSnapshot": "5b521936b01fbe1890f6f9baed0254ab6351c04a",
+    "status": "REJECTED_AS_PRODUCTION_TOPOLOGY_RETAINED_AS_HISTORICAL_REFERENCE",
+    "rejectionVerdict": "REJECT_REGENERATE",
+    "rejectionReason": "Non-watertight geometry, up to 1,644 disconnected islands, fused airflow gaps, degenerate backplate.",
+    "draftObjPath": "D:/\ucef4\ud4e8\ud130 \uc870\ub9bd/.workflow/scratch/triposr_draft/FAN_NOCTUA_NF_A12X25_G2_PWM/0/mesh.obj",
+    "draftObjSha256": "c15d868ce10e1915b3df8de9cd82e082de7d57be747a411f61afecd0dd371073"
+  },
+  "toolVersions": {
+    "blender": "5.2.0 LTS fbe6228777e7 \u2014 C:/Program Files/Blender Foundation/Blender 5.2/blender.exe",
+    "torch": "2.11.0+cu128",
+    "cuda": "12.8 (driver 577.03 / CUDA Driver 12.9, WDDM, NVIDIA GeForce RTX 5090 Laptop GPU 24,463 MiB)",
+    "preprocessing": "rembg 2.0.81 (u2net) + Pillow 12.3.0",
+    "trimesh": "5.0.0"
+  },
+  "generation": {
+    "durationSeconds": "NOT_APPLICABLE",
+    "peakVramMiB": "NOT_APPLICABLE",
+    "reconstructionMethod": "Clean procedural Blender 5.2 parametric modeling. Deterministic manufacturer metadata is dimensional ground truth. The licensed photograph and rejected AI draft were visual references only. The rejected AI geometry supplies no compatibility or dimensional truth."
+  },
+  "coordinateSystem": "GLTF_Y_UP",
+  "boundsOrder": [
+    "widthX",
+    "heightY",
+    "depthZ"
+  ],
+  "frameBoundsMm": [
+    120,
+    120,
+    25
+  ],
+  "visualBoundsWithPadsMm": [
+    120,
+    120,
+    27
+  ],
+  "mountingHoleSpacingMm": [
+    105,
+    105
+  ],
+  "anchor": "CENTER",
+  "intakeNormal": [
+    0,
+    0,
+    1
+  ],
+  "exhaustNormal": [
+    0,
+    0,
+    -1
+  ],
+  "axisConvention": {
+    "+X": "left-to-right from intake view",
+    "+Y": "bottom-to-top",
+    "+Z": "toward intake/front"
+  },
+  "connector": "4_PIN_PWM",
+  "ratedVoltageV": 12,
+  "maxInputCurrentA": 0.15,
+  "maxInputPowerW": 1.8,
+  "portsConsumed": {
+    "fanPwm4Pin": 1
+  },
+  "boundsSource": "DETERMINISTIC_METADATA \u2014 supplied by director frozen catalog, NOT inferred from mesh. Mesh is visual only.",
+  "metersPerUnit": 1.0,
+  "lods": [
+    {
+      "url": "/assets/fan-noctua-nf-a12x25-g2-pwm/lod0.glb",
+      "maxScreenFraction": 1.0,
+      "triangles": 18878,
+      "vertices": 9443,
+      "bytes": 343448,
+      "sha256": "2976d0eac8c28a1b4f805cf28a7d8fce64b897440856468eda0acaf3ff8ff293",
+      "extentsMm": [
+        120.0,
+        120.0,
+        27.0
+      ],
+      "centerMm": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "url": "/assets/fan-noctua-nf-a12x25-g2-pwm/lod1.glb",
+      "maxScreenFraction": 0.5,
+      "triangles": 11998,
+      "vertices": 6003,
+      "bytes": 219604,
+      "sha256": "b9fe1ad8e33cbbe3c2b07b770f5bf23d09ca4fc665a0d7ea7096980a46dc5d21",
+      "extentsMm": [
+        120.0,
+        120.0,
+        27.0
+      ],
+      "centerMm": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "url": "/assets/fan-noctua-nf-a12x25-g2-pwm/lod2.glb",
+      "maxScreenFraction": 0.25,
+      "triangles": 5998,
+      "vertices": 3003,
+      "bytes": 111604,
+      "sha256": "77a5f9d9cf129efc70e3b81caeabd0139a4ac248b2f4bb939e70400aa13912cf",
+      "extentsMm": [
+        120.0,
+        120.0,
+        27.0
+      ],
+      "centerMm": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "textureCap": 1024,
+  "attributionObligation": "Retain CC BY 4.0 attribution in production ATTRIBUTION.md + manifest. GLB is an adaptation \u2014 CC BY 4.0 requires attribution, permits commercial redistribution.",
+  "noticeFile": "D:/\ucef4\ud4e8\ud130 \uc870\ub9bd/.workflow/scratch/final_r3_2/FAN_NOCTUA_NF_A12X25_G2_PWM/ATTRIBUTION.md",
+  "contactSheets": [
+    "D:/\ucef4\ud4e8\ud130 \uc870\ub9bd/.workflow/scratch/final_r3_2/FAN_NOCTUA_NF_A12X25_G2_PWM/contact_sheet_lod0.png",
+    "D:/\ucef4\ud4e8\ud130 \uc870\ub9bd/.workflow/scratch/final_r3_2/FAN_NOCTUA_NF_A12X25_G2_PWM/contact_sheet_lod1.png",
+    "D:/\ucef4\ud4e8\ud130 \uc870\ub9bd/.workflow/scratch/final_r3_2/FAN_NOCTUA_NF_A12X25_G2_PWM/contact_sheet_lod2.png",
+    "D:/\ucef4\ud4e8\ud130 \uc870\ub9bd/.workflow/scratch/final_r3_2/FAN_NOCTUA_NF_A12X25_G2_PWM/lod_comparison.png"
+  ],
+  "validationReport": "D:/\ucef4\ud4e8\ud130 \uc870\ub9bd/.workflow/scratch/final_r3_2/FAN_NOCTUA_NF_A12X25_G2_PWM/validation_report.json"
+}

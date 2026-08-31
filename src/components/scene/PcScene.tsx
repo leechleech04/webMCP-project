@@ -11,8 +11,13 @@ import { MotherboardModel } from "./MotherboardModel";
 
 const motherboardTransform = getRequiredMountTransform("motherboard-tray");
 
-export function PcScene() {
+export interface PcSceneProps {
+  highlightedComponentIds?: string[];
+}
+
+export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
   const placements = useBuildStore((state) => state.placements);
+  const highlighted = new Set(highlightedComponentIds);
   const gpuInstalled = placements.some(
     (placement) => placement.componentId === "gpu-01",
   );
@@ -59,6 +64,7 @@ export function PcScene() {
             <Model
               key={placement.componentId}
               transform={transform}
+              highlight={highlighted.has(placement.componentId)}
             />
           );
         })}

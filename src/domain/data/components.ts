@@ -57,6 +57,13 @@ const fanTop01: ComponentDefinition = {
     { id: "fan-pwm", type: "PWM", direction: "INPUT" },
     { id: "fan-argb", type: "ARGB", direction: "INPUT" },
   ],
+  visualAsset: {
+    mode: "GLB",
+    assetId: "FAN_NOCTUA_NF_A12X25_G2_PWM",
+    url: "/assets/fan-noctua-nf-a12x25-g2-pwm/lod0.glb",
+    license: "CC BY 4.0 International",
+    attributionPath: "assets/fan-noctua-nf-a12x25-g2-pwm/ATTRIBUTION.md",
+  },
 };
 
 export const componentRegistry: Readonly<

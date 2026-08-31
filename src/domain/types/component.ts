@@ -39,4 +39,13 @@ export interface ComponentDefinition {
     capacity?: number;
   };
   connectors?: ConnectorDefinition[];
+  visualAsset?: {
+    mode: "GLB" | "PROCEDURAL_FALLBACK";
+    assetId?: string;
+    url?: string;
+    license?: string;
+    attributionPath?: string;
+  };
 }
+
+export type ComponentRegistry = Readonly<Record<string, ComponentDefinition>>;

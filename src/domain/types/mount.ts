@@ -17,3 +17,5 @@ export interface MountDefinition {
     maxHeight?: number;
   };
 }
+
+export type MountRegistry = Readonly<Record<string, MountDefinition>>;
