@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, type ReactNode } from "react";
 import { useBuildStore } from "../../store/buildStore";
 import { getActiveCaseProfile } from "../../domain/cases/getActiveCase";
 import { componentRegistry } from "../../domain/data/components";
@@ -8,21 +8,37 @@ import { removeComponent } from "../../domain/commands/removeComponent";
 import { moveComponent } from "../../domain/commands/moveComponent";
 import { setFanDirection } from "../../domain/commands/setFanDirection";
 import type { ComponentDefinition } from "../../domain/types/component";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 type TabCategory = "GPU" | "RADIATOR" | "FAN" | "MOTHERBOARD" | "CPU" | "RAM" | "PSU" | "DIAGRAMS";
 
-const CATEGORIES: { id: TabCategory; label: string; icon: string }[] = [
-  { id: "GPU", label: "Graphics", icon: "🎮" },
-  { id: "RADIATOR", label: "Liquid Cooler", icon: "💧" },
-  { id: "FAN", label: "Fans & Air", icon: "🌀" },
-  { id: "MOTHERBOARD", label: "Motherboard", icon: "🟩" },
-  { id: "CPU", label: "CPU", icon: "⚡" },
-  { id: "RAM", label: "Memory (RAM)", icon: "🧠" },
-  { id: "PSU", label: "Power Supply", icon: "🔋" },
-  { id: "DIAGRAMS", label: "Diagrams", icon: "📐" },
+const CATEGORIES: { id: TabCategory; label: string }[] = [
+  { id: "GPU", label: "Graphics" },
+  { id: "RADIATOR", label: "Liquid Cooler" },
+  { id: "FAN", label: "Fans & Air" },
+  { id: "MOTHERBOARD", label: "Motherboard" },
+  { id: "CPU", label: "CPU" },
+  { id: "RAM", label: "Memory (RAM)" },
+  { id: "PSU", label: "Power Supply" },
+  { id: "DIAGRAMS", label: "Diagrams" },
 ];
 
+function CategoryIcon({ category }: { category: TabCategory }) {
+  const paths: Record<TabCategory, ReactNode> = {
+    GPU: <><rect x="3" y="6" width="18" height="12" rx="3" /><circle cx="9" cy="12" r="3" /><path d="M15 10h3M15 14h2M7 18v2M11 18v2" /></>,
+    RADIATOR: <><rect x="4" y="3" width="16" height="18" rx="3" /><circle cx="12" cy="9" r="3.5" /><circle cx="12" cy="16" r="2.5" /></>,
+    FAN: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1.5" /><path d="M12 10c-1-4 1-6 3-5 2 2 1 5-3 7M14 12c4-1 6 1 5 3-2 2-5 1-7-3M12 14c1 4-1 6-3 5-2-2-1-5 3-7M10 12c-4 1-6-1-5-3 2-2 5-1 7 3" /></>,
+    MOTHERBOARD: <><rect x="4" y="3" width="16" height="18" rx="2" /><rect x="8" y="7" width="7" height="7" rx="1" /><path d="M8 17h8M18 7v5M6 7v3" /></>,
+    CPU: <><rect x="6" y="6" width="12" height="12" rx="2" /><rect x="9" y="9" width="6" height="6" rx="1" /><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3" /></>,
+    RAM: <><rect x="3" y="7" width="18" height="10" rx="2" /><path d="M7 10v4M11 10v4M15 10v4M18 10v4M7 17v2M11 17v2M15 17v2" /></>,
+    PSU: <><rect x="3" y="5" width="18" height="14" rx="3" /><circle cx="10" cy="12" r="4" /><path d="M16 10h2M16 14h2M10 8v8M6 12h8" /></>,
+    DIAGRAMS: <><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v5h5M9 12h6M9 16h6" /></>,
+  };
+  return <svg className="category-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{paths[category]}</svg>;
+}
+
 export function ComponentPalette() {
+  const { t, componentName, categoryName, caseName } = useLanguage();
   const state = useBuildStore((s) => s);
   const activeProfile = useMemo(() => getActiveCaseProfile(state), [state]);
   const [activeTab, setActiveTab] = useState<TabCategory>("GPU");
@@ -67,21 +83,21 @@ export function ComponentPalette() {
     if (limit.maxDepth && component.dimensions.depth > limit.maxDepth) {
       return {
         fits: false,
-        reason: `Depth/Length (${component.dimensions.depth}mm) exceeds case max (${limit.maxDepth}mm)`,
+        reason: t("clearance.depth", { value: component.dimensions.depth, max: limit.maxDepth }),
         excessMm: component.dimensions.depth - limit.maxDepth,
       };
     }
     if (limit.maxWidth && component.dimensions.width > limit.maxWidth) {
       return {
         fits: false,
-        reason: `Width (${component.dimensions.width}mm) exceeds case max (${limit.maxWidth}mm)`,
+        reason: t("clearance.width", { value: component.dimensions.width, max: limit.maxWidth }),
         excessMm: component.dimensions.width - limit.maxWidth,
       };
     }
     if (limit.maxHeight && component.dimensions.height > limit.maxHeight) {
       return {
         fits: false,
-        reason: `Height (${component.dimensions.height}mm) exceeds case max (${limit.maxHeight}mm)`,
+        reason: t("clearance.height", { value: component.dimensions.height, max: limit.maxHeight }),
         excessMm: component.dimensions.height - limit.maxHeight,
       };
     }
@@ -96,7 +112,7 @@ export function ComponentPalette() {
     const targetMount = selectedMounts[componentId] || availableMounts.find((m) => !occupiedMounts.has(m)) || availableMounts[0];
 
     if (!targetMount) {
-      setErrorMessage(`No supported mount found for ${component.name} in current case (${activeProfile.label})`);
+      setErrorMessage(t("catalog.noMount", { component: componentName(component.id, component.name), case: caseName(activeProfile.label) }));
       return;
     }
 
@@ -104,9 +120,9 @@ export function ComponentPalette() {
       installComponent({ componentId, mountId: targetMount });
       const fit = checkClearanceFit(component, targetMount);
       if (!fit.fits) {
-        setStatusMessage(`⚠️ Installed ${component.name} with Overfill / Clearance Warning: ${fit.reason}`);
+        setStatusMessage(t("catalog.installedWarning", { component: componentName(component.id, component.name), reason: fit.reason }));
       } else {
-        setStatusMessage(`Installed ${component.name} at ${targetMount}`);
+        setStatusMessage(t("catalog.installed", { component: componentName(component.id, component.name), mount: targetMount }));
       }
       setErrorMessage(null);
       setTimeout(() => setStatusMessage(null), 4000);
@@ -125,7 +141,7 @@ export function ComponentPalette() {
       if (!occupiedMounts.has("dimm-b1") && activeProfile.supportedMountIds.includes("dimm-b1")) {
         installComponent({ componentId: "ram-02", mountId: "dimm-b1" });
       }
-      setStatusMessage("Installed 2x DDR5 RAM Sticks in Dual-Channel (dimm-a1 & dimm-b1)");
+      setStatusMessage(t("catalog.ramInstalled"));
       setErrorMessage(null);
       setTimeout(() => setStatusMessage(null), 3000);
     } catch (err: any) {
@@ -140,7 +156,7 @@ export function ComponentPalette() {
       if (installedMap.has("ram-01")) removeComponent({ componentId: "ram-01" });
       if (installedMap.has("ram-02")) removeComponent({ componentId: "ram-02" });
       if (installedMap.has("ram-03")) removeComponent({ componentId: "ram-03" });
-      setStatusMessage("Removed all RAM sticks");
+      setStatusMessage(t("catalog.ramRemoved"));
       setErrorMessage(null);
       setTimeout(() => setStatusMessage(null), 3000);
     } catch (err: any) {
@@ -153,7 +169,7 @@ export function ComponentPalette() {
   const handleRemove = (componentId: string) => {
     try {
       removeComponent({ componentId });
-      setStatusMessage(`Removed ${componentRegistry[componentId]?.name ?? componentId}`);
+      setStatusMessage(t("catalog.removed", { component: componentName(componentId, componentRegistry[componentId]?.name ?? componentId) }));
       setErrorMessage(null);
       setTimeout(() => setStatusMessage(null), 3000);
     } catch (err: any) {
@@ -166,7 +182,7 @@ export function ComponentPalette() {
   const handleMove = (componentId: string, targetMount: string) => {
     try {
       moveComponent({ componentId, mountId: targetMount });
-      setStatusMessage(`Moved ${componentRegistry[componentId]?.name ?? componentId} to ${targetMount}`);
+      setStatusMessage(t("catalog.moved", { component: componentName(componentId, componentRegistry[componentId]?.name ?? componentId), mount: targetMount }));
       setErrorMessage(null);
       setTimeout(() => setStatusMessage(null), 3000);
     } catch (err: any) {
@@ -184,7 +200,8 @@ export function ComponentPalette() {
 
   return (
     <section
-      aria-label="Component Catalog and Customizer"
+      className="catalog-panel"
+      aria-label={t("catalog.aria")}
       style={{
         marginTop: "0.6rem",
         border: "1px solid #1e3a8a",
@@ -198,6 +215,7 @@ export function ComponentPalette() {
     >
       {/* Header Bar */}
       <div
+        className="catalog-heading"
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -222,7 +240,7 @@ export function ComponentPalette() {
             wordBreak: "break-word",
           }}
         >
-          <span>🛠️</span> Component Customizer
+          {t("catalog.title")}
         </h3>
         <span
           style={{
@@ -237,12 +255,13 @@ export function ComponentPalette() {
             wordBreak: "break-word",
           }}
         >
-          Profile: {activeProfile.formFactor}
+          {t("catalog.profile", { profile: caseName(activeProfile.formFactor) })}
         </span>
       </div>
 
       {/* Large Category Tabs Strip */}
       <div
+        className="catalog-tabs"
         style={{
           display: "flex",
           gap: "0.4rem",
@@ -276,8 +295,8 @@ export function ComponentPalette() {
                 transition: "all 0.15s ease",
               }}
             >
-              <span style={{ fontSize: "0.9rem" }}>{cat.icon}</span>
-              <span>{cat.label}</span>
+              <span className="category-icon-wrap"><CategoryIcon category={cat.id} /></span>
+              <span>{categoryName(cat.id, cat.label)}</span>
             </button>
           );
         })}
@@ -286,6 +305,7 @@ export function ComponentPalette() {
       {/* RAM QUANTITY & DUAL CHANNEL SELECTOR HEADER */}
       {activeTab === "RAM" && (
         <div
+          className="ram-config"
           style={{
             display: "flex",
             justifyContent: "space-between",
@@ -302,9 +322,9 @@ export function ComponentPalette() {
           }}
         >
           <div>
-            <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#60a5fa" }}>RAM Stick Configuration:</span>
+            <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#60a5fa" }}>{t("catalog.ramConfig")}</span>
             <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "0.1rem" }}>
-              {ramQuantity === 2 ? "2x Sticks (Dual-Channel) · Uses dimm-a1 & dimm-b1" : "1x Stick (Single-Channel)"}
+              {ramQuantity === 2 ? t("catalog.ramDual") : t("catalog.ramSingle")}
             </div>
           </div>
           <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
@@ -322,7 +342,7 @@ export function ComponentPalette() {
                 cursor: "pointer",
               }}
             >
-              1 Stick
+              {t("catalog.oneStick")}
             </button>
             <button
               type="button"
@@ -338,7 +358,7 @@ export function ComponentPalette() {
                 cursor: "pointer",
               }}
             >
-              2 Sticks (Dual)
+              {t("catalog.twoSticks")}
             </button>
           </div>
         </div>
@@ -374,7 +394,7 @@ export function ComponentPalette() {
                 cursor: "pointer",
               }}
             >
-              120mm Fan Diagram
+              {t("diagram.fan", { size: 120 })}
             </button>
             <button
               type="button"
@@ -390,7 +410,7 @@ export function ComponentPalette() {
                 cursor: "pointer",
               }}
             >
-              140mm Fan Diagram
+              {t("diagram.fan", { size: 140 })}
             </button>
             <button
               type="button"
@@ -406,7 +426,7 @@ export function ComponentPalette() {
                 cursor: "pointer",
               }}
             >
-              160mm Fan Diagram
+              {t("diagram.fan", { size: 160 })}
             </button>
             <button
               type="button"
@@ -422,58 +442,58 @@ export function ComponentPalette() {
                 cursor: "pointer",
               }}
             >
-              AIO Liquid Cooler Schematic
+              {t("diagram.aio")}
             </button>
           </div>
 
           {selectedDiagramSize === "120" && (
             <div style={{ padding: "0.65rem", background: "#0c1320", borderRadius: "8px", border: "1px solid #1e3a8a" }}>
-              <div style={{ fontWeight: 800, color: "#60a5fa", fontSize: "0.88rem" }}>120mm Fan Technical Diagram</div>
+              <div style={{ fontWeight: 800, color: "#60a5fa", fontSize: "0.88rem" }}>{t("diagram.fanTitle", { size: 120 })}</div>
               <div style={{ fontSize: "0.76rem", color: "#cbd5e1", marginTop: "0.4rem", lineHeight: "1.5" }}>
-                • Frame Size: <strong>120 × 120 × 25 mm</strong><br />
-                • Mounting Hole Spacing: <strong>105 × 105 mm</strong> (Ø 4.3mm screw pitch)<br />
-                • Rated Speed: <strong>2000 RPM (PWM)</strong> · Airflow: <strong>60 CFM</strong><br />
-                • Static Pressure: <strong>2.34 mm H2O</strong> · Noise Level: <strong>22.6 dBA</strong><br />
-                • Impeller: <strong>9 Aerodynamic High-Pressure Blades</strong>
+                • {t("diagram.frame")}: <strong>120 × 120 × 25 mm</strong><br />
+                • {t("diagram.spacing")}: <strong>105 × 105 mm</strong> (Ø 4.3mm)<br />
+                • {t("diagram.speed")}: <strong>2000 RPM (PWM)</strong> · {t("diagram.airflow")}: <strong>60 CFM</strong><br />
+                • {t("diagram.pressure")}: <strong>2.34 mm H2O</strong> · {t("diagram.noise")}: <strong>22.6 dBA</strong><br />
+                • {t("diagram.impeller")}: <strong>{t("diagram.impeller120")}</strong>
               </div>
             </div>
           )}
 
           {selectedDiagramSize === "140" && (
             <div style={{ padding: "0.65rem", background: "#0c1320", borderRadius: "8px", border: "1px solid #1e3a8a" }}>
-              <div style={{ fontWeight: 800, color: "#60a5fa", fontSize: "0.88rem" }}>140mm Fan Technical Diagram</div>
+              <div style={{ fontWeight: 800, color: "#60a5fa", fontSize: "0.88rem" }}>{t("diagram.fanTitle", { size: 140 })}</div>
               <div style={{ fontSize: "0.76rem", color: "#cbd5e1", marginTop: "0.4rem", lineHeight: "1.5" }}>
-                • Frame Size: <strong>140 × 140 × 25 mm</strong><br />
-                • Mounting Hole Spacing: <strong>125 × 125 mm</strong> (Ø 4.3mm screw pitch)<br />
-                • Rated Speed: <strong>1600 RPM (PWM)</strong> · Airflow: <strong>85 CFM</strong><br />
-                • Static Pressure: <strong>2.80 mm H2O</strong> · Noise Level: <strong>24.2 dBA</strong><br />
-                • Impeller: <strong>7 Extended Sweep Flow Blades</strong>
+                • {t("diagram.frame")}: <strong>140 × 140 × 25 mm</strong><br />
+                • {t("diagram.spacing")}: <strong>125 × 125 mm</strong> (Ø 4.3mm)<br />
+                • {t("diagram.speed")}: <strong>1600 RPM (PWM)</strong> · {t("diagram.airflow")}: <strong>85 CFM</strong><br />
+                • {t("diagram.pressure")}: <strong>2.80 mm H2O</strong> · {t("diagram.noise")}: <strong>24.2 dBA</strong><br />
+                • {t("diagram.impeller")}: <strong>{t("diagram.impeller140")}</strong>
               </div>
             </div>
           )}
 
           {selectedDiagramSize === "160" && (
             <div style={{ padding: "0.65rem", background: "#0c1320", borderRadius: "8px", border: "1px solid #1e3a8a" }}>
-              <div style={{ fontWeight: 800, color: "#60a5fa", fontSize: "0.88rem" }}>160mm Large Intake Fan Technical Diagram</div>
+              <div style={{ fontWeight: 800, color: "#60a5fa", fontSize: "0.88rem" }}>{t("diagram.fan160Title")}</div>
               <div style={{ fontSize: "0.76rem", color: "#cbd5e1", marginTop: "0.4rem", lineHeight: "1.5" }}>
-                • Frame Size: <strong>160 × 160 × 30 mm</strong><br />
-                • Mounting Hole Spacing: <strong>140 × 140 mm</strong> (Chassis Ring Mount)<br />
-                • Rated Speed: <strong>1400 RPM (PWM)</strong> · Airflow: <strong>110 CFM</strong><br />
-                • Static Pressure: <strong>3.42 mm H2O</strong> · Noise Level: <strong>26.8 dBA</strong><br />
-                • Impeller: <strong>High-Volume Dual-Ball Bearing Impeller</strong>
+                • {t("diagram.frame")}: <strong>160 × 160 × 30 mm</strong><br />
+                • {t("diagram.spacing")}: <strong>140 × 140 mm</strong><br />
+                • {t("diagram.speed")}: <strong>1400 RPM (PWM)</strong> · {t("diagram.airflow")}: <strong>110 CFM</strong><br />
+                • {t("diagram.pressure")}: <strong>3.42 mm H2O</strong> · {t("diagram.noise")}: <strong>26.8 dBA</strong><br />
+                • {t("diagram.impeller")}: <strong>{t("diagram.impeller160")}</strong>
               </div>
             </div>
           )}
 
           {selectedDiagramSize === "AIO" && (
             <div style={{ padding: "0.65rem", background: "#0c1320", borderRadius: "8px", border: "1px solid #047857" }}>
-              <div style={{ fontWeight: 800, color: "#34d399", fontSize: "0.88rem" }}>AIO Closed-Loop Liquid Cooling Schematic</div>
+              <div style={{ fontWeight: 800, color: "#34d399", fontSize: "0.88rem" }}>{t("diagram.aioTitle")}</div>
               <div style={{ fontSize: "0.76rem", color: "#cbd5e1", marginTop: "0.4rem", lineHeight: "1.5" }}>
-                • <strong>Radiator</strong>: 120 / 240 / 360 × 120 × 30mm Aluminum Dual-Pass Matrix<br />
-                • <strong>Coolant Tubes</strong>: Dual 400mm Low-Permeation Braided EPDM Sleeved Rubber Tubes<br />
-                • <strong>Water Pump Unit</strong>: 2800 RPM 3-Phase Ceramic Bearing Pump (80×80×55mm)<br />
-                • <strong>Cold Plate</strong>: 55×55mm High-Density Micro-Skived Pure Copper Base<br />
-                • <strong>Connectors</strong>: 4-Pin PWM Pump Header + 3-Pin ARGB 5V Sync
+                • <strong>{t("diagram.radiator")}</strong>: {t("diagram.radiatorSpec")}<br />
+                • <strong>{t("diagram.tubes")}</strong>: {t("diagram.tubesSpec")}<br />
+                • <strong>{t("diagram.pump")}</strong>: {t("diagram.pumpSpec")}<br />
+                • <strong>{t("diagram.coldPlate")}</strong>: {t("diagram.coldPlateSpec")}<br />
+                • <strong>{t("diagram.connectors")}</strong>: {t("diagram.connectorsSpec")}
               </div>
             </div>
           )}
@@ -483,6 +503,7 @@ export function ComponentPalette() {
       {/* Prominent Component Cards List */}
       {activeTab !== "DIAGRAMS" && (
         <div
+          className="catalog-list"
           style={{
             display: "flex",
             flexDirection: "column",
@@ -503,6 +524,7 @@ export function ComponentPalette() {
             return (
               <div
                 key={comp.id}
+                className={`component-card${isInstalled ? " is-installed" : ""}${!clearanceFit.fits ? " has-warning" : ""}`}
                 style={{
                   padding: "0.85rem",
                   borderRadius: "10px",
@@ -537,7 +559,7 @@ export function ComponentPalette() {
                         wordBreak: "break-word",
                       }}
                     >
-                      {comp.name}
+                      {componentName(comp.id, comp.name)}
                     </div>
                     <div
                       style={{
@@ -589,7 +611,7 @@ export function ComponentPalette() {
                             wordBreak: "break-word",
                           }}
                         >
-                          🔋 {comp.power.capacity}W Capacity
+                          🔋 {comp.power.capacity}W {t("catalog.capacity")}
                         </span>
                       ) : null}
                     </div>
@@ -614,8 +636,8 @@ export function ComponentPalette() {
                     }}
                   >
                     {isInstalled
-                      ? (!clearanceFit.fits ? `⚠️ Overfill: ${installedMount}` : `✓ ${installedMount}`)
-                      : (!clearanceFit.fits ? "⚠️ Inapplicable" : "Available")}
+                      ? (!clearanceFit.fits ? t("catalog.overfill", { mount: installedMount }) : `✓ ${installedMount}`)
+                      : (!clearanceFit.fits ? t("catalog.inapplicable") : t("catalog.available"))}
                   </span>
                 </div>
 
@@ -661,7 +683,7 @@ export function ComponentPalette() {
                           wordBreak: "break-word",
                         }}
                       >
-                        ⚡ Install 2x Sticks (Dual-Channel Kit)
+                        {t("catalog.installDual")}
                       </button>
                     ) : (
                       <button
@@ -681,7 +703,7 @@ export function ComponentPalette() {
                           wordBreak: "break-word",
                         }}
                       >
-                        Remove Dual-Channel Kit (2x Sticks)
+                        {t("catalog.removeDual")}
                       </button>
                     )}
                   </div>
@@ -700,7 +722,7 @@ export function ComponentPalette() {
                     {!isInstalled ? (
                       <>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", flex: "1 1 140px", minWidth: "120px" }}>
-                          <label style={{ fontSize: "0.72rem", color: "#94a3b8", fontWeight: 600, whiteSpace: "nowrap" }}>Mount:</label>
+                          <label style={{ fontSize: "0.72rem", color: "#94a3b8", fontWeight: 600, whiteSpace: "nowrap" }}>{t("catalog.mount")}</label>
                           <select
                             value={selectedTargetMount || ""}
                             onChange={(e) => setSelectedMounts({ ...selectedMounts, [comp.id]: e.target.value })}
@@ -718,7 +740,7 @@ export function ComponentPalette() {
                           >
                             {compatibleMounts.map((m) => (
                               <option key={m} value={m}>
-                                {m} {occupiedMounts.has(m) ? "(Occupied)" : "(Free)"}
+                                {m} ({occupiedMounts.has(m) ? t("catalog.occupied") : t("catalog.free")})
                               </option>
                             ))}
                           </select>
@@ -745,7 +767,7 @@ export function ComponentPalette() {
                             wordBreak: "break-word",
                           }}
                         >
-                          {!clearanceFit.fits ? "Install (Collision)" : "Install Part"}
+                          {!clearanceFit.fits ? t("catalog.installCollision") : t("catalog.install")}
                         </button>
                       </>
                     ) : (
@@ -767,7 +789,7 @@ export function ComponentPalette() {
                             wordBreak: "break-word",
                           }}
                         >
-                          Remove
+                          {t("catalog.remove")}
                         </button>
 
                         {compatibleMounts.length > 1 && (
@@ -788,7 +810,7 @@ export function ComponentPalette() {
                           >
                             {compatibleMounts.map((m) => (
                               <option key={m} value={m} disabled={occupiedMounts.has(m) && m !== installedMount}>
-                                Move: {m} {m === installedMount ? "(Current)" : occupiedMounts.has(m) ? "(Occupied)" : "(Free)"}
+                                {t("catalog.move")}: {m} ({m === installedMount ? t("catalog.current") : occupiedMounts.has(m) ? t("catalog.occupied") : t("catalog.free")})
                               </option>
                             ))}
                           </select>
@@ -815,7 +837,7 @@ export function ComponentPalette() {
                           wordBreak: "break-word",
                         }}
                       >
-                        {fanConfig?.direction === "EXHAUST" ? "🔥 Exhaust Flow" : "❄️ Intake Flow"}
+                        {fanConfig?.direction === "EXHAUST" ? t("catalog.exhaust") : t("catalog.intake")}
                       </button>
                     )}
                   </div>
@@ -843,7 +865,7 @@ export function ComponentPalette() {
             wordBreak: "break-word",
           }}
         >
-          ✅ {statusMessage}
+          {statusMessage}
         </div>
       )}
       {errorMessage && (
@@ -862,7 +884,7 @@ export function ComponentPalette() {
             wordBreak: "break-word",
           }}
         >
-          ❌ {errorMessage}
+          {errorMessage}
         </div>
       )}
     </section>

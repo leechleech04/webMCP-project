@@ -3,8 +3,10 @@ import { getActiveCaseProfile } from "../../domain/cases/getActiveCase";
 import { caseProfiles } from "../../domain/cases/caseProfiles";
 import { selectCase } from "../../domain/commands/selectCase";
 import { useBuildStore } from "../../store/buildStore";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export function CasePicker({ dragging }: { dragging?: boolean }) {
+  const { t, caseName } = useLanguage();
   const state = useBuildStore((s) => s);
   const active = useMemo(() => getActiveCaseProfile(state), [state]);
   const [message, setMessage] = useState<string | null>(null);
@@ -12,12 +14,12 @@ export function CasePicker({ dragging }: { dragging?: boolean }) {
 
   const onSelect = (componentId: string) => {
     if (dragging) {
-      setMessage("Cannot switch case while dragging");
+      setMessage(t("case.dragging"));
       return;
     }
     try {
       selectCase({ componentId });
-      setMessage(`Switched to ${caseProfiles.find((p) => p.componentId === componentId)?.label}`);
+      setMessage(t("case.switched", { case: caseName(caseProfiles.find((p) => p.componentId === componentId)?.label ?? componentId) }));
       setErrorDetail(null);
       setTimeout(() => setMessage(null), 2200);
     } catch (err: any) {
@@ -29,6 +31,7 @@ export function CasePicker({ dragging }: { dragging?: boolean }) {
 
   return (
     <section
+      className="case-picker"
       aria-labelledby="case-picker-title"
       style={{
         marginTop: "0.5rem",
@@ -41,6 +44,7 @@ export function CasePicker({ dragging }: { dragging?: boolean }) {
       }}
     >
       <div
+        className="case-picker-heading"
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -60,7 +64,7 @@ export function CasePicker({ dragging }: { dragging?: boolean }) {
             fontWeight: 800,
           }}
         >
-          Chassis Form Factor
+          {t("case.title")}
         </span>
         <span
           style={{
@@ -75,18 +79,19 @@ export function CasePicker({ dragging }: { dragging?: boolean }) {
             wordBreak: "break-word",
           }}
         >
-          {active.formFactor} ({active.dimensionsMm.width}×{active.dimensionsMm.height}×{active.dimensionsMm.depth}mm)
+          {caseName(active.formFactor)} ({active.dimensionsMm.width}×{active.dimensionsMm.height}×{active.dimensionsMm.depth}mm)
         </span>
       </div>
 
       {/* 2x2 Clean Grid for Spacious Button Fitting */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.45rem" }}>
+      <div className="case-options" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.45rem" }}>
         {caseProfiles.map((p) => {
           const isActive = p.componentId === active.componentId;
-          const shortName = p.label.split(" —")[0];
+          const shortName = caseName(p.label).split(" —")[0];
           return (
             <button
               key={p.id}
+              className="case-option"
               type="button"
               onClick={() => onSelect(p.componentId)}
               disabled={dragging}
@@ -103,7 +108,7 @@ export function CasePicker({ dragging }: { dragging?: boolean }) {
                 overflowWrap: "break-word",
                 wordBreak: "break-word",
               }}
-              title={`${p.label} · ${p.dimensionsMm.width}×${p.dimensionsMm.height}×${p.dimensionsMm.depth} mm`}
+              title={`${caseName(p.label)} · ${p.dimensionsMm.width}×${p.dimensionsMm.height}×${p.dimensionsMm.depth} mm`}
             >
               <div
                 style={{

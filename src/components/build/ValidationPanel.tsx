@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 
 import { validateBuild } from "../../domain/constraints/validateBuild";
 import { useBuildStore } from "../../store/buildStore";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export interface ValidationPanelProps {
   onSelectionChange?: (componentIds: string[]) => void;
 }
 
 export function ValidationPanel({ onSelectionChange }: ValidationPanelProps) {
+  const { language, t } = useLanguage();
   const placements = useBuildStore((state) => state.placements);
   const connections = useBuildStore((state) => state.connections);
   const fanConfigs = useBuildStore((state) => state.fanConfigs);
@@ -30,17 +32,17 @@ export function ValidationPanel({ onSelectionChange }: ValidationPanelProps) {
     <section className="validation-panel" aria-labelledby="validation-title">
       <div className="panel-heading">
         <div>
-          <h2 id="validation-title">Build validation</h2>
-          <p className="panel-caption">Deterministic checks from the shared Build State.</p>
+          <h2 id="validation-title">{t("validation.title")}</h2>
+          <p className="panel-caption">{t("validation.caption")}</p>
         </div>
         <span className={issues.length === 0 ? "valid-pill" : "error-pill"}>
-          {issues.length === 0 ? "VALID" : `${issues.length} ISSUE${issues.length === 1 ? "" : "S"}`}
+          {issues.length === 0 ? t("validation.valid") : t("validation.issues", { count: issues.length })}
         </span>
       </div>
 
       {issues.length === 0 ? (
         <p className="valid-state" role="status" data-testid="validation-valid">
-          Build valid · no compatibility issues detected.
+          {t("validation.clear")}
         </p>
       ) : (
         <div className="validation-list" role="list">
@@ -62,18 +64,18 @@ export function ValidationPanel({ onSelectionChange }: ValidationPanelProps) {
                 }}
                 data-testid={`validation-${issue.id}`}
               >
-                <span className="issue-kicker">{issue.severity} · {issue.type}</span>
-                <strong>{issue.id === "GPU_RADIATOR_COLLISION" ? "GPU / Radiator Collision" : issue.id}</strong>
+                <span className="issue-kicker">{language === "ko" ? localizeIssueMeta(issue.severity) : issue.severity} · {language === "ko" ? localizeIssueMeta(issue.type) : issue.type}</span>
+                <strong>{issue.id === "GPU_RADIATOR_COLLISION" ? t("validation.collision") : language === "ko" ? localizeIssueTitle(issue.id) : issue.id}</strong>
                 {issue.id === "GPU_RADIATOR_COLLISION" ? (
                   <span className="issue-details">
-                    <span>GPU length: 340 mm</span>
-                    <span>Available clearance: 320 mm</span>
-                    <span>Margin: -20 mm</span>
+                    <span>{t("validation.gpuLength")}</span>
+                    <span>{t("validation.clearance")}</span>
+                    <span>{t("validation.margin")}</span>
                   </span>
                 ) : (
-                  <span className="issue-details"><span>{issue.message}</span></span>
+                  <span className="issue-details"><span>{language === "ko" ? localizeIssue(issue.message) : issue.message}</span></span>
                 )}
-                <span className="issue-footnote">Select to highlight affected components.</span>
+                <span className="issue-footnote">{t("validation.select")}</span>
               </button>
             );
           })}
@@ -82,3 +84,29 @@ export function ValidationPanel({ onSelectionChange }: ValidationPanelProps) {
     </section>
   );
 }
+
+const localizeIssue = (message: string) => message
+  .replace("No case fans are installed.", "케이스 팬이 설치되어 있지 않습니다.")
+  .replace("A PSU is required for the installed powered components.", "전력이 필요한 부품을 위해 파워서플라이가 필요합니다.")
+  .replace("Fan direction is not configured for:", "팬 방향이 설정되지 않음:")
+  .replace("Airflow is unbalanced:", "공기 흐름 불균형:")
+  .replace(" intake / ", " 흡기 / ")
+  .replace(" exhaust.", " 배기입니다.")
+  .replace("GPU power cable clearance:", "GPU 전원 케이블 여유 공간:")
+  .replace(" available; ", " 사용 가능; ")
+  .replace(" required; Margin:", " 필요; 여유:");
+
+const localizeIssueMeta = (value: string) => ({
+  ERROR: "오류", WARNING: "경고", CLEARANCE: "공간", CABLE: "케이블", POWER: "전원",
+  CONNECTOR: "커넥터", AIRFLOW: "공기 흐름",
+}[value] ?? value);
+
+const localizeIssueTitle = (id: string) => ({
+  AIRFLOW_NO_FANS: "케이스 팬 없음",
+  AIRFLOW_DIRECTION_UNCONFIGURED: "팬 방향 미설정",
+  AIRFLOW_UNBALANCED: "공기 흐름 불균형",
+  PSU_MISSING: "파워서플라이 없음",
+  PSU_INSUFFICIENT_CAPACITY: "파워 용량 부족",
+  PSU_GPU_CONNECTOR_MISMATCH: "GPU 전원 커넥터 불일치",
+  GPU_CABLE_CLEARANCE: "GPU 케이블 여유 공간 부족",
+}[id] ?? id);

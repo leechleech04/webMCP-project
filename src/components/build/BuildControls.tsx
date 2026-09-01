@@ -4,8 +4,10 @@ import { getActiveCaseProfile } from "../../domain/cases/getActiveCase";
 import { autoFillBuild } from "../../domain/commands/autoFillBuild";
 import { clearBuild } from "../../domain/commands/clearBuild";
 import { generateAutoFillRecipe } from "../../domain/recipes/autoFillRecipe";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export function BuildControls() {
+  const { t, caseName } = useLanguage();
   const state = useBuildStore((s) => s);
   const activeProfile = useMemo(() => getActiveCaseProfile(state), [state]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -34,9 +36,7 @@ export function BuildControls() {
   const handleAutoFill = () => {
     try {
       const outcome = autoFillBuild();
-      setStatusMessage(
-        `Auto-fill applied for ${activeProfile.formFactor}: +${outcome.appliedPlacements.length} components, +${outcome.appliedConnections.length} cables, +${outcome.appliedFanConfigs.length} fan directions configured.`,
-      );
+      setStatusMessage(t("build.autoFillResult", { formFactor: caseName(activeProfile.formFactor), components: outcome.appliedPlacements.length, cables: outcome.appliedConnections.length, fans: outcome.appliedFanConfigs.length }));
       setErrorMessage(null);
       setTimeout(() => setStatusMessage(null), 5000);
     } catch (err: any) {
@@ -49,9 +49,7 @@ export function BuildControls() {
   const handleConfirmClear = () => {
     try {
       const outcome = clearBuild({ confirm: true });
-      setStatusMessage(
-        `Build cleared: removed ${outcome.clearedComponentsCount} components, ${outcome.clearedConnectionsCount} cables, ${outcome.clearedFanConfigsCount} fan configs. Active case (${activeProfile.label}) preserved.`,
-      );
+      setStatusMessage(t("build.clearResult", { components: outcome.clearedComponentsCount, cables: outcome.clearedConnectionsCount, fans: outcome.clearedFanConfigsCount, case: caseName(activeProfile.label) }));
       setErrorMessage(null);
       setConfirmingClear(false);
       setTimeout(() => setStatusMessage(null), 5000);
@@ -65,7 +63,8 @@ export function BuildControls() {
 
   return (
     <section
-      aria-label="Build Actions"
+      className="build-actions"
+      aria-label={t("build.title")}
       style={{
         marginTop: "0.65rem",
         border: "1px solid #28354a",
@@ -74,7 +73,7 @@ export function BuildControls() {
         background: "#0c1320",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+      <div className="build-actions-heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
         <h3
           style={{
             margin: 0,
@@ -84,14 +83,14 @@ export function BuildControls() {
             textTransform: "uppercase",
           }}
         >
-          Build Actions
+          {t("build.title")}
         </h3>
         <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
-          {installedNonCaseCount} component{installedNonCaseCount === 1 ? "" : "s"} installed
+          {t("build.installedCount", { count: installedNonCaseCount })}
         </span>
       </div>
 
-      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+      <div className="build-action-buttons" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
         <button
           type="button"
           onClick={handleAutoFill}
@@ -109,11 +108,11 @@ export function BuildControls() {
           }}
           title={
             preview.count > 0
-              ? `Auto-fill missing mounts (+${preview.count} parts) for ${activeProfile.formFactor}`
-              : "Build already has all mounts filled for current case"
+              ? t("build.autoFillTitle", { count: preview.count, formFactor: caseName(activeProfile.formFactor) })
+              : t("build.autoFillCompleteTitle")
           }
         >
-          ⚡ Auto Fill Build {preview.count > 0 ? `(+${preview.count})` : "(Full)"}
+          {t("build.autoFill")} {preview.count > 0 ? `(+${preview.count})` : `(${t("build.full")})`}
         </button>
 
         {!confirmingClear ? (
@@ -133,9 +132,9 @@ export function BuildControls() {
               border: installedNonCaseCount > 0 ? "1px solid #991b1b" : "1px solid #334155",
               cursor: installedNonCaseCount > 0 ? "pointer" : "not-allowed",
             }}
-            title="Remove all installed parts while preserving the active case"
+            title={t("build.clearTitle")}
           >
-            🗑️ Clear Build
+            {t("build.clear")}
           </button>
         ) : null}
       </div>
@@ -153,12 +152,10 @@ export function BuildControls() {
           }}
         >
           <div id="clear-dialog-title" style={{ fontSize: "0.78rem", fontWeight: 800, color: "#fecaca" }}>
-            Confirm Clear Build?
+            {t("build.confirmTitle")}
           </div>
           <div style={{ fontSize: "0.72rem", color: "#cbd5e1", marginTop: "0.25rem", lineHeight: 1.4 }}>
-            All non-case components ({installedNonCaseCount}), power cables, and fan directions will be removed. The
-            active case <strong style={{ color: "#60a5fa" }}>{activeProfile.label}</strong> will remain selected at{" "}
-            <code>case-root</code>.
+            {t("build.confirmBody", { count: installedNonCaseCount, case: caseName(activeProfile.label) })}
           </div>
           <div style={{ display: "flex", gap: "0.45rem", marginTop: "0.5rem" }}>
             <button
@@ -174,7 +171,7 @@ export function BuildControls() {
                 border: "none",
               }}
             >
-              Yes, Clear Build
+              {t("build.confirm")}
             </button>
             <button
               type="button"
@@ -186,7 +183,7 @@ export function BuildControls() {
                 fontSize: "0.74rem",
               }}
             >
-              Cancel
+              {t("build.cancel")}
             </button>
           </div>
         </div>

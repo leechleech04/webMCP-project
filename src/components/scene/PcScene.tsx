@@ -18,6 +18,7 @@ import { validateBuild } from "../../domain/constraints/validateBuild";
 import { AirflowVisualization } from "./AirflowVisualization";
 import { CaseModel } from "./CaseModel";
 import { MountIndicators } from "./MountIndicators";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export interface PcSceneProps {
   highlightedComponentIds?: string[];
@@ -64,6 +65,7 @@ function StudioEnvironment({ mode }: { mode: SceneAppearanceMode }) {
 }
 
 export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
+  const { t, componentName } = useLanguage();
   const state = useBuildStore((s) => s);
   const placements = useBuildStore((s) => s.placements);
   const activeProfile = useMemo(() => getActiveCaseProfile(state), [state]);
@@ -214,7 +216,10 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       role="img"
-      aria-label={`Mount-based PC assembly scene. GPU is ${gpuInstalled ? "installed" : "not installed"}. Radiator is ${radiatorPlacement ? `installed at ${radiatorPlacement.mountId}` : "not installed"}.`}
+      aria-label={t("scene.aria", {
+        gpu: gpuInstalled ? t("scene.installed") : t("scene.notInstalled"),
+        radiator: radiatorPlacement ? t("scene.installedAt", { mount: radiatorPlacement.mountId }) : t("scene.notInstalled"),
+      })}
     >
       <div
         style={{
@@ -241,7 +246,7 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
             fontWeight: 600,
           }}
         >
-          {appearanceMode === "STUDIO" ? "☀️ Studio" : "🌙 Dark"}
+          {appearanceMode === "STUDIO" ? t("scene.studio") : t("scene.dark")}
         </button>
 
         <button
@@ -258,7 +263,7 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
             fontWeight: 700,
           }}
         >
-          {isFullscreen ? "✕ Exit Fullscreen" : "⛶ Fullscreen 3D"}
+          {isFullscreen ? t("scene.exitFullscreen") : t("scene.fullscreen")}
         </button>
 
         <button
@@ -273,9 +278,9 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
             fontSize: "0.74rem",
             cursor: "pointer",
           }}
-          title="Reset Camera View"
+          title={t("scene.resetTitle")}
         >
-          🎯 Reset View
+          {t("scene.reset")}
         </button>
       </div>
 
@@ -300,14 +305,14 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <strong style={{ fontSize: "0.85rem", color: errorComponentIds.has(selectedPlacement.componentId) ? "#fca5a5" : "#60a5fa" }}>
-              {selectedComponentDef.name}
+              {componentName(selectedComponentDef.id, selectedComponentDef.name)}
             </strong>
             <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>{selectedPlacement.mountId}</span>
           </div>
 
           {errorComponentIds.has(selectedPlacement.componentId) && (
             <div style={{ fontSize: "0.72rem", color: "#fca5a5", fontWeight: 700 }}>
-              ⚠️ Collision / Clearance Limit Exceeded
+              {t("scene.collision")}
             </div>
           )}
 
@@ -325,7 +330,7 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
                 cursor: "pointer",
               }}
             >
-              {isMoveArmed ? "Cancel Move (Esc)" : "Move Component ('M')"}
+              {isMoveArmed ? t("scene.cancelMove") : t("scene.move")}
             </button>
 
             {selectedFanConfig && (
@@ -342,7 +347,7 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
                   cursor: "pointer",
                 }}
               >
-                {selectedFanConfig.direction === "INTAKE" ? "🔵 INTAKE (Flip)" : "🔴 EXHAUST (Flip)"}
+                {selectedFanConfig.direction === "INTAKE" ? t("scene.intakeFlip") : t("scene.exhaustFlip")}
               </button>
             )}
 
@@ -359,7 +364,7 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
                 cursor: "pointer",
               }}
             >
-              Remove
+              {t("scene.remove")}
             </button>
 
             <button

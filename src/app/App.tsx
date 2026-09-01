@@ -7,12 +7,14 @@ import { BuildControls } from "../components/build/BuildControls";
 import { ComponentPalette } from "../components/build/ComponentPalette";
 import { useBuildStore } from "../store/buildStore";
 import { getRuntimeMode, registerTools, type RuntimeMode } from "../webmcp/registerTools";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const PcScene = lazy(() =>
   import("../components/scene/PcScene").then((module) => ({ default: module.PcScene })),
 );
 
 export function App() {
+  const { language, setLanguage, t } = useLanguage();
   const placements = useBuildStore((state) => state.placements);
   const [highlightedComponentIds, setHighlightedComponentIds] = useState<string[]>([]);
   const [runtimeMode, setRuntimeMode] = useState<RuntimeMode>(() => getRuntimeMode());
@@ -47,54 +49,97 @@ export function App() {
 
   const statusBadgeText =
     runtimeMode === "webmcp"
-      ? `WebMCP live transport (${toolCounts.registered}/${toolCounts.total} tools)`
+      ? t("status.live", toolCounts)
       : runtimeMode === "partial"
-        ? `WebMCP partial transport (${toolCounts.registered}/${toolCounts.total} tools)`
-        : `Reviewer simulation (0/${toolCounts.total} tools)`;
+        ? t("status.partial", toolCounts)
+        : t("status.simulation", { total: toolCounts.total });
 
   return (
     <main className="workspace-shell">
       <section className="debug-card" aria-labelledby="debug-title">
-        <div className="eyebrow">AI PC Assembly Workspace</div>
-        <div className="title-row">
-          <div>
-            <h1 id="debug-title">Build State Studio</h1>
-            <p>One deterministic topology drives the GUI, the 3D scene, and WebMCP tools.</p>
-          </div>
-          <span className="status-badge">{statusBadgeText}</span>
-        </div>
-
-        <div className="scene-layout">
-          <div className="scene-card">
-            <Suspense fallback={<div className="scene-loading">Loading 3D workspace…</div>}>
-              <PcScene highlightedComponentIds={highlightedComponentIds} />
-            </Suspense>
-            <div className="scene-overlay" aria-hidden="true">
-              <span>LIVE BUILD STATE</span>
-              <strong>{gpuPlacement ? `GPU · ${gpuPlacement.componentId} (${gpuPlacement.mountId})` : "GPU not installed"}</strong>
-              <strong>{radiatorPlacement ? `Radiator · ${radiatorPlacement.componentId} (${radiatorPlacement.mountId})` : "Radiator not installed"}</strong>
-              {highlightedComponentIds.length > 0 && <em>Conflict selected · affected models highlighted</em>}
+        <header className="workspace-header">
+          <div className="brand-lockup">
+            <span className="brand-index" aria-hidden="true">PB</span>
+            <div>
+              <div className="eyebrow">{t("app.eyebrow")}</div>
+              <h1 id="debug-title">{t("app.title")}</h1>
+              <p>{t("app.subtitle")}</p>
             </div>
           </div>
+          <div className="header-utilities">
+            <span className={`status-badge status-${runtimeMode}`}>{statusBadgeText}</span>
+            <div className="language-switch" role="group" aria-label={t("language.label")}>
+              {(["en", "ko"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={language === option ? "active" : ""}
+                  aria-pressed={language === option}
+                  onClick={() => setLanguage(option)}
+                >
+                  {option.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+        </header>
 
-          <aside className="controls-panel" aria-label="Build controls">
+        <div className="workbench-grid">
+          <aside className="setup-rail" aria-label={t("scene.controls")}>
+            <div className="rail-heading">
+              <span>{t("workspace.controlsKicker")}</span>
+              <p>{t("workspace.controlsCaption")}</p>
+            </div>
             <CasePicker />
             <BuildControls />
+          </aside>
+
+          <section className="stage-column" aria-labelledby="assembly-heading">
+            <div className="stage-heading">
+              <div>
+                <h2 id="assembly-heading">{t("workspace.assemblyTitle")}</h2>
+                <p>{t("workspace.assemblyCaption")}</p>
+              </div>
+              <span>{placements.length} / 15</span>
+            </div>
+            <div className="scene-card">
+              <Suspense fallback={<div className="scene-loading">{t("scene.loading")}</div>}>
+                <PcScene highlightedComponentIds={highlightedComponentIds} />
+              </Suspense>
+              <div className="scene-overlay" aria-hidden="true">
+                <span>{t("scene.live")}</span>
+                <strong>{gpuPlacement ? t("scene.gpu", { id: gpuPlacement.componentId, mount: gpuPlacement.mountId }) : t("scene.gpuMissing")}</strong>
+                <strong>{radiatorPlacement ? t("scene.radiator", { id: radiatorPlacement.componentId, mount: radiatorPlacement.mountId }) : t("scene.radiatorMissing")}</strong>
+                {highlightedComponentIds.length > 0 && <em>{t("scene.conflict")}</em>}
+              </div>
+            </div>
+            <div className="scene-hint">{t("scene.hint")}</div>
+          </section>
+
+          <aside className="parts-rail" aria-label={t("catalog.aria")}>
             <ComponentPalette />
-            <div className="scene-hint">Drag to orbit · 'M' to arm Move Mode · Fullscreen 3D Viewer · Select any part size & mount</div>
           </aside>
         </div>
 
-        <div className="insight-grid">
-          <ValidationPanel onSelectionChange={setHighlightedComponentIds} />
-          <ActivityPanel />
-        </div>
+        <section className="review-dock" aria-labelledby="review-heading">
+          <div className="dock-heading">
+            <div>
+              <h2 id="review-heading">{t("workspace.reviewTitle")}</h2>
+              <p>{t("workspace.reviewCaption")}</p>
+            </div>
+          </div>
+          <div className="insight-grid">
+            <ValidationPanel onSelectionChange={setHighlightedComponentIds} />
+            <ActivityPanel />
+          </div>
+        </section>
 
         {runtimeMode !== "webmcp" && <ReviewerSimulationPanel />}
 
-        <div className="debug-grid">
-          <div><h2>Zustand placements ({placements.length})</h2><pre>{JSON.stringify({ placements }, null, 2)}</pre></div>
-        </div>
+        <details className="developer-details">
+          <summary>{t("debug.details")} <span>{t("debug.placements", { count: placements.length })}</span></summary>
+          <pre>{JSON.stringify({ placements }, null, 2)}</pre>
+        </details>
       </section>
     </main>
   );
