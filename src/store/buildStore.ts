@@ -10,6 +10,16 @@ export const initialBuildState: BuildState = {
   activity: [],
 };
 
+export const demoInitialBuildState: BuildState = {
+  placements: [
+    { componentId: "case-01", mountId: "workspace-root" },
+    { componentId: "motherboard-01", mountId: "motherboard-tray" },
+  ],
+  connections: [],
+  fanConfigs: [],
+  activity: [],
+};
+
 export const buildStore = createStore<BuildState>(() => ({
   ...initialBuildState,
 }));
@@ -34,4 +44,13 @@ export const getBuildState = (): BuildState => {
 
 export const resetBuildStore = (): void => {
   buildStore.setState({ ...initialBuildState }, true);
+};
+
+export const initializeDemoBuild = (): void => {
+  buildStore.setState({
+    placements: demoInitialBuildState.placements.map((placement) => ({ ...placement })),
+    connections: [],
+    fanConfigs: [],
+    activity: [],
+  }, true);
 };

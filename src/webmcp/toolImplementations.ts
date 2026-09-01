@@ -1,16 +1,22 @@
 import { getBuildState } from "../store/buildStore";
 import { recordActivity } from "../domain/commands/recordActivity";
-import { validateBuild } from "../domain/constraints/validateBuild";
+import { assessBuild } from "../domain/constraints/validateBuild";
 import type { DomainAction } from "../domain/types/action";
 import { componentRegistry } from "../domain/data/components";
 import { installComponent } from "../domain/commands/installComponent";
 import { moveComponent } from "../domain/commands/moveComponent";
 import { removeComponent } from "../domain/commands/removeComponent";
 import { simulateChanges } from "../domain/simulation/simulateChanges";
+import { connectComponents } from "../domain/commands/connectComponents";
+import { setFanDirection } from "../domain/commands/setFanDirection";
+import { canUndoLastAgentAction, undoLastAgentAction } from "../domain/commands/commitDomainAction";
+import { mountRegistry } from "../domain/data/mounts";
 import type { BuildState } from "../domain/types/build";
 import type { ToolClient } from "./types";
 
 export interface BuildStateToolResult extends BuildState {
+  canUndoLastAgentAction: boolean;
+  assessment: ReturnType<typeof assessBuild>;
   components: Array<{
     id: string;
     type: string;
@@ -24,6 +30,8 @@ export const getBuildStateTool = (): BuildStateToolResult => {
   const placements = new Map(state.placements.map((placement) => [placement.componentId, placement.mountId]));
   return {
     ...state,
+    canUndoLastAgentAction: canUndoLastAgentAction(),
+    assessment: assessBuild(state),
     components: Object.values(componentRegistry).map((component) => ({
       id: component.id,
       type: component.type,
@@ -35,16 +43,13 @@ export const getBuildStateTool = (): BuildStateToolResult => {
 
 export interface ValidateBuildToolResult {
   valid: boolean;
-  issues: ReturnType<typeof validateBuild>;
+  status: ReturnType<typeof assessBuild>["status"];
+  issues: ReturnType<typeof assessBuild>["issues"];
 }
 
 export const validateBuildTool = (_input: unknown = {}, _client?: ToolClient): ValidateBuildToolResult => {
-  const issues = validateBuild(getBuildState());
-  recordActivity({ actor: "AGENT", message: "Validated build" });
-  if (issues.length > 0) {
-    recordActivity({ actor: "AGENT", message: `Detected ${issues[0].id}` });
-  }
-  return { valid: issues.length === 0, issues };
+  const assessment = assessBuild(getBuildState());
+  return { valid: assessment.status === "READY", ...assessment };
 };
 
 export interface MoveComponentToolInput {
@@ -67,11 +72,9 @@ const normalizeError = (error: unknown) => ({
 export const moveComponentTool = (input: MoveComponentToolInput): ActionToolResult => {
   try {
     const placement = moveComponent(input, { actor: "AGENT" });
-    const issues = validateBuild(getBuildState());
-    if (issues.some((issue) => issue.id === "GPU_RADIATOR_COLLISION") === false) {
-      recordActivity({ actor: "SYSTEM", message: "Validation became valid" });
-    }
-    return { ok: true, placement, validation: { valid: issues.length === 0, issues } };
+    const assessment = assessBuild(getBuildState());
+    recordActivity({ actor: "SYSTEM", message: `Build status is ${assessment.status}`, affectedComponentIds: [input.componentId] });
+    return { ok: true, placement, validation: { valid: assessment.status === "READY", ...assessment } };
   } catch (error) {
     return { ok: false, error: normalizeError(error) };
   }
@@ -79,7 +82,9 @@ export const moveComponentTool = (input: MoveComponentToolInput): ActionToolResu
 
 export const installComponentTool = (input: { componentId: string; mountId: string }): ActionToolResult => {
   try {
-    return { ok: true, placement: installComponent(input, { actor: "AGENT" }) };
+    const placement = installComponent(input, { actor: "AGENT" });
+    const assessment = assessBuild(getBuildState());
+    return { ok: true, placement, validation: { valid: assessment.status === "READY", ...assessment } };
   } catch (error) {
     return { ok: false, error: normalizeError(error) };
   }
@@ -97,10 +102,43 @@ export const simulateChangesTool = (input: { actions: DomainAction[] }): ReturnT
 export const removeComponentTool = (input: { componentId: string }): ActionToolResult => {
   try {
     removeComponent(input, { actor: "AGENT" });
-    return { ok: true, validation: validateBuildTool() };
+    const assessment = assessBuild(getBuildState());
+    return { ok: true, validation: { valid: assessment.status === "READY", ...assessment } };
   } catch (error) {
     return { ok: false, error: normalizeError(error) };
   }
+};
+
+export const getAvailableMountsTool = (input: { componentId?: string } = {}) => {
+  const occupied = new Set(getBuildState().placements.map((item) => item.mountId));
+  const component = input.componentId ? componentRegistry[input.componentId] : undefined;
+  if (input.componentId && !component) throw new TypeError(`Unknown component: ${input.componentId}`);
+  return Object.values(mountRegistry).filter((mount) =>
+    !occupied.has(mount.id) && (!component || mount.supportedComponentTypes.includes(component.type)));
+};
+
+export const connectComponentTool = (input: Parameters<typeof connectComponents>[0]): ActionToolResult => {
+  try {
+    connectComponents(input, { actor: "AGENT" });
+    const assessment = assessBuild(getBuildState());
+    return { ok: true, validation: { valid: assessment.status === "READY", ...assessment } };
+  } catch (error) { return { ok: false, error: normalizeError(error) }; }
+};
+
+export const setFanDirectionTool = (input: Parameters<typeof setFanDirection>[0]): ActionToolResult => {
+  try {
+    setFanDirection(input, { actor: "AGENT" });
+    const assessment = assessBuild(getBuildState());
+    return { ok: true, validation: { valid: assessment.status === "READY", ...assessment } };
+  } catch (error) { return { ok: false, error: normalizeError(error) }; }
+};
+
+export const undoLastAgentActionTool = (): ActionToolResult => {
+  try {
+    undoLastAgentAction();
+    const assessment = assessBuild(getBuildState());
+    return { ok: true, validation: { valid: assessment.status === "READY", ...assessment } };
+  } catch (error) { return { ok: false, error: normalizeError(error) }; }
 };
 
 export const toolImplementations = {
@@ -110,4 +148,8 @@ export const toolImplementations = {
   install_component: installComponentTool,
   remove_component: removeComponentTool,
   simulate_changes: simulateChangesTool,
+  get_available_mounts: getAvailableMountsTool,
+  connect_component: connectComponentTool,
+  set_fan_direction: setFanDirectionTool,
+  undo_last_agent_action: undoLastAgentActionTool,
 };

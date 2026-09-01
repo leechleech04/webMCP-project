@@ -15,6 +15,8 @@ export interface ActivityEntry {
   actor: ActivityActor;
   message: string;
   createdAt: string;
+  affectedComponentIds?: string[];
+  undoable?: boolean;
 }
 
 export interface BuildState {

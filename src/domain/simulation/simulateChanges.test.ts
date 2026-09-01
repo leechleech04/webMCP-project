@@ -27,10 +27,10 @@ describe("simulateChanges", () => {
       { componentId: "gpu-01", mountId: "pcie-slot-1" },
       { componentId: "radiator-01", mountId: "radiator-top" },
     ]);
-    expect(result.issues).toEqual([]);
+    expect(result.issues.some((issue) => issue.id === "GPU_RADIATOR_COLLISION")).toBe(false);
     expect(getBuildState()).toEqual(before);
     expect(notifications).toBe(0);
-    expect(validateBuild(getBuildState())).toHaveLength(1);
+    expect(validateBuild(getBuildState()).some((issue) => issue.id === "GPU_RADIATOR_COLLISION")).toBe(true);
   });
 
   it("is atomic when an invalid action follows a valid action", () => {

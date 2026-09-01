@@ -1,6 +1,6 @@
-import { buildStore } from "../../store/buildStore";
 import type { Placement } from "../types/placement";
-import { applyDomainAction, type DomainTransitionOptions } from "./transition";
+import { commitDomainAction } from "./commitDomainAction";
+import type { DomainTransitionOptions } from "./transition";
 
 export interface MoveComponentInput {
   componentId: string;
@@ -11,11 +11,6 @@ export const moveComponent = (
   { componentId, mountId }: MoveComponentInput,
   options: DomainTransitionOptions = {},
 ): Placement => {
-  const transition = applyDomainAction(
-    buildStore.getState(),
-    { type: "MOVE_COMPONENT", componentId, mountId },
-    options,
-  );
-  buildStore.setState(transition.state);
+  const transition = commitDomainAction({ type: "MOVE_COMPONENT", componentId, mountId }, options);
   return transition.result as Placement;
 };

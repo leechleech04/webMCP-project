@@ -5,7 +5,7 @@ import { mountRegistry } from "../data/mounts";
 import { validateAirflow } from "./airflow";
 import { validateGpuCable } from "./gpuCableClearance";
 import { validateGpuRadiatorClearance } from "./gpuRadiatorClearance";
-import { validateBuild } from "./validateBuild";
+import { assessBuild } from "./validateBuild";
 import { validatePsu } from "./psuPower";
 import type { BuildState } from "../types/build";
 
@@ -21,7 +21,7 @@ describe("GPU and radiator clearance", () => {
       { componentId: "radiator-01", mountId: "radiator-top" },
     ]],
   ])("returns no issue for %s", (_label, placements) => {
-    expect(validateBuild({ ...emptyState(), placements })).toEqual([]);
+    expect(validateGpuRadiatorClearance({ ...emptyState(), placements })).toEqual([]);
   });
 
   it("returns one stable front-collision issue with measured values", () => {
@@ -45,6 +45,31 @@ describe("GPU and radiator clearance", () => {
       affectedComponentIds: ["gpu-01", "radiator-01"],
     }]);
     expect(state).toEqual(before);
+  });
+});
+
+describe("build readiness", () => {
+  it("does not overclaim an empty topology as valid", () => {
+    expect(assessBuild(emptyState())).toMatchObject({ status: "INCOMPLETE", issues: [{ id: "REQUIRED_COMPONENTS_MISSING" }] });
+  });
+
+  it("separates a physical conflict from incomplete assembly", () => {
+    const state = { ...emptyState(), placements: [
+      { componentId: "case-01", mountId: "workspace-root" }, { componentId: "motherboard-01", mountId: "motherboard-tray" },
+      { componentId: "psu-01", mountId: "psu-bay" }, { componentId: "gpu-01", mountId: "pcie-slot-1" },
+      { componentId: "radiator-01", mountId: "radiator-front" },
+    ] };
+    expect(assessBuild(state).status).toBe("CONFLICT");
+  });
+
+  it("reaches READY only after the required base power paths are connected", () => {
+    const state: BuildState = { ...emptyState(), placements: [
+      { componentId: "case-01", mountId: "workspace-root" }, { componentId: "motherboard-01", mountId: "motherboard-tray" }, { componentId: "psu-01", mountId: "psu-bay" },
+    ], connections: [
+      { id: "atx", from: { componentId: "psu-01", connectorId: "psu-atx-01" }, to: { componentId: "motherboard-01", connectorId: "motherboard-atx" } },
+      { id: "eps", from: { componentId: "psu-01", connectorId: "psu-eps-01" }, to: { componentId: "motherboard-01", connectorId: "motherboard-eps" } },
+    ] };
+    expect(assessBuild(state)).toEqual({ status: "READY", issues: [] });
   });
 });
 
@@ -81,7 +106,7 @@ describe("expanded constraint fixtures", () => {
     expect(validateAirflow(emptyState(), { enforceNoFans: true })[0].id).toBe("AIRFLOW_NO_FANS");
     const one = { ...emptyState(), placements: [{ componentId: "fan-top-01", mountId: "fan-top-1" }] };
     expect(validateAirflow(one)[0].id).toBe("AIRFLOW_DIRECTION_UNCONFIGURED");
-    expect(validateAirflow({ ...one, fanConfigs: [{ componentId: "fan-top-01", direction: "INTAKE" }] })[0].id).toBe("AIRFLOW_UNBALANCED");
+    expect(validateAirflow({ ...one, fanConfigs: [{ componentId: "fan-top-01", direction: "INTAKE" }] })).toEqual([]);
     const components = { ...componentRegistry, "fan-top-02": { ...componentRegistry["fan-top-01"], id: "fan-top-02" } };
     expect(validateAirflow({ ...one, placements: [...one.placements, { componentId: "fan-top-02", mountId: "fan-top-1" }], fanConfigs: [
       { componentId: "fan-top-01", direction: "INTAKE" },

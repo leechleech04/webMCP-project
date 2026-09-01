@@ -35,6 +35,7 @@ const withActivity = (
   state: BuildState,
   message: string,
   options: DomainTransitionOptions,
+  affectedComponentIds: string[] = [],
 ): BuildState => {
   if (options.recordActivity === false) {
     return state;
@@ -45,6 +46,7 @@ const withActivity = (
     createActivityEntry({
       actor: options.actor ?? "USER",
       message,
+      affectedComponentIds,
       now: options.now,
       createId: options.createId,
     }),
@@ -100,6 +102,7 @@ export const applyDomainAction = (
           { ...state, placements: [...state.placements, placement] },
           `${component.name} installed at ${mountLabel(action.mountId)}`,
           options,
+          [action.componentId],
         ),
         result: placement,
       };
@@ -137,6 +140,7 @@ export const applyDomainAction = (
           },
           `${component.name} moved to ${mountLabel(action.mountId)}`,
           options,
+          [action.componentId],
         ),
         result: placement,
       };
@@ -168,6 +172,7 @@ export const applyDomainAction = (
           },
           `${component.name} removed from the build`,
           options,
+          [action.componentId],
         ),
         result: placement,
       };
@@ -190,6 +195,12 @@ export const applyDomainAction = (
       if (fromConnector.direction !== "OUTPUT" || toConnector.direction !== "INPUT") {
         throw new DomainCommandError("CONNECTOR_NOT_FOUND", "Connections must run from an output to an input");
       }
+      if (fromConnector.type !== toConnector.type) {
+        throw new DomainCommandError("CONNECTOR_TYPE_MISMATCH", `Cannot connect ${fromConnector.type} to ${toConnector.type}`);
+      }
+      if (state.connections.some((connection) => connection.to.componentId === action.toComponentId && connection.to.connectorId === action.toConnectorId)) {
+        throw new DomainCommandError("CONNECTOR_OCCUPIED", `${action.toConnectorId} is already connected`);
+      }
       const id = `${action.fromComponentId}:${action.fromConnectorId}->${action.toComponentId}:${action.toConnectorId}`;
       if (state.connections.some((connection) => connection.id === id)) {
         throw new DomainCommandError("CONNECTION_ALREADY_EXISTS", `Connection ${id} already exists`);
@@ -204,6 +215,7 @@ export const applyDomainAction = (
           { ...state, connections: [...state.connections, connection] },
           `${fromComponent.name} connected to ${toComponent.name}`,
           options,
+          [action.fromComponentId, action.toComponentId],
         ),
         result: connection,
       };
@@ -218,6 +230,7 @@ export const applyDomainAction = (
           { ...state, connections: state.connections.filter((connection) => connection.id !== action.connectionId) },
           `Connection ${action.connectionId} removed`,
           options,
+          [],
         ),
         result: action.connectionId,
       };
@@ -240,6 +253,7 @@ export const applyDomainAction = (
           },
           `${component.name} set to ${action.direction.toLowerCase()}`,
           options,
+          [action.componentId],
         ),
         result: config,
       };

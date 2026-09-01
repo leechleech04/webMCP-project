@@ -24,6 +24,8 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
   const radiatorPlacement = placements.find(
     (placement) => placement.componentId === "radiator-01",
   );
+  const caseInstalled = placements.some((placement) => placement.componentId === "case-01");
+  const motherboardInstalled = placements.some((placement) => placement.componentId === "motherboard-01");
 
   return (
     <div
@@ -49,9 +51,10 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
         />
         <pointLight color="#60a5fa" intensity={32} position={[-7, 7, 6]} />
 
-        <CaseModel />
-        <MotherboardModel transform={motherboardTransform} />
+        {caseInstalled && <CaseModel />}
+        {motherboardInstalled && <MotherboardModel transform={motherboardTransform} />}
         {placements.map((placement) => {
+          if (placement.componentId === "case-01" || placement.componentId === "motherboard-01") return null;
           const Model = getSceneModel(placement.componentId);
 
           if (!Model) {

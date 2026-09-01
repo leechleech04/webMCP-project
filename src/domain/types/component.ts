@@ -33,6 +33,8 @@ export interface ComponentDefinition {
   id: string;
   type: ComponentType;
   name: string;
+  dataConfidence?: "SOURCED" | "DEMO";
+  sourceNote?: string;
   dimensions: Dimensions;
   power?: {
     consumption?: number;

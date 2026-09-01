@@ -14,6 +14,7 @@ import { componentRegistry } from "../data/components";
 import { installComponent } from "./installComponent";
 import { moveComponent } from "./moveComponent";
 import { removeComponent } from "./removeComponent";
+import { connectComponents } from "./connectComponents";
 
 describe("build commands", () => {
   beforeEach(() => {
@@ -236,5 +237,16 @@ describe("build commands", () => {
         code: "COMPONENT_DOES_NOT_FIT",
       }),
     );
+  });
+
+  it("rejects connector type mismatches and occupied inputs", () => {
+    buildStore.setState({ placements: [
+      { componentId: "motherboard-01", mountId: "motherboard-tray" },
+      { componentId: "psu-01", mountId: "psu-bay" },
+      { componentId: "fan-top-01", mountId: "fan-top-1" },
+    ], connections: [], fanConfigs: [], activity: [] });
+    expect(() => connectComponents({ fromComponentId: "psu-01", fromConnectorId: "psu-atx-01", toComponentId: "fan-top-01", toConnectorId: "fan-pwm" })).toThrowError(expect.objectContaining({ code: "CONNECTOR_TYPE_MISMATCH" }));
+    connectComponents({ fromComponentId: "psu-01", fromConnectorId: "psu-atx-01", toComponentId: "motherboard-01", toConnectorId: "motherboard-atx" });
+    expect(() => connectComponents({ fromComponentId: "psu-01", fromConnectorId: "psu-atx-01", toComponentId: "motherboard-01", toConnectorId: "motherboard-atx" })).toThrowError(expect.objectContaining({ code: "CONNECTOR_OCCUPIED" }));
   });
 });

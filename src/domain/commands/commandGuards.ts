@@ -15,8 +15,12 @@ export type DomainCommandErrorCode =
   | "UNSUPPORTED_COMPONENT_TYPE"
   | "COMPONENT_DOES_NOT_FIT"
   | "CONNECTOR_NOT_FOUND"
+  | "CONNECTOR_TYPE_MISMATCH"
+  | "CONNECTOR_OCCUPIED"
   | "CONNECTION_ALREADY_EXISTS"
-  | "CONNECTION_NOT_FOUND";
+  | "CONNECTION_NOT_FOUND"
+  | "NOTHING_TO_UNDO"
+  | "UNDO_STALE";
 
 export class DomainCommandError extends Error {
   constructor(

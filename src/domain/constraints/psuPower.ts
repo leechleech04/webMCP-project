@@ -21,7 +21,7 @@ export const validatePsu = (state: BuildState, context: PsuContext = {}) => {
   const psu = components[PSU_ID];
   if (!psu || !ids.has(PSU_ID)) {
     if (!shouldCheckMissing) return [];
-    return [{ id: "PSU_MISSING", type: "POWER" as const, severity: "ERROR" as const, message: "A PSU is required for the installed powered components.", affectedComponentIds: [...powered, PSU_ID] }];
+    return [{ id: "PSU_MISSING", type: "POWER" as const, severity: "ERROR" as const, category: "COMPLETENESS" as const, message: "A PSU is required for the installed powered components.", affectedComponentIds: [...powered, PSU_ID] }];
   }
 
   const load = [...ids].reduce((total, id) => total + (components[id]?.power?.consumption ?? 0), 0);

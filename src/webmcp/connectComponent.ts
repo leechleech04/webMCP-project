@@ -1,0 +1,1 @@
+export { connectComponentTool } from "./toolImplementations";

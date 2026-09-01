@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { validateBuild } from "../../domain/constraints/validateBuild";
+import { assessBuild } from "../../domain/constraints/validateBuild";
 import { useBuildStore } from "../../store/buildStore";
 
 export interface ValidationPanelProps {
@@ -12,10 +12,11 @@ export function ValidationPanel({ onSelectionChange }: ValidationPanelProps) {
   const connections = useBuildStore((state) => state.connections);
   const fanConfigs = useBuildStore((state) => state.fanConfigs);
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
-  const issues = useMemo(
-    () => validateBuild({ placements, connections, fanConfigs, activity: [] }),
+  const assessment = useMemo(
+    () => assessBuild({ placements, connections, fanConfigs, activity: [] }),
     [placements, connections, fanConfigs],
   );
+  const issues = assessment.issues;
 
   useEffect(() => {
     const nextId = issues.some((issue) => issue.id === selectedIssueId)
@@ -33,14 +34,14 @@ export function ValidationPanel({ onSelectionChange }: ValidationPanelProps) {
           <h2 id="validation-title">Build validation</h2>
           <p className="panel-caption">Deterministic checks from the shared Build State.</p>
         </div>
-        <span className={issues.length === 0 ? "valid-pill" : "error-pill"}>
-          {issues.length === 0 ? "VALID" : `${issues.length} ISSUE${issues.length === 1 ? "" : "S"}`}
+        <span className={assessment.status === "READY" ? "valid-pill" : "error-pill"}>
+          {assessment.status} · {issues.length}
         </span>
       </div>
 
       {issues.length === 0 ? (
         <p className="valid-state" role="status" data-testid="validation-valid">
-          Build valid · no compatibility issues detected.
+          Build ready · required components, connections, power, clearance, and configured airflow pass.
         </p>
       ) : (
         <div className="validation-list" role="list">

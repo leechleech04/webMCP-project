@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 
 import { installComponent } from "../domain/commands/installComponent";
 import { moveComponent } from "../domain/commands/moveComponent";
@@ -8,9 +8,12 @@ import { mountRegistry } from "../domain/data/mounts";
 import { ActivityPanel } from "../components/build/ActivityPanel";
 import { ReviewerSimulationPanel } from "../components/build/ReviewerSimulationPanel";
 import { ValidationPanel } from "../components/build/ValidationPanel";
-import { PcScene } from "../components/scene/PcScene";
+import { ComponentPalette } from "../components/build/ComponentPalette";
+import { BuildTree } from "../components/build/BuildTree";
 import { useBuildStore } from "../store/buildStore";
 import { getRuntimeMode, registerTools, type RuntimeMode } from "../webmcp/registerTools";
+
+const PcScene = lazy(() => import("../components/scene/PcScene").then((module) => ({ default: module.PcScene })));
 
 const GPU_ID = "gpu-01";
 const GPU_MOUNT_ID = "pcie-slot-1";
@@ -23,9 +26,13 @@ const getErrorMessage = (error: unknown): string => error instanceof Error ? err
 
 export function App() {
   const placements = useBuildStore((state) => state.placements);
-  const [highlightedComponentIds, setHighlightedComponentIds] = useState<string[]>([]);
+  const activity = useBuildStore((state) => state.activity);
+  const [validationHighlightIds, setValidationHighlightIds] = useState<string[]>([]);
+  const [agentHighlightIds, setAgentHighlightIds] = useState<string[]>([]);
   const [runtimeMode, setRuntimeMode] = useState<RuntimeMode>(() => getRuntimeMode());
   const [commandMessage, setCommandMessage] = useState("Run a domain command to change the shared Build State.");
+  const [registeredToolCount, setRegisteredToolCount] = useState(0);
+  const highlightedComponentIds = useMemo(() => [...new Set([...validationHighlightIds, ...agentHighlightIds])], [validationHighlightIds, agentHighlightIds]);
 
   useEffect(() => {
     let alive = true;
@@ -33,6 +40,7 @@ export function App() {
     void registerTools().then((registration) => {
       if (alive) {
         setRuntimeMode(registration.mode);
+        setRegisteredToolCount(registration.registeredTools.length);
         cleanup = registration.cleanup;
       } else {
         registration.cleanup();
@@ -43,6 +51,14 @@ export function App() {
       cleanup();
     };
   }, []);
+
+  useEffect(() => {
+    const latest = activity.at(-1);
+    if (latest?.actor !== "AGENT" || !latest.affectedComponentIds?.length) return;
+    setAgentHighlightIds(latest.affectedComponentIds);
+    const timer = window.setTimeout(() => setAgentHighlightIds([]), 2500);
+    return () => window.clearTimeout(timer);
+  }, [activity]);
 
   const gpu = componentRegistry[GPU_ID];
   const radiator = componentRegistry[RADIATOR_ID];
@@ -75,17 +91,17 @@ export function App() {
             <h1 id="debug-title">Build State Studio</h1>
             <p>One deterministic topology drives the GUI, the 3D scene, and WebMCP tools.</p>
           </div>
-          <span className="status-badge">{runtimeMode === "webmcp" ? "WebMCP live transport" : "Reviewer simulation"}</span>
+          <span className={`status-badge runtime-${runtimeMode}`}>{runtimeMode === "webmcp" ? `WebMCP live · ${registeredToolCount}/10 tools` : runtimeMode === "partial" ? `WebMCP partial · ${registeredToolCount}/10` : "Reviewer simulation"}</span>
         </div>
 
         <div className="scene-layout">
           <div className="scene-card">
-            <PcScene highlightedComponentIds={highlightedComponentIds} />
+            <Suspense fallback={<div className="scene-loading">Loading 3D workspace…</div>}><PcScene highlightedComponentIds={highlightedComponentIds} /></Suspense>
             <div className="scene-overlay" aria-hidden="true">
               <span>LIVE BUILD STATE</span>
               <strong>{gpuPlacement ? "GPU installed" : "GPU not installed"}</strong>
               <strong>{radiatorPlacement ? `Radiator · ${formatMountLabel(radiatorPlacement.mountId)}` : "Radiator not installed"}</strong>
-              {highlightedComponentIds.length > 0 && <em>Conflict selected · affected models highlighted</em>}
+              {highlightedComponentIds.length > 0 && <em>Issue or agent change · affected models highlighted</em>}
             </div>
           </div>
 
@@ -121,17 +137,24 @@ export function App() {
           </aside>
         </div>
 
+        <div className="workspace-grid"><ComponentPalette onMessage={setCommandMessage} /><BuildTree onMessage={setCommandMessage} /></div>
+
+        <section className="agent-guide" aria-labelledby="agent-guide-title">
+          <div><div className="eyebrow">Thoughtful WebMCP workflow</div><h2 id="agent-guide-title">Ask your browser agent in natural language</h2><p>“Check this build, simulate a safe fix, then apply it.” The agent can inspect → validate → simulate → apply, while every committed change stays visible and undoable.</p></div>
+          <ol><li><strong>Inspect</strong><span>Read state and available mounts</span></li><li><strong>Explain</strong><span>Separate incomplete work from conflicts</span></li><li><strong>Simulate</strong><span>Project typed actions atomically</span></li><li><strong>Apply</strong><span>Commit, highlight, audit, or undo</span></li></ol>
+        </section>
+
         <div className="insight-grid">
-          <ValidationPanel onSelectionChange={setHighlightedComponentIds} />
+          <ValidationPanel onSelectionChange={setValidationHighlightIds} />
           <ActivityPanel />
         </div>
 
         {runtimeMode === "simulation" && <ReviewerSimulationPanel />}
 
-        <div className="debug-grid">
+        <details className="debug-details"><summary>Developer state inspection</summary><div className="debug-grid">
           <div><h2>Human-readable state</h2><pre>{debugOutput}</pre></div>
           <div><h2>Zustand placements</h2><pre>{JSON.stringify({ placements }, null, 2)}</pre></div>
-        </div>
+        </div></details>
       </section>
     </main>
   );

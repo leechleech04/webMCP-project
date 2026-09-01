@@ -24,7 +24,8 @@ export const mountTransforms: Readonly<Record<string, SceneTransform>> = {
   "fan-top-1": {
     position: [0, 9.55, 2],
     rotation: [0, 0, 0],
-    scale: [0.012, 0.012, 0.012],
+    // The fan GLB is authored in metres; 12 scene units produces a 120 mm fan.
+    scale: [12, 12, 12],
   },
 };
 

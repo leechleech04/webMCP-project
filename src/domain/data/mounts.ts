@@ -2,6 +2,11 @@ import type { MountDefinition } from "../types/mount";
 
 const mountDefinitions: MountDefinition[] = [
   {
+    id: "workspace-root",
+    type: "CASE",
+    supportedComponentTypes: ["CASE"],
+  },
+  {
     id: "motherboard-tray",
     type: "MOTHERBOARD",
     supportedComponentTypes: ["MOTHERBOARD"],

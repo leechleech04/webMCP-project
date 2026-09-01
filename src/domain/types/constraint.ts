@@ -13,4 +13,5 @@ export interface ConstraintIssue {
   severity: ConstraintSeverity;
   message: string;
   affectedComponentIds: string[];
+  category?: "COMPATIBILITY" | "COMPLETENESS";
 }
