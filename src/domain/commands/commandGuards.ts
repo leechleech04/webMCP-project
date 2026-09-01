@@ -1,5 +1,7 @@
 ﻿import type { ComponentDefinition, ComponentRegistry } from "../types/component";
 import type { MountDefinition, MountRegistry } from "../types/mount";
+import type { BuildState } from "../types/build";
+import { getActiveCaseProfile } from "../cases/getActiveCase";
 
 export type DomainErrorCode =
   | "COMPONENT_NOT_FOUND"
@@ -11,6 +13,7 @@ export type DomainErrorCode =
   | "COMPONENT_DOES_NOT_FIT"
   | "INCOMPATIBLE_MOUNT"
   | "INCOMPATIBLE_CASE"
+  | "CASE_REQUIRED"
   | "CONNECTOR_NOT_FOUND"
   | "CONNECTOR_DIRECTION_INVALID"
   | "CONNECTOR_TYPE_MISMATCH"
@@ -91,4 +94,28 @@ export const assertComponentFitsMount = (
       );
     }
   }
+};
+
+export const assertComponentFitsActiveCase = (
+  state: BuildState,
+  component: ComponentDefinition,
+  mount: MountDefinition,
+): void => {
+  const profile = getActiveCaseProfile(state);
+  if (mount.id !== "case-root" && !profile.supportedMountIds.includes(mount.id)) {
+    throw new DomainCommandError(
+      "INCOMPATIBLE_MOUNT",
+      `Mount ${mount.id} is not available in ${profile.label}`,
+    );
+  }
+
+  const profileLimit = profile.clearanceLimits[mount.id];
+  assertComponentFitsMount(component, {
+    ...mount,
+    constraints: {
+      maxWidth: profileLimit?.maxWidth ?? mount.constraints?.maxWidth,
+      maxHeight: profileLimit?.maxHeight ?? mount.constraints?.maxHeight,
+      maxDepth: profileLimit?.maxDepth ?? mount.constraints?.maxDepth,
+    },
+  });
 };

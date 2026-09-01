@@ -49,6 +49,7 @@ export interface CaseProfile {
   formFactor: string;
   dimensionsMm: { width: number; height: number; depth: number };
   supportedMountIds: string[];
+  supportedMotherboardFormFactors: Array<"MINI_ITX" | "MICRO_ATX" | "ATX" | "E_ATX">;
   mountTransforms: Record<string, SceneTransform>;
   clearanceLimits: CaseClearanceLimits;
   camera: CaseCameraConfig;

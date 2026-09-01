@@ -42,6 +42,7 @@ const motherboard01: ComponentDefinition = {
   type: "MOTHERBOARD",
   name: "ATX Standard Motherboard (305×244mm)",
   dimensions: { width: 244, height: 35, depth: 305 },
+  compatibility: { motherboardFormFactor: "ATX", cpuSocket: "AM5", memoryType: "DDR5" },
   connectors: [
     { id: "motherboard-atx", type: "ATX_24PIN", direction: "INPUT" },
     { id: "motherboard-eps", type: "EPS_8PIN", direction: "INPUT" },
@@ -55,6 +56,7 @@ const motherboardItx01: ComponentDefinition = {
   type: "MOTHERBOARD",
   name: "Mini-ITX Compact Motherboard (170×170mm)",
   dimensions: { width: 170, height: 35, depth: 170 },
+  compatibility: { motherboardFormFactor: "MINI_ITX", cpuSocket: "AM5", memoryType: "DDR5" },
   connectors: [
     { id: "motherboard-atx", type: "ATX_24PIN", direction: "INPUT" },
     { id: "motherboard-eps", type: "EPS_8PIN", direction: "INPUT" },
@@ -70,6 +72,7 @@ const cpu01: ComponentDefinition = {
   name: "Octa-Core CPU (125W TDP)",
   dimensions: { width: 45, height: 5, depth: 45 },
   power: { consumption: 125 },
+  compatibility: { cpuSocket: "AM5" },
 };
 
 // RAM
@@ -78,6 +81,7 @@ const ram01: ComponentDefinition = {
   type: "RAM",
   name: "16GB DDR5-6000 Stick 1",
   dimensions: { width: 133, height: 35, depth: 7 },
+  compatibility: { memoryType: "DDR5" },
 };
 
 const ram02: ComponentDefinition = {
@@ -85,6 +89,7 @@ const ram02: ComponentDefinition = {
   type: "RAM",
   name: "16GB DDR5-6000 Stick 2",
   dimensions: { width: 133, height: 35, depth: 7 },
+  compatibility: { memoryType: "DDR5" },
 };
 
 const ram03: ComponentDefinition = {
@@ -92,6 +97,15 @@ const ram03: ComponentDefinition = {
   type: "RAM",
   name: "32GB RGB DDR5-6400 High-Capacity Stick",
   dimensions: { width: 133, height: 42, depth: 8 },
+  compatibility: { memoryType: "DDR5" },
+};
+
+const storage01: ComponentDefinition = {
+  id: "storage-nvme-01",
+  type: "STORAGE",
+  name: "2TB PCIe 4.0 NVMe SSD",
+  dimensions: { width: 22, height: 3.5, depth: 80 },
+  power: { consumption: 5 },
 };
 
 // GPUs
@@ -270,6 +284,7 @@ export const componentRegistry: Readonly<
   [ram01.id]: ram01,
   [ram02.id]: ram02,
   [ram03.id]: ram03,
+  [storage01.id]: storage01,
   [gpu01.id]: gpu01,
   [gpu2fan01.id]: gpu2fan01,
   [gpu1fan01.id]: gpu1fan01,

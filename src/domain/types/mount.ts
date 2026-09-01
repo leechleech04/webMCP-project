@@ -5,6 +5,7 @@ export type MountType =
   | "MOTHERBOARD"
   | "CPU"
   | "RAM"
+  | "STORAGE"
   | "PCIE"
   | "RADIATOR"
   | "PSU"

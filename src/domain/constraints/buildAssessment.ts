@@ -20,6 +20,7 @@ const ESSENTIAL_TYPES: readonly ComponentType[] = [
   "MOTHERBOARD",
   "CPU",
   "RAM",
+  "STORAGE",
   "PSU",
 ];
 
@@ -68,7 +69,13 @@ export const assessBuildState = (
         const hasAtxLink = state.connections.some(
           (c) =>
             c.to.componentId === mb.componentId &&
-            components[c.from.componentId]?.type === "PSU",
+            components[c.from.componentId]?.type === "PSU" &&
+            components[c.from.componentId]?.connectors?.some(
+              (connector) => connector.id === c.from.connectorId && connector.type === "ATX_24PIN",
+            ) &&
+            mbDef.connectors?.some(
+              (connector) => connector.id === c.to.connectorId && connector.type === "ATX_24PIN",
+            ),
         );
         if (!hasAtxLink) {
           missingPowerConnections.push(`ATX 24-Pin Power to ${mbDef.name}`);
@@ -82,7 +89,13 @@ export const assessBuildState = (
         const hasEpsLink = state.connections.some(
           (c) =>
             c.to.componentId === mb.componentId &&
-            c.to.connectorId === "motherboard-eps",
+            components[c.from.componentId]?.type === "PSU" &&
+            components[c.from.componentId]?.connectors?.some(
+              (connector) => connector.id === c.from.connectorId && connector.type === "EPS_8PIN",
+            ) &&
+            mbDef.connectors?.some(
+              (connector) => connector.id === c.to.connectorId && connector.type === "EPS_8PIN",
+            ),
         );
         if (!hasEpsLink) {
           missingPowerConnections.push(`EPS CPU Power to ${mbDef.name}`);
@@ -103,7 +116,15 @@ export const assessBuildState = (
         const hasGpuLink = state.connections.some(
           (c) =>
             c.to.componentId === gpu.componentId &&
-            components[c.from.componentId]?.type === "PSU",
+            components[c.from.componentId]?.type === "PSU" &&
+            components[c.from.componentId]?.connectors?.some(
+              (connector) => connector.id === c.from.connectorId &&
+                (connector.type === "12V_2X6" || connector.type === "PCIE_8PIN"),
+            ) &&
+            gpuDef.connectors?.some(
+              (connector) => connector.id === c.to.connectorId && connector.type ===
+                components[c.from.componentId]?.connectors?.find((source) => source.id === c.from.connectorId)?.type,
+            ),
         );
         if (!hasGpuLink) {
           missingPowerConnections.push(`GPU PCIe/12V Power to ${gpuDef.name}`);

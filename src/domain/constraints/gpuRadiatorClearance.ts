@@ -1,7 +1,6 @@
 import { componentRegistry as defaultComponents } from "../data/components";
 import type { BuildState } from "../types/build";
 import type { ComponentRegistry } from "../types/component";
-import { GPU_ID, RADIATOR_ID } from "./constraintIds";
 
 /** MVP demo rule: a front 360 radiator leaves 320 mm for the GPU. */
 export const FRONT_RADIATOR_GPU_CLEARANCE_MM = 320;
@@ -15,11 +14,11 @@ export const validateGpuRadiatorClearance = (
   context: ConstraintContext = {},
 ) => {
   const components = context.componentRegistry ?? defaultComponents;
-  const gpuPlacement = state.placements.find((placement) => placement.componentId === GPU_ID);
-  const radiatorPlacement = state.placements.find((placement) => placement.componentId === RADIATOR_ID);
+  const gpuPlacement = state.placements.find((placement) => components[placement.componentId]?.type === "GPU");
+  const radiatorPlacement = state.placements.find((placement) => components[placement.componentId]?.type === "RADIATOR");
   if (!gpuPlacement || !radiatorPlacement || radiatorPlacement.mountId !== "radiator-front") return [];
 
-  const gpuDepth = components[GPU_ID]?.dimensions.depth ?? 340;
+  const gpuDepth = components[gpuPlacement.componentId]?.dimensions.depth ?? 0;
   const margin = FRONT_RADIATOR_GPU_CLEARANCE_MM - gpuDepth;
   if (margin >= 0) return [];
 
@@ -28,6 +27,7 @@ export const validateGpuRadiatorClearance = (
     type: "CLEARANCE" as const,
     severity: "ERROR" as const,
     message: `GPU length: ${gpuDepth} mm; Available clearance: ${FRONT_RADIATOR_GPU_CLEARANCE_MM} mm; Margin: ${margin} mm`,
-    affectedComponentIds: [GPU_ID, RADIATOR_ID],
+    affectedComponentIds: [gpuPlacement.componentId, radiatorPlacement.componentId],
+    details: { gpuLengthMm: gpuDepth, availableClearanceMm: FRONT_RADIATOR_GPU_CLEARANCE_MM, marginMm: margin },
   }];
 };

@@ -4,10 +4,13 @@ import { ReviewerSimulationPanel } from "../components/build/ReviewerSimulationP
 import { ValidationPanel } from "../components/build/ValidationPanel";
 import { CasePicker } from "../components/build/CasePicker";
 import { BuildControls } from "../components/build/BuildControls";
+import { ConnectionPanel } from "../components/build/ConnectionPanel";
 import { ComponentPalette } from "../components/build/ComponentPalette";
 import { useBuildStore } from "../store/buildStore";
 import { getRuntimeMode, registerTools, type RuntimeMode } from "../webmcp/registerTools";
 import { useLanguage } from "../i18n/LanguageContext";
+import { getActiveCaseProfile } from "../domain/cases/getActiveCase";
+import { SceneErrorBoundary } from "../components/scene/SceneErrorBoundary";
 
 const PcScene = lazy(() =>
   import("../components/scene/PcScene").then((module) => ({ default: module.PcScene })),
@@ -16,6 +19,7 @@ const PcScene = lazy(() =>
 export function App() {
   const { language, setLanguage, t } = useLanguage();
   const placements = useBuildStore((state) => state.placements);
+  const activeProfile = useBuildStore((state) => getActiveCaseProfile(state));
   const [highlightedComponentIds, setHighlightedComponentIds] = useState<string[]>([]);
   const [runtimeMode, setRuntimeMode] = useState<RuntimeMode>(() => getRuntimeMode());
   const [toolCounts, setToolCounts] = useState<{ registered: number; total: number }>({
@@ -46,6 +50,8 @@ export function App() {
 
   const gpuPlacement = placements.find((placement) => placement.componentId.startsWith("gpu"));
   const radiatorPlacement = placements.find((placement) => placement.componentId.startsWith("radiator"));
+  const installedPartCount = placements.filter((placement) => placement.mountId !== "case-root").length;
+  const availablePartMountCount = activeProfile.supportedMountIds.filter((mountId) => mountId !== "case-root").length;
 
   const statusBadgeText =
     runtimeMode === "webmcp"
@@ -92,6 +98,7 @@ export function App() {
             </div>
             <CasePicker />
             <BuildControls />
+            <ConnectionPanel />
           </aside>
 
           <section className="stage-column" aria-labelledby="assembly-heading">
@@ -100,12 +107,20 @@ export function App() {
                 <h2 id="assembly-heading">{t("workspace.assemblyTitle")}</h2>
                 <p>{t("workspace.assemblyCaption")}</p>
               </div>
-              <span>{placements.length} / 15</span>
+              <span>{installedPartCount} / {availablePartMountCount}</span>
             </div>
             <div className="scene-card">
-              <Suspense fallback={<div className="scene-loading">{t("scene.loading")}</div>}>
-                <PcScene highlightedComponentIds={highlightedComponentIds} />
-              </Suspense>
+              <SceneErrorBoundary fallback={(error, retry) => (
+                <div className="scene-failure" role="alert">
+                  <strong>{t("scene.failed")}</strong>
+                  <span>{error.message}</span>
+                  <button type="button" onClick={retry}>{t("scene.retry")}</button>
+                </div>
+              )}>
+                <Suspense fallback={<div className="scene-loading">{t("scene.loading")}</div>}>
+                  <PcScene highlightedComponentIds={highlightedComponentIds} />
+                </Suspense>
+              </SceneErrorBoundary>
               <div className="scene-overlay" aria-hidden="true">
                 <span>{t("scene.live")}</span>
                 <strong>{gpuPlacement ? t("scene.gpu", { id: gpuPlacement.componentId, mount: gpuPlacement.mountId }) : t("scene.gpuMissing")}</strong>
@@ -136,10 +151,12 @@ export function App() {
 
         {runtimeMode !== "webmcp" && <ReviewerSimulationPanel />}
 
-        <details className="developer-details">
-          <summary>{t("debug.details")} <span>{t("debug.placements", { count: placements.length })}</span></summary>
-          <pre>{JSON.stringify({ placements }, null, 2)}</pre>
-        </details>
+        {import.meta.env.DEV && (
+          <details className="developer-details">
+            <summary>{t("debug.details")} <span>{t("debug.placements", { count: placements.length })}</span></summary>
+            <pre>{JSON.stringify({ placements }, null, 2)}</pre>
+          </details>
+        )}
       </section>
     </main>
   );

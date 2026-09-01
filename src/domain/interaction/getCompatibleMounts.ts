@@ -2,6 +2,7 @@ import type { BuildState } from "../types/build";
 import type { CaseProfile } from "../cases/types";
 import { componentRegistry } from "../data/components";
 import { mountRegistry } from "../data/mounts";
+import { assertComponentFitsActiveCase } from "../commands/commandGuards";
 
 export interface CompatibleMountCandidate {
   mountId: string;
@@ -34,7 +35,13 @@ export const getCompatibleMountCandidates = ({
   return caseProfile.supportedMountIds
     .filter((mountId) => {
       const mount = mountRegistry[mountId];
-      return mount && mount.supportedComponentTypes.includes(component.type);
+      if (!mount || !mount.supportedComponentTypes.includes(component.type)) return false;
+      try {
+        assertComponentFitsActiveCase(state, component, mount);
+        return true;
+      } catch {
+        return false;
+      }
     })
     .map((mountId) => {
       const transform = caseProfile.mountTransforms[mountId] ?? { position: [0, 0, 0] };

@@ -1,15 +1,20 @@
 ﻿import { cloneBuildState } from "../activity";
 import type { DomainAction } from "../types/action";
+import { appendActivity, createActivityEntry } from "../activity";
 import type { BuildState } from "../types/build";
 import { buildStore } from "../../store/buildStore";
 import {
   canUndoLastAgentAction,
+  canRedoLastAction,
+  canUndoLastAction,
   getTopologyRevision,
   incrementTopologyRevision,
   popUndoEntryOrThrow,
+  popAnyUndoEntryOrThrow,
   pushUndoEntry,
   resetCommandHistory,
   restoreSnapshotState,
+  restoreRedoState,
   snapshotTopology,
 } from "./commandHistory";
 import {
@@ -19,6 +24,8 @@ import {
 } from "./transition";
 
 export {
+  canRedoLastAction,
+  canUndoLastAction,
   canUndoLastAgentAction,
   getTopologyRevision,
   resetCommandHistory,
@@ -116,16 +123,20 @@ export const commitDomainAction = (
   const affectedComponentIds = getAffectedComponentIds(before, transition.state);
   const actor = options.actor ?? "USER";
 
+  if (affectedComponentIds.length === 0) {
+    return { ...transition, state: before };
+  }
+
   const nextRevision = incrementTopologyRevision();
   const isUndoableAgentAction = actor === "AGENT";
-  if (isUndoableAgentAction) {
-    pushUndoEntry({
-      appliedRevision: nextRevision,
-      snapshot: snapshotTopology(before),
-      affectedComponentIds,
-      message: actionLabel(action),
-    });
-  }
+  pushUndoEntry({
+    appliedRevision: nextRevision,
+    snapshot: snapshotTopology(before),
+    redoSnapshot: snapshotTopology(transition.state),
+    affectedComponentIds,
+    message: actionLabel(action),
+    actor,
+  });
 
   const committedState = annotateLatestActivity(
     transition.state,
@@ -138,9 +149,69 @@ export const commitDomainAction = (
   return { ...transition, state: committedState };
 };
 
+export const commitDomainActions = (
+  actions: DomainAction[],
+  message: string,
+  options: DomainTransitionOptions = {},
+): DomainTransitionResult<unknown[]> => {
+  const before = cloneBuildState(buildStore.getState());
+  let projected = before;
+  const results: unknown[] = [];
+
+  for (const action of actions) {
+    const transition = applyDomainAction(projected, action, {
+      ...options,
+      recordActivity: false,
+    });
+    projected = transition.state;
+    results.push(transition.result);
+  }
+
+  const affectedComponentIds = getAffectedComponentIds(before, projected);
+  if (affectedComponentIds.length === 0) {
+    return { state: before, result: results };
+  }
+
+  const actor = options.actor ?? "USER";
+  const nextRevision = incrementTopologyRevision();
+  const isUndoableAgentAction = actor === "AGENT";
+  pushUndoEntry({
+    appliedRevision: nextRevision,
+    snapshot: snapshotTopology(before),
+    redoSnapshot: snapshotTopology(projected),
+    affectedComponentIds,
+    message,
+    actor,
+  });
+
+  const committedState = appendActivity(projected, createActivityEntry({
+    actor,
+    message,
+    affectedComponentIds,
+    undoable: isUndoableAgentAction,
+    now: options.now,
+    createId: options.createId,
+  }));
+  buildStore.setState(committedState);
+  return { state: committedState, result: results };
+};
+
 export const undoLastAgentAction = (): { affectedComponentIds: string[] } => {
   const entry = popUndoEntryOrThrow();
   const restored = restoreSnapshotState(buildStore.getState(), entry);
   buildStore.setState(restored);
+  return { affectedComponentIds: [...entry.affectedComponentIds] };
+};
+
+export const undoLastAction = (): { affectedComponentIds: string[] } => {
+  const entry = popAnyUndoEntryOrThrow();
+  const restored = restoreSnapshotState(buildStore.getState(), entry);
+  buildStore.setState(restored);
+  return { affectedComponentIds: [...entry.affectedComponentIds] };
+};
+
+export const redoLastAction = (): { affectedComponentIds: string[] } => {
+  const { state, entry } = restoreRedoState(buildStore.getState());
+  buildStore.setState(state);
   return { affectedComponentIds: [...entry.affectedComponentIds] };
 };

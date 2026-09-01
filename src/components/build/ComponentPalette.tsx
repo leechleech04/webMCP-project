@@ -1,4 +1,4 @@
-import { useState, useMemo, type ReactNode } from "react";
+import { useState, useMemo } from "react";
 import { useBuildStore } from "../../store/buildStore";
 import { getActiveCaseProfile } from "../../domain/cases/getActiveCase";
 import { componentRegistry } from "../../domain/data/components";
@@ -9,33 +9,10 @@ import { moveComponent } from "../../domain/commands/moveComponent";
 import { setFanDirection } from "../../domain/commands/setFanDirection";
 import type { ComponentDefinition } from "../../domain/types/component";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { commitDomainActions } from "../../domain/commands/commitDomainAction";
+import { useTimeoutQueue } from "../useTimeoutQueue";
+import { CatalogTabs, type TabCategory } from "./CatalogTabs";
 
-type TabCategory = "GPU" | "RADIATOR" | "FAN" | "MOTHERBOARD" | "CPU" | "RAM" | "PSU" | "DIAGRAMS";
-
-const CATEGORIES: { id: TabCategory; label: string }[] = [
-  { id: "GPU", label: "Graphics" },
-  { id: "RADIATOR", label: "Liquid Cooler" },
-  { id: "FAN", label: "Fans & Air" },
-  { id: "MOTHERBOARD", label: "Motherboard" },
-  { id: "CPU", label: "CPU" },
-  { id: "RAM", label: "Memory (RAM)" },
-  { id: "PSU", label: "Power Supply" },
-  { id: "DIAGRAMS", label: "Diagrams" },
-];
-
-function CategoryIcon({ category }: { category: TabCategory }) {
-  const paths: Record<TabCategory, ReactNode> = {
-    GPU: <><rect x="3" y="6" width="18" height="12" rx="3" /><circle cx="9" cy="12" r="3" /><path d="M15 10h3M15 14h2M7 18v2M11 18v2" /></>,
-    RADIATOR: <><rect x="4" y="3" width="16" height="18" rx="3" /><circle cx="12" cy="9" r="3.5" /><circle cx="12" cy="16" r="2.5" /></>,
-    FAN: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1.5" /><path d="M12 10c-1-4 1-6 3-5 2 2 1 5-3 7M14 12c4-1 6 1 5 3-2 2-5 1-7-3M12 14c1 4-1 6-3 5-2-2-1-5 3-7M10 12c-4 1-6-1-5-3 2-2 5-1 7 3" /></>,
-    MOTHERBOARD: <><rect x="4" y="3" width="16" height="18" rx="2" /><rect x="8" y="7" width="7" height="7" rx="1" /><path d="M8 17h8M18 7v5M6 7v3" /></>,
-    CPU: <><rect x="6" y="6" width="12" height="12" rx="2" /><rect x="9" y="9" width="6" height="6" rx="1" /><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3" /></>,
-    RAM: <><rect x="3" y="7" width="18" height="10" rx="2" /><path d="M7 10v4M11 10v4M15 10v4M18 10v4M7 17v2M11 17v2M15 17v2" /></>,
-    PSU: <><rect x="3" y="5" width="18" height="14" rx="3" /><circle cx="10" cy="12" r="4" /><path d="M16 10h2M16 14h2M10 8v8M6 12h8" /></>,
-    DIAGRAMS: <><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v5h5M9 12h6M9 16h6" /></>,
-  };
-  return <svg className="category-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{paths[category]}</svg>;
-}
 
 export function ComponentPalette() {
   const { t, componentName, categoryName, caseName } = useLanguage();
@@ -47,6 +24,7 @@ export function ComponentPalette() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedDiagramSize, setSelectedDiagramSize] = useState<"120" | "140" | "160" | "AIO">("120");
   const [ramQuantity, setRamQuantity] = useState<1 | 2>(2);
+  const schedule = useTimeoutQueue();
 
   const installedMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -125,44 +103,43 @@ export function ComponentPalette() {
         setStatusMessage(t("catalog.installed", { component: componentName(component.id, component.name), mount: targetMount }));
       }
       setErrorMessage(null);
-      setTimeout(() => setStatusMessage(null), 4000);
-    } catch (err: any) {
-      setErrorMessage(err?.message ?? String(err));
+      schedule(() => setStatusMessage(null), 4000);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : String(err));
       setStatusMessage(null);
-      setTimeout(() => setErrorMessage(null), 4000);
+      schedule(() => setErrorMessage(null), 4000);
     }
   };
 
   const handleInstallRamDual = () => {
     try {
-      if (!occupiedMounts.has("dimm-a1")) {
-        installComponent({ componentId: "ram-01", mountId: "dimm-a1" });
-      }
-      if (!occupiedMounts.has("dimm-b1") && activeProfile.supportedMountIds.includes("dimm-b1")) {
-        installComponent({ componentId: "ram-02", mountId: "dimm-b1" });
-      }
+      const actions = [];
+      if (!occupiedMounts.has("dimm-a1")) actions.push({ type: "INSTALL_COMPONENT" as const, componentId: "ram-01", mountId: "dimm-a1" });
+      if (!occupiedMounts.has("dimm-b1") && activeProfile.supportedMountIds.includes("dimm-b1")) actions.push({ type: "INSTALL_COMPONENT" as const, componentId: "ram-02", mountId: "dimm-b1" });
+      commitDomainActions(actions, "Installed dual-channel RAM kit");
       setStatusMessage(t("catalog.ramInstalled"));
       setErrorMessage(null);
-      setTimeout(() => setStatusMessage(null), 3000);
-    } catch (err: any) {
-      setErrorMessage(err?.message ?? String(err));
+      schedule(() => setStatusMessage(null), 3000);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : String(err));
       setStatusMessage(null);
-      setTimeout(() => setErrorMessage(null), 4000);
+      schedule(() => setErrorMessage(null), 4000);
     }
   };
 
   const handleRemoveRamDual = () => {
     try {
-      if (installedMap.has("ram-01")) removeComponent({ componentId: "ram-01" });
-      if (installedMap.has("ram-02")) removeComponent({ componentId: "ram-02" });
-      if (installedMap.has("ram-03")) removeComponent({ componentId: "ram-03" });
+      const actions = ["ram-01", "ram-02", "ram-03"]
+        .filter((componentId) => installedMap.has(componentId))
+        .map((componentId) => ({ type: "REMOVE_COMPONENT" as const, componentId }));
+      commitDomainActions(actions, "Removed RAM kit");
       setStatusMessage(t("catalog.ramRemoved"));
       setErrorMessage(null);
-      setTimeout(() => setStatusMessage(null), 3000);
-    } catch (err: any) {
-      setErrorMessage(err?.message ?? String(err));
+      schedule(() => setStatusMessage(null), 3000);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : String(err));
       setStatusMessage(null);
-      setTimeout(() => setErrorMessage(null), 4000);
+      schedule(() => setErrorMessage(null), 4000);
     }
   };
 
@@ -171,11 +148,11 @@ export function ComponentPalette() {
       removeComponent({ componentId });
       setStatusMessage(t("catalog.removed", { component: componentName(componentId, componentRegistry[componentId]?.name ?? componentId) }));
       setErrorMessage(null);
-      setTimeout(() => setStatusMessage(null), 3000);
-    } catch (err: any) {
-      setErrorMessage(err?.message ?? String(err));
+      schedule(() => setStatusMessage(null), 3000);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : String(err));
       setStatusMessage(null);
-      setTimeout(() => setErrorMessage(null), 4000);
+      schedule(() => setErrorMessage(null), 4000);
     }
   };
 
@@ -184,11 +161,11 @@ export function ComponentPalette() {
       moveComponent({ componentId, mountId: targetMount });
       setStatusMessage(t("catalog.moved", { component: componentName(componentId, componentRegistry[componentId]?.name ?? componentId), mount: targetMount }));
       setErrorMessage(null);
-      setTimeout(() => setStatusMessage(null), 3000);
-    } catch (err: any) {
-      setErrorMessage(err?.message ?? String(err));
+      schedule(() => setStatusMessage(null), 3000);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : String(err));
       setStatusMessage(null);
-      setTimeout(() => setErrorMessage(null), 4000);
+      schedule(() => setErrorMessage(null), 4000);
     }
   };
 
@@ -259,48 +236,12 @@ export function ComponentPalette() {
         </span>
       </div>
 
-      {/* Large Category Tabs Strip */}
-      <div
-        className="catalog-tabs"
-        style={{
-          display: "flex",
-          gap: "0.4rem",
-          overflowX: "auto",
-          paddingBottom: "0.45rem",
-          marginBottom: "0.75rem",
-        }}
-      >
-        {CATEGORIES.map((cat) => {
-          const isActive = activeTab === cat.id;
-          return (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setActiveTab(cat.id)}
-              style={{
-                flexShrink: 0,
-                padding: "0.45rem 0.75rem",
-                borderRadius: "8px",
-                border: isActive ? "1px solid #38bdf8" : "1px solid #28354a",
-                background: isActive ? "linear-gradient(135deg, #1e40af, #1d4ed8)" : "#111a2b",
-                color: isActive ? "#ffffff" : "#94a3b8",
-                fontSize: "0.78rem",
-                fontWeight: isActive ? 800 : 600,
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.35rem",
-                boxShadow: isActive ? "0 2px 8px rgba(56, 189, 248, 0.3)" : "none",
-                transition: "all 0.15s ease",
-              }}
-            >
-              <span className="category-icon-wrap"><CategoryIcon category={cat.id} /></span>
-              <span>{categoryName(cat.id, cat.label)}</span>
-            </button>
-          );
-        })}
-      </div>
+      <CatalogTabs
+        active={activeTab}
+        onChange={setActiveTab}
+        label={t("catalog.categories")}
+        categoryName={categoryName}
+      />
 
       {/* RAM QUANTITY & DUAL CHANNEL SELECTOR HEADER */}
       {activeTab === "RAM" && (
@@ -367,6 +308,9 @@ export function ComponentPalette() {
       {/* DIAGRAMS TAB */}
       {activeTab === "DIAGRAMS" && (
         <div
+          role="tabpanel"
+          id="catalog-panel-DIAGRAMS"
+          aria-labelledby="catalog-tab-DIAGRAMS"
           style={{
             display: "flex",
             flexDirection: "column",
@@ -504,6 +448,9 @@ export function ComponentPalette() {
       {activeTab !== "DIAGRAMS" && (
         <div
           className="catalog-list"
+          role="tabpanel"
+          id={`catalog-panel-${activeTab}`}
+          aria-labelledby={`catalog-tab-${activeTab}`}
           style={{
             display: "flex",
             flexDirection: "column",
@@ -749,20 +696,20 @@ export function ComponentPalette() {
                         <button
                           type="button"
                           onClick={() => handleInstall(comp.id)}
-                          disabled={compatibleMounts.length === 0 || occupiedMounts.has(selectedTargetMount)}
+                          disabled={compatibleMounts.length === 0 || occupiedMounts.has(selectedTargetMount) || !clearanceFit.fits}
                           style={{
                             flex: "1 1 130px",
                             padding: "0.45rem 0.8rem",
                             borderRadius: "7px",
-                            background: !occupiedMounts.has(selectedTargetMount)
-                              ? (!clearanceFit.fits ? "#dc2626" : "linear-gradient(135deg, #2563eb, #1d4ed8)")
+                            background: !occupiedMounts.has(selectedTargetMount) && clearanceFit.fits
+                              ? "linear-gradient(135deg, #2563eb, #1d4ed8)"
                               : "#334155",
                             color: "#ffffff",
                             fontWeight: 800,
                             fontSize: "0.78rem",
                             border: "none",
-                            cursor: !occupiedMounts.has(selectedTargetMount) ? "pointer" : "not-allowed",
-                            boxShadow: !occupiedMounts.has(selectedTargetMount) ? "0 2px 8px rgba(37, 99, 235, 0.35)" : "none",
+                            cursor: !occupiedMounts.has(selectedTargetMount) && clearanceFit.fits ? "pointer" : "not-allowed",
+                            boxShadow: !occupiedMounts.has(selectedTargetMount) && clearanceFit.fits ? "0 2px 8px rgba(37, 99, 235, 0.35)" : "none",
                             overflowWrap: "break-word",
                             wordBreak: "break-word",
                           }}

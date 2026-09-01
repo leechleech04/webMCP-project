@@ -1,10 +1,18 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useBuildStore } from "../../store/buildStore";
 import { getActiveCaseProfile } from "../../domain/cases/getActiveCase";
 import { autoFillBuild } from "../../domain/commands/autoFillBuild";
 import { clearBuild } from "../../domain/commands/clearBuild";
 import { generateAutoFillRecipe } from "../../domain/recipes/autoFillRecipe";
 import { useLanguage } from "../../i18n/LanguageContext";
+import {
+  canRedoLastAction,
+  canUndoLastAction,
+  redoLastAction,
+  undoLastAction,
+} from "../../domain/commands/commitDomainAction";
+import { exportBuildState, importBuildState } from "../../store/buildPersistence";
+import { useTimeoutQueue } from "../useTimeoutQueue";
 
 export function BuildControls() {
   const { t, caseName } = useLanguage();
@@ -13,6 +21,8 @@ export function BuildControls() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmingClear, setConfirmingClear] = useState(false);
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const schedule = useTimeoutQueue();
 
   const preview = useMemo(() => {
     try {
@@ -38,11 +48,11 @@ export function BuildControls() {
       const outcome = autoFillBuild();
       setStatusMessage(t("build.autoFillResult", { formFactor: caseName(activeProfile.formFactor), components: outcome.appliedPlacements.length, cables: outcome.appliedConnections.length, fans: outcome.appliedFanConfigs.length }));
       setErrorMessage(null);
-      setTimeout(() => setStatusMessage(null), 5000);
-    } catch (err: any) {
-      setErrorMessage(err?.message ?? String(err));
+      schedule(() => setStatusMessage(null), 5000);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : String(err));
       setStatusMessage(null);
-      setTimeout(() => setErrorMessage(null), 5000);
+      schedule(() => setErrorMessage(null), 5000);
     }
   };
 
@@ -52,12 +62,37 @@ export function BuildControls() {
       setStatusMessage(t("build.clearResult", { components: outcome.clearedComponentsCount, cables: outcome.clearedConnectionsCount, fans: outcome.clearedFanConfigsCount, case: caseName(activeProfile.label) }));
       setErrorMessage(null);
       setConfirmingClear(false);
-      setTimeout(() => setStatusMessage(null), 5000);
-    } catch (err: any) {
-      setErrorMessage(err?.message ?? String(err));
+      schedule(() => setStatusMessage(null), 5000);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : String(err));
       setStatusMessage(null);
       setConfirmingClear(false);
-      setTimeout(() => setErrorMessage(null), 5000);
+      schedule(() => setErrorMessage(null), 5000);
+    }
+  };
+
+  const handleExport = () => {
+    const url = URL.createObjectURL(new Blob([exportBuildState()], { type: "application/json" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `pc-build-${new Date().toISOString().slice(0, 10)}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = async (file?: File) => {
+    if (!file) return;
+    try {
+      importBuildState(await file.text());
+      setStatusMessage(t("build.imported"));
+      setErrorMessage(null);
+      schedule(() => setStatusMessage(null), 5000);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+      setStatusMessage(null);
+      schedule(() => setErrorMessage(null), 5000);
+    } finally {
+      if (importInputRef.current) importInputRef.current.value = "";
     }
   };
 
@@ -137,6 +172,17 @@ export function BuildControls() {
             {t("build.clear")}
           </button>
         ) : null}
+        <button type="button" className="secondary" onClick={() => undoLastAction()} disabled={!canUndoLastAction()}>{t("build.undo")}</button>
+        <button type="button" className="secondary" onClick={() => redoLastAction()} disabled={!canRedoLastAction()}>{t("build.redo")}</button>
+        <button type="button" className="secondary" onClick={handleExport}>{t("build.export")}</button>
+        <button type="button" className="secondary" onClick={() => importInputRef.current?.click()}>{t("build.import")}</button>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept="application/json,.json"
+          hidden
+          onChange={(event) => void handleImport(event.target.files?.[0])}
+        />
       </div>
 
       {confirmingClear && (

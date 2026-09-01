@@ -19,6 +19,10 @@ export function ActivityPanel() {
       [/^(.+) connected to (.+)$/, (from, to) => `${from}을(를) ${to}에 연결함`],
       [/^Auto-filled build for (.+): \+(\d+) components, \+(\d+) cables, \+(\d+) fan directions$/, (formFactor, components, cables, fans) => `${caseName(formFactor)} 자동 채우기: 부품 +${components}개, 케이블 +${cables}개, 팬 방향 +${fans}개`],
       [/^Cleared build: removed (.+) components, (.+) cables\. Case preserved\.$/, (components, cables) => `빌드 비우기: 부품 ${components}개, 케이블 ${cables}개 제거 · 케이스 유지`],
+      [/^Installed dual-channel RAM kit$/, () => "듀얼 채널 RAM 키트를 설치함"],
+      [/^Removed RAM kit$/, () => "RAM 키트를 제거함"],
+      [/^Undid (.+)$/, (action) => `실행 취소: ${action}`],
+      [/^Redid (.+)$/, (action) => `다시 실행: ${action}`],
     ];
     for (const [pattern, format] of patterns) {
       const match = value.match(pattern);

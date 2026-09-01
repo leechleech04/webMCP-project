@@ -6,6 +6,7 @@ import { MotherboardModel } from "../components/scene/MotherboardModel";
 import { PsuModel } from "../components/scene/PsuModel";
 import { CpuModel } from "../components/scene/CpuModel";
 import { RamModel } from "../components/scene/RamModel";
+import { StorageModel } from "../components/scene/StorageModel";
 import type { SceneTransform } from "./mountTransforms";
 import type { ComponentDefinition } from "../domain/types/component";
 
@@ -48,6 +49,9 @@ export const modelRegistry: Readonly<
   "ram-01": RamModel,
   "ram-02": RamModel,
   "ram-03": RamModel,
+
+  // Storage
+  "storage-nvme-01": StorageModel,
 
   // PSUs
   "psu-01": PsuModel,

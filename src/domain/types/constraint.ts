@@ -13,6 +13,7 @@ export interface ConstraintIssue {
   severity: ConstraintSeverity;
   message: string;
   affectedComponentIds: string[];
+  details?: Record<string, string | number | boolean>;
 }
 
 export interface ValidationSummary {

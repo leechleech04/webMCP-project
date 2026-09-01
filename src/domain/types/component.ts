@@ -4,6 +4,7 @@ export type ComponentType =
   | "CPU"
   | "GPU"
   | "RAM"
+  | "STORAGE"
   | "RADIATOR"
   | "FAN"
   | "PSU";
@@ -40,6 +41,11 @@ export interface ComponentDefinition {
     capacity?: number;
   };
   connectors?: ConnectorDefinition[];
+  compatibility?: {
+    motherboardFormFactor?: "MINI_ITX" | "MICRO_ATX" | "ATX" | "E_ATX";
+    cpuSocket?: string;
+    memoryType?: string;
+  };
   visualAsset?: {
     mode: "GLB" | "PROCEDURAL_FALLBACK";
     assetId?: string;

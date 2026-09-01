@@ -90,6 +90,16 @@ const mountDefinitions: MountDefinition[] = [
     supportedComponentTypes: ["FAN"],
   },
   {
+    id: "storage-m2-1",
+    type: "STORAGE",
+    supportedComponentTypes: ["STORAGE"],
+  },
+  {
+    id: "fan-bottom-2",
+    type: "FAN",
+    supportedComponentTypes: ["FAN"],
+  },
+  {
     id: "fan-side-1",
     type: "FAN",
     supportedComponentTypes: ["FAN"],

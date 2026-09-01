@@ -9,6 +9,8 @@ export interface ActivitySource {
   createId?: () => string;
 }
 
+export const MAX_ACTIVITY_ENTRIES = 200;
+
 let activitySequence = 0;
 
 export const createActivityEntry = ({
@@ -42,7 +44,7 @@ export const appendActivity = (
   entry: ActivityEntry,
 ): BuildState => ({
   ...state,
-  activity: [...state.activity, entry],
+  activity: [...state.activity, entry].slice(-MAX_ACTIVITY_ENTRIES),
 });
 
 export const cloneBuildState = (state: BuildState): BuildState => ({

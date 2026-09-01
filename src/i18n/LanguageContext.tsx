@@ -13,19 +13,21 @@ const en: Record<string, string> = {
   "workspace.reviewTitle": "Check the build", "workspace.reviewCaption": "Compatibility findings and a chronological record of changes.",
   "status.live": "WebMCP live transport ({registered}/{total} tools)", "status.partial": "WebMCP partial transport ({registered}/{total} tools)",
   "status.simulation": "Reviewer simulation (0/{total} tools)", "scene.loading": "Loading 3D workspace…", "scene.live": "LIVE BUILD STATE",
+  "scene.failed": "The 3D scene could not be displayed.", "scene.retry": "Retry",
   "scene.gpu": "GPU · {id} ({mount})", "scene.gpuMissing": "GPU not installed", "scene.radiator": "Radiator · {id} ({mount})",
   "scene.radiatorMissing": "Radiator not installed", "scene.conflict": "Conflict selected · affected models highlighted",
   "scene.hint": "Drag to orbit · 'M' to arm Move Mode · Fullscreen 3D Viewer · Select any part size & mount", "scene.controls": "Build controls",
   "scene.studio": "Studio", "scene.dark": "Dark", "scene.fullscreen": "Fullscreen", "scene.exitFullscreen": "Exit fullscreen",
   "scene.reset": "Reset view", "scene.resetTitle": "Reset Camera View", "scene.collision": "Collision / clearance limit exceeded",
   "scene.cancelMove": "Cancel Move (Esc)", "scene.move": "Move Component ('M')", "scene.intakeFlip": "🔵 INTAKE (Flip)",
-  "scene.exhaustFlip": "🔴 EXHAUST (Flip)", "scene.remove": "Remove", "scene.installed": "installed", "scene.notInstalled": "not installed",
+  "scene.exhaustFlip": "🔴 EXHAUST (Flip)", "scene.remove": "Remove", "scene.dismissError": "Dismiss scene error", "scene.installed": "installed", "scene.notInstalled": "not installed",
   "scene.aria": "Mount-based PC assembly scene. GPU is {gpu}. Radiator is {radiator}.",
   "scene.installedAt": "installed at {mount}",
   "validation.title": "Build validation", "validation.caption": "Deterministic checks from the shared Build State.", "validation.valid": "VALID",
   "validation.issues": "{count} ISSUE(S)", "validation.clear": "Build valid · no compatibility issues detected.",
   "validation.collision": "GPU / Radiator Collision", "validation.gpuLength": "GPU length: 340 mm", "validation.clearance": "Available clearance: 320 mm",
   "validation.margin": "Margin: -20 mm", "validation.select": "Select to highlight affected components.",
+  "validation.gpuLengthValue": "GPU length: {value} mm", "validation.clearanceValue": "Available clearance: {value} mm", "validation.marginValue": "Margin: {value} mm",
   "activity.title": "Activity timeline", "activity.caption": "One ordered audit trail for human and agent actions.",
   "activity.empty": "No activity yet. Install a component to begin.", "actor.USER": "USER", "actor.AGENT": "AGENT", "actor.SYSTEM": "SYSTEM",
   "case.title": "Chassis Form Factor", "case.dragging": "Cannot switch case while dragging", "case.switched": "Switched to {case}",
@@ -34,9 +36,12 @@ const en: Record<string, string> = {
   "build.clear": "Clear build", "build.clearTitle": "Remove all installed parts while preserving the active case", "build.confirmTitle": "Confirm Clear Build?",
   "build.confirmBody": "All non-case components ({count}), power cables, and fan directions will be removed. The active case {case} will remain selected at case-root.",
   "build.confirm": "Yes, Clear Build", "build.cancel": "Cancel",
+  "build.undo": "Undo", "build.redo": "Redo", "build.export": "Export", "build.import": "Import", "build.imported": "Build file imported successfully.",
   "build.autoFillResult": "Auto-fill applied for {formFactor}: +{components} components, +{cables} cables, +{fans} fan directions configured.",
   "build.clearResult": "Build cleared: removed {components} components, {cables} cables, {fans} fan configs. Active case ({case}) preserved.",
+  "connections.title": "Cable connections", "connections.empty": "Install compatible powered components to connect cables.", "connections.disconnect": "Disconnect",
   "catalog.aria": "Component Catalog and Customizer", "catalog.title": "Component Customizer", "catalog.profile": "Profile: {profile}",
+  "catalog.categories": "Component categories",
   "catalog.ramConfig": "RAM Stick Configuration:", "catalog.ramDual": "2x Sticks (Dual-Channel) · Uses dimm-a1 & dimm-b1",
   "catalog.ramSingle": "1x Stick (Single-Channel)", "catalog.oneStick": "1 Stick", "catalog.twoSticks": "2 Sticks (Dual)", "catalog.capacity": "Capacity",
   "catalog.overfill": "⚠️ Overfill: {mount}", "catalog.inapplicable": "⚠️ Inapplicable", "catalog.available": "Available",
@@ -83,6 +88,8 @@ const ko: Record<string, string> = {
   "status.partial": "WebMCP 일부 연결 ({registered}/{total}개 도구)",
   "status.simulation": "검토자 시뮬레이션 (0/{total}개 도구)",
   "scene.loading": "3D 작업 공간 불러오는 중…",
+  "scene.failed": "3D 장면을 표시하지 못했습니다.",
+  "scene.retry": "다시 시도",
   "scene.live": "실시간 빌드 상태",
   "scene.gpu": "GPU · {id} ({mount})",
   "scene.gpuMissing": "GPU 미설치",
@@ -103,6 +110,7 @@ const ko: Record<string, string> = {
   "scene.intakeFlip": "🔵 흡기 (전환)",
   "scene.exhaustFlip": "🔴 배기 (전환)",
   "scene.remove": "제거",
+  "scene.dismissError": "3D 오류 닫기",
   "scene.aria": "마운트 기반 PC 조립 장면. GPU는 {gpu} 상태이고, 라디에이터는 {radiator} 상태입니다.",
   "scene.installed": "설치됨",
   "scene.notInstalled": "미설치",
@@ -116,6 +124,9 @@ const ko: Record<string, string> = {
   "validation.gpuLength": "GPU 길이: 340 mm",
   "validation.clearance": "사용 가능 여유 공간: 320 mm",
   "validation.margin": "여유: -20 mm",
+  "validation.gpuLengthValue": "GPU 길이: {value} mm",
+  "validation.clearanceValue": "사용 가능 여유 공간: {value} mm",
+  "validation.marginValue": "여유: {value} mm",
   "validation.select": "관련 부품을 강조하려면 선택하세요.",
   "activity.title": "활동 타임라인",
   "activity.caption": "사용자와 에이전트 작업을 시간순으로 기록합니다.",
@@ -138,10 +149,19 @@ const ko: Record<string, string> = {
   "build.confirmBody": "케이스 외 부품 {count}개와 전원 케이블, 팬 방향 설정이 모두 제거됩니다. 현재 케이스 {case}는 case-root에 유지됩니다.",
   "build.confirm": "예, 빌드 비우기",
   "build.cancel": "취소",
+  "build.undo": "실행 취소",
+  "build.redo": "다시 실행",
+  "build.export": "내보내기",
+  "build.import": "불러오기",
+  "build.imported": "빌드 파일을 불러왔습니다.",
   "build.autoFillResult": "{formFactor} 자동 채우기 완료: 부품 +{components}개, 케이블 +{cables}개, 팬 방향 +{fans}개.",
   "build.clearResult": "빌드 비우기 완료: 부품 {components}개, 케이블 {cables}개, 팬 설정 {fans}개 제거. 현재 케이스({case})는 유지됩니다.",
+  "connections.title": "케이블 연결",
+  "connections.empty": "호환되는 전원 부품을 설치하면 케이블을 연결할 수 있습니다.",
+  "connections.disconnect": "연결 해제",
   "catalog.aria": "부품 카탈로그 및 사용자 설정",
   "catalog.title": "부품 사용자 설정",
+  "catalog.categories": "부품 카테고리",
   "catalog.profile": "프로필: {profile}",
   "catalog.ramConfig": "RAM 구성:",
   "catalog.ramDual": "2개 (듀얼 채널) · dimm-a1 및 dimm-b1 사용",
@@ -219,6 +239,7 @@ const componentNamesKo: Record<string, string> = {
   "ram-01": "16GB DDR5-6000 RAM 1",
   "ram-02": "16GB DDR5-6000 RAM 2",
   "ram-03": "32GB RGB DDR5-6400 고용량 RAM",
+  "storage-nvme-01": "2TB PCIe 4.0 NVMe SSD",
   "gpu-01": "트리플 팬 플래그십 GPU (340mm, 450W)",
   "gpu-2fan-01": "듀얼 팬 미드레인지 GPU (242mm, 220W)",
   "gpu-1fan-01": "소형 싱글 팬 Mini-ITX GPU (170mm, 130W)",
@@ -238,7 +259,7 @@ const componentNamesKo: Record<string, string> = {
 
 const categoryNamesKo: Record<string, string> = {
   GPU: "그래픽카드", RADIATOR: "수랭 쿨러", FAN: "팬과 공기 흐름", MOTHERBOARD: "메인보드",
-  CPU: "CPU", RAM: "메모리 (RAM)", PSU: "파워서플라이", DIAGRAMS: "도면",
+  CPU: "CPU", RAM: "메모리 (RAM)", STORAGE: "저장장치", PSU: "파워서플라이", DIAGRAMS: "도면",
 };
 
 const caseNamesKo: Record<string, string> = {
@@ -278,11 +299,19 @@ const LanguageContext = createContext<LanguageValue>(defaultValue);
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>(() => {
     if (typeof window === "undefined") return "en";
-    return window.localStorage.getItem(STORAGE_KEY) === "ko" ? "ko" : "en";
+    try {
+      return window.localStorage.getItem(STORAGE_KEY) === "ko" ? "ko" : "en";
+    } catch {
+      return "en";
+    }
   });
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, language);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, language);
+    } catch {
+      // Language selection still works for the current session.
+    }
     document.documentElement.lang = language;
   }, [language]);
 

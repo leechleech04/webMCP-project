@@ -18,6 +18,7 @@ describe("buildAssessment layer", () => {
       "MOTHERBOARD",
       "CPU",
       "RAM",
+      "STORAGE",
       "PSU",
     ]);
   });
@@ -27,6 +28,7 @@ describe("buildAssessment layer", () => {
     installComponent({ componentId: "motherboard-01", mountId: "motherboard-tray" });
     installComponent({ componentId: "cpu-01", mountId: "cpu-socket-1" });
     installComponent({ componentId: "ram-01", mountId: "dimm-a1" });
+    installComponent({ componentId: "storage-nvme-01", mountId: "storage-m2-1" });
     installComponent({ componentId: "psu-01", mountId: "psu-bay" });
 
     const assessment = assessBuildState(getBuildState());

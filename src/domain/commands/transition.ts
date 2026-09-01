@@ -12,6 +12,7 @@ import type { ComponentRegistry } from "../types/component";
 import type { MountRegistry } from "../types/mount";
 import {
   assertComponentFitsMount,
+  assertComponentFitsActiveCase,
   DomainCommandError,
   getComponentOrThrow,
   getMountOrThrow,
@@ -96,7 +97,21 @@ export const applyDomainAction = (
 
       const incompatible = state.placements.filter((p) => {
         if (p.mountId === "case-root") return false;
-        return !profile.supportedMountIds.includes(p.mountId);
+        const installedComponent = components[p.componentId];
+        const installedMount = mounts[p.mountId];
+        if (!installedComponent || !installedMount || !profile.supportedMountIds.includes(p.mountId)) {
+          return true;
+        }
+        try {
+          assertComponentFitsActiveCase(
+            { ...state, placements: [{ componentId: action.componentId, mountId: "case-root" }] },
+            installedComponent,
+            installedMount,
+          );
+          return false;
+        } catch {
+          return true;
+        }
       });
 
       if (incompatible.length > 0) {
@@ -136,7 +151,7 @@ export const applyDomainAction = (
         throw new DomainCommandError("MOUNT_OCCUPIED", `${mount.id} is already occupied`);
       }
 
-      assertComponentFitsMount(component, mount);
+      assertComponentFitsActiveCase(state, component, mount);
       const placement = { componentId: action.componentId, mountId: action.mountId };
 
       let nextFanConfigs = state.fanConfigs;
@@ -178,7 +193,7 @@ export const applyDomainAction = (
         throw new DomainCommandError("MOUNT_OCCUPIED", `${mount.id} is already occupied`);
       }
 
-      assertComponentFitsMount(component, mount);
+      assertComponentFitsActiveCase(state, component, mount);
       const placement = { componentId: action.componentId, mountId: action.mountId };
 
       let nextFanConfigs = state.fanConfigs;
@@ -274,6 +289,10 @@ export const applyDomainAction = (
       if (
         state.connections.some(
           (connection) =>
+            connection.from.componentId === action.fromComponentId &&
+            connection.from.connectorId === action.fromConnectorId,
+        ) || state.connections.some(
+          (connection) =>
             connection.to.componentId === action.toComponentId &&
             connection.to.connectorId === action.toConnectorId,
         )
@@ -314,6 +333,9 @@ export const applyDomainAction = (
 
     case "SET_FAN_DIRECTION": {
       const component = getComponentOrThrow(action.componentId, components);
+      if (component.type !== "FAN") {
+        throw new DomainCommandError("UNSUPPORTED_COMPONENT_TYPE", `${component.name} is not a fan`);
+      }
       const placement = state.placements.find((item) => item.componentId === action.componentId);
       if (!placement) {
         throw new DomainCommandError("COMPONENT_NOT_INSTALLED", `${component.name} is not installed`);
@@ -341,19 +363,37 @@ export const applyDomainAction = (
         throw new DomainCommandError("AUTO_FILL_NO_CHANGES", "Build already has all compatible slots filled for current case profile.");
       }
 
-      const nextPlacements = [...state.placements, ...recipe.placements];
-      const nextConnections = [...state.connections, ...recipe.connections];
-      const nextFanConfigs = [
-        ...state.fanConfigs.filter((fc) => !recipe.fanConfigs.some((rfc) => rfc.componentId === fc.componentId)),
-        ...recipe.fanConfigs,
-      ];
-
-      const proposedState: BuildState = {
-        ...state,
-        placements: nextPlacements,
-        connections: nextConnections,
-        fanConfigs: nextFanConfigs,
-      };
+      let proposedState = state;
+      try {
+        for (const placement of recipe.placements) {
+          proposedState = applyDomainAction(proposedState, {
+            type: placement.mountId === "case-root" ? "SELECT_CASE" : "INSTALL_COMPONENT",
+            componentId: placement.componentId,
+            ...(placement.mountId === "case-root" ? {} : { mountId: placement.mountId }),
+          } as DomainAction, { ...options, recordActivity: false }).state;
+        }
+        for (const connection of recipe.connections) {
+          proposedState = applyDomainAction(proposedState, {
+            type: "CONNECT_COMPONENTS",
+            fromComponentId: connection.from.componentId,
+            fromConnectorId: connection.from.connectorId,
+            toComponentId: connection.to.componentId,
+            toConnectorId: connection.to.connectorId,
+          }, { ...options, recordActivity: false }).state;
+        }
+        for (const config of recipe.fanConfigs) {
+          proposedState = applyDomainAction(proposedState, {
+            type: "SET_FAN_DIRECTION",
+            componentId: config.componentId,
+            direction: config.direction,
+          }, { ...options, recordActivity: false }).state;
+        }
+      } catch (error) {
+        throw new DomainCommandError(
+          "AUTO_FILL_BLOCKED",
+          `Auto-fill was rolled back: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
 
       const issues = validateBuild(proposedState);
       const hasErrors = issues.some((i) => i.severity === "ERROR");

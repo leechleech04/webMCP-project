@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
+import type { ReactNode } from "react";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 
 import { useBuildStore } from "../../store/buildStore";
 import { getActiveCaseProfile } from "../../domain/cases/getActiveCase";
-import type { CaseProfile } from "../../domain/cases/types";
 import { getRequiredCaseMountTransform } from "../../scene/caseMountTransforms";
+import { getCaseCameraPosition } from "../../scene/camera";
 import { deriveAirflowScene } from "../../domain/airflow/deriveAirflowScene";
 import { getCompatibleMountCandidates } from "../../domain/interaction/getCompatibleMounts";
 import { componentRegistry } from "../../domain/data/components";
@@ -26,11 +27,9 @@ export interface PcSceneProps {
 
 export type SceneAppearanceMode = "STUDIO" | "DARK";
 
-export const getCaseCameraPosition = (profile: CaseProfile): [number, number, number] => {
-  const [tx, ty, tz] = profile.camera.target;
-  const dist = profile.camera.distance;
-  return [tx + dist * 0.72, ty + dist * 0.52, tz + dist * 0.82];
-};
+function SelectableSceneModel({ children, onSelect }: { children: ReactNode; onSelect: () => void }) {
+  return <group onClick={(event) => { event.stopPropagation(); onSelect(); }}>{children}</group>;
+}
 
 function StudioEnvironment({ mode }: { mode: SceneAppearanceMode }) {
   if (mode === "DARK") {
@@ -85,7 +84,7 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
   }, [validationIssues]);
 
   const gpuInstalled = placements.some((placement) => placement.componentId.startsWith("gpu"));
-  const radiatorPlacement = placements.find((placement) => placement.componentId === "radiator-01");
+  const radiatorPlacement = placements.find((placement) => componentRegistry[placement.componentId]?.type === "RADIATOR");
 
   const [appearanceMode, setAppearanceMode] = useState<SceneAppearanceMode>("STUDIO");
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -93,10 +92,9 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
   const [isMoveArmed, setIsMoveArmed] = useState(false);
   const [hoveredMountId] = useState<string | null>(null);
   const [cameraResetKey, setCameraResetKey] = useState(0);
+  const [interactionError, setInteractionError] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const pointerDownPos = useRef<{ x: number; y: number } | null>(null);
-  const DRAG_THRESHOLD_PX = 6;
 
   const selectedPlacement = useMemo(
     () => placements.find((p) => p.componentId === selectedComponentId),
@@ -136,21 +134,6 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isMoveArmed, selectedComponentId, isFullscreen]);
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    pointerDownPos.current = { x: e.clientX, y: e.clientY };
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    if (!pointerDownPos.current) return;
-    const dx = Math.abs(e.clientX - pointerDownPos.current.x);
-    const dy = Math.abs(e.clientY - pointerDownPos.current.y);
-    pointerDownPos.current = null;
-
-    if (dx > DRAG_THRESHOLD_PX || dy > DRAG_THRESHOLD_PX) {
-      return;
-    }
-  };
-
   const handleSelectComponent = (componentId: string) => {
     if (componentId.startsWith("case-")) return;
     setSelectedComponentId((prev) => (prev === componentId ? null : componentId));
@@ -166,8 +149,10 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
       });
       setIsMoveArmed(false);
       setSelectedComponentId(null);
+      setInteractionError(null);
     } catch (err) {
       console.warn("Direct mount move failed:", err);
+      setInteractionError(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -177,8 +162,10 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
       removeComponent({ componentId: selectedPlacement.componentId });
       setSelectedComponentId(null);
       setIsMoveArmed(false);
+      setInteractionError(null);
     } catch (err) {
       console.warn("Remove component failed:", err);
+      setInteractionError(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -213,14 +200,18 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
             }
           : undefined
       }
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
       role="img"
       aria-label={t("scene.aria", {
         gpu: gpuInstalled ? t("scene.installed") : t("scene.notInstalled"),
         radiator: radiatorPlacement ? t("scene.installedAt", { mount: radiatorPlacement.mountId }) : t("scene.notInstalled"),
       })}
     >
+      {interactionError && (
+        <div className="scene-error" role="alert">
+          <span>{interactionError}</span>
+          <button type="button" onClick={() => setInteractionError(null)} aria-label={t("scene.dismissError")}>×</button>
+        </div>
+      )}
       <div
         style={{
           position: "absolute",
@@ -391,7 +382,7 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
 
       <Canvas
         key={cameraResetKey}
-        shadows
+        shadows="basic"
         camera={{ position: initialCameraPos, fov: activeProfile.camera.fov, near: 0.1, far: 120 }}
         gl={{
           antialias: true,
@@ -424,12 +415,16 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
             : (hasCollisionOrError || isSelected);
 
           return (
-            <Model
+            <SelectableSceneModel
               key={placement.componentId}
-              transform={transform}
-              highlight={isHighlighted}
-              component={componentRegistry[placement.componentId]}
-            />
+              onSelect={() => handleSelectComponent(placement.componentId)}
+            >
+              <Model
+                transform={transform}
+                highlight={isHighlighted}
+                component={componentRegistry[placement.componentId]}
+              />
+            </SelectableSceneModel>
           );
         })}
 

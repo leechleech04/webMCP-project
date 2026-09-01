@@ -11,7 +11,8 @@ vi.mock("@react-three/fiber", () => ({
   useFrame: vi.fn(),
   Canvas: ({ children }: { children?: ReactNode }) => {
     const components = Children.toArray(children).filter(
-      (child) => isValidElement(child) && typeof child.type !== "string",
+      (child) => isValidElement(child) && typeof child.type !== "string" &&
+        (child.type as { name?: string }).name !== "StudioEnvironment",
     );
 
     return <div data-r3f-canvas="true">{components}</div>;

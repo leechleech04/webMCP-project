@@ -4,6 +4,7 @@ import { caseProfiles } from "../../domain/cases/caseProfiles";
 import { selectCase } from "../../domain/commands/selectCase";
 import { useBuildStore } from "../../store/buildStore";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { useTimeoutQueue } from "../useTimeoutQueue";
 
 export function CasePicker({ dragging }: { dragging?: boolean }) {
   const { t, caseName } = useLanguage();
@@ -11,6 +12,7 @@ export function CasePicker({ dragging }: { dragging?: boolean }) {
   const active = useMemo(() => getActiveCaseProfile(state), [state]);
   const [message, setMessage] = useState<string | null>(null);
   const [errorDetail, setErrorDetail] = useState<string | null>(null);
+  const schedule = useTimeoutQueue();
 
   const onSelect = (componentId: string) => {
     if (dragging) {
@@ -21,9 +23,9 @@ export function CasePicker({ dragging }: { dragging?: boolean }) {
       selectCase({ componentId });
       setMessage(t("case.switched", { case: caseName(caseProfiles.find((p) => p.componentId === componentId)?.label ?? componentId) }));
       setErrorDetail(null);
-      setTimeout(() => setMessage(null), 2200);
-    } catch (err: any) {
-      const msg = err?.message ?? String(err);
+      schedule(() => setMessage(null), 2200);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
       setMessage(msg);
       setErrorDetail(msg);
     }
@@ -95,6 +97,7 @@ export function CasePicker({ dragging }: { dragging?: boolean }) {
               type="button"
               onClick={() => onSelect(p.componentId)}
               disabled={dragging}
+              aria-pressed={isActive}
               style={{
                 padding: "0.45rem 0.5rem",
                 borderRadius: "8px",

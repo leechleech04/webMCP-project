@@ -68,9 +68,9 @@ export function ValidationPanel({ onSelectionChange }: ValidationPanelProps) {
                 <strong>{issue.id === "GPU_RADIATOR_COLLISION" ? t("validation.collision") : language === "ko" ? localizeIssueTitle(issue.id) : issue.id}</strong>
                 {issue.id === "GPU_RADIATOR_COLLISION" ? (
                   <span className="issue-details">
-                    <span>{t("validation.gpuLength")}</span>
-                    <span>{t("validation.clearance")}</span>
-                    <span>{t("validation.margin")}</span>
+                    <span>{t("validation.gpuLengthValue", { value: Number(issue.details?.gpuLengthMm ?? 0) })}</span>
+                    <span>{t("validation.clearanceValue", { value: Number(issue.details?.availableClearanceMm ?? 0) })}</span>
+                    <span>{t("validation.marginValue", { value: Number(issue.details?.marginMm ?? 0) })}</span>
                   </span>
                 ) : (
                   <span className="issue-details"><span>{language === "ko" ? localizeIssue(issue.message) : issue.message}</span></span>
@@ -109,4 +109,4 @@ const localizeIssueTitle = (id: string) => ({
   PSU_INSUFFICIENT_CAPACITY: "파워 용량 부족",
   PSU_GPU_CONNECTOR_MISMATCH: "GPU 전원 커넥터 불일치",
   GPU_CABLE_CLEARANCE: "GPU 케이블 여유 공간 부족",
-}[id] ?? id);
+}[id.split(":")[0]] ?? id);

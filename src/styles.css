@@ -304,6 +304,68 @@ h2 {
   font-size: 0.85rem;
 }
 
+.connection-panel {
+  margin-top: 0.65rem;
+  border-top: 1px solid #28354a;
+  padding-top: 0.75rem;
+}
+
+.connection-list {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.connection-action,
+.connection-existing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.7rem;
+  text-align: left;
+}
+
+.connection-existing {
+  border: 1px solid #28354a;
+  border-radius: 8px;
+  color: #cbd5e1;
+  background: #111827;
+}
+
+.connection-existing button {
+  padding: 0.25rem 0.4rem;
+  font-size: 0.65rem;
+}
+
+.connection-error {
+  color: #fca5a5;
+  font-size: 0.72rem;
+}
+
+.scene-error {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  max-width: min(32rem, calc(100% - 1.5rem));
+  border: 1px solid rgb(239 68 68 / 55%);
+  border-radius: 10px;
+  padding: 0.6rem 0.7rem;
+  color: #fecaca;
+  background: rgb(69 10 10 / 92%);
+  font-size: 0.76rem;
+}
+
+.scene-error button {
+  padding: 0.1rem 0.4rem;
+}
+
 .controls-panel {
   padding: 1rem;
   border: 1px solid #28354a;
@@ -467,8 +529,11 @@ h2 {
 .activity-list {
   display: grid;
   gap: 0.65rem;
+  max-height: 24rem;
   margin: 0;
-  padding: 0;
+  padding: 0 0.35rem 0 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
   list-style: none;
 }
 
@@ -825,6 +890,16 @@ button.secondary {
   color: #5d5b53;
 }
 
+.scene-failure {
+  display: grid;
+  min-height: 540px;
+  place-content: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  color: #fecaca;
+  text-align: center;
+}
+
 .controls-panel {
   max-height: 680px;
   overflow-y: auto;
@@ -973,7 +1048,8 @@ button.secondary {
   text-align: left;
 }
 
-.catalog-tabs button[style*="linear-gradient"] {
+.catalog-tabs button[style*="linear-gradient"],
+.catalog-tabs button[aria-selected="true"] {
   border-color: #282822 !important;
   color: #fffaf3 !important;
   background: #282822 !important;
@@ -2545,7 +2621,8 @@ button.secondary {
   height: 1rem;
 }
 
-.catalog-tabs button[style*="linear-gradient"] .category-icon-wrap {
+.catalog-tabs button[style*="linear-gradient"] .category-icon-wrap,
+.catalog-tabs button[aria-selected="true"] .category-icon-wrap {
   color: #ffe8c7 !important;
   background: rgb(255 239 215 / 12%);
 }

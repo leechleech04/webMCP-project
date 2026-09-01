@@ -69,6 +69,13 @@ export const generateAutoFillRecipe = (state: BuildState): AutoFillPlan => {
     }
   }
 
+  // 3b. Boot storage
+  if (!occupiedMounts.has("storage-m2-1") && profile.supportedMountIds.includes("storage-m2-1") && !installedComponents.has("storage-nvme-01")) {
+    proposedPlacements.push({ componentId: "storage-nvme-01", mountId: "storage-m2-1" });
+    occupiedMounts.add("storage-m2-1");
+    installedComponents.add("storage-nvme-01");
+  }
+
   // 4. GPU (check clearance)
   if (!occupiedMounts.has("pcie-slot-1") && profile.supportedMountIds.includes("pcie-slot-1")) {
     const limit = profile.clearanceLimits["pcie-slot-1"];
@@ -112,23 +119,19 @@ export const generateAutoFillRecipe = (state: BuildState): AutoFillPlan => {
   }
 
   // 7. Fans
-  const fanMounts = profile.fanMounts.filter((m) => !occupiedMounts.has(m.mountId));
+  const fanMounts = profile.fanMounts.filter((m) => !occupiedMounts.has(m.mountId) && Boolean(mountRegistry[m.mountId]));
   for (const fm of fanMounts) {
-    let fanId = fm.mountId.replace("fan-", "fan-") + "-01";
-    if (!componentRegistry[fanId]) {
-      fanId = "fan-top-01";
-    }
-    if (installedComponents.has(fanId)) {
-      const candidates = Object.keys(componentRegistry).filter((id) => id.startsWith("fan-") && !installedComponents.has(id));
-      if (candidates.length > 0) fanId = candidates[0];
-      else continue;
-    }
+    const fanId = Object.values(componentRegistry)
+      .filter((component) => component.type === "FAN" && !installedComponents.has(component.id))
+      .sort((a, b) => Math.abs(a.dimensions.width - fm.sizeMm) - Math.abs(b.dimensions.width - fm.sizeMm))
+      .find((component) => component.dimensions.width <= fm.sizeMm)?.id;
+    if (!fanId) continue;
     proposedPlacements.push({ componentId: fanId, mountId: fm.mountId });
     occupiedMounts.add(fm.mountId);
     installedComponents.add(fanId);
 
     const dir = fm.recommendedDirection ?? getRecommendedFanDirection(fm.mountId);
-    proposedFanConfigs.push({ componentId: fanId, direction: dir });
+    proposedFanConfigs.push({ componentId: fanId, direction: dir, mountId: fm.mountId });
   }
 
   // 8. Power Cables
@@ -139,7 +142,7 @@ export const generateAutoFillRecipe = (state: BuildState): AutoFillPlan => {
 
   if (psuPlacement && mbPlacement) {
     const atxId = `${psuPlacement.componentId}:psu-atx-01->${mbPlacement.componentId}:motherboard-atx`;
-    if (!state.connections.some((c) => c.id === atxId)) {
+    if (!state.connections.some((c) => c.to.componentId === mbPlacement.componentId && c.to.connectorId === "motherboard-atx")) {
       proposedConnections.push({
         id: atxId,
         from: { componentId: psuPlacement.componentId, connectorId: "psu-atx-01" },
@@ -148,7 +151,7 @@ export const generateAutoFillRecipe = (state: BuildState): AutoFillPlan => {
     }
 
     const epsId = `${psuPlacement.componentId}:psu-eps-01->${mbPlacement.componentId}:motherboard-eps`;
-    if (!state.connections.some((c) => c.id === epsId)) {
+    if (!state.connections.some((c) => c.to.componentId === mbPlacement.componentId && c.to.connectorId === "motherboard-eps")) {
       proposedConnections.push({
         id: epsId,
         from: { componentId: psuPlacement.componentId, connectorId: "psu-eps-01" },
@@ -159,7 +162,7 @@ export const generateAutoFillRecipe = (state: BuildState): AutoFillPlan => {
 
   if (psuPlacement && gpuPlacement) {
     const id = `${psuPlacement.componentId}:psu-gpu-01->${gpuPlacement.componentId}:gpu-power`;
-    if (!state.connections.some((c) => c.id === id)) {
+    if (!state.connections.some((c) => c.to.componentId === gpuPlacement.componentId && c.to.connectorId === "gpu-power")) {
       proposedConnections.push({
         id,
         from: { componentId: psuPlacement.componentId, connectorId: "psu-gpu-01" },

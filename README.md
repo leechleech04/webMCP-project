@@ -23,13 +23,16 @@ Supports 4 distinct case profiles with unique clearance constraints, camera orbi
 
 ### 2. Deterministic Domain & Transaction Engine
 - **Central Mutation Path**: Live topology changes execute through `commitDomainAction`, ensuring monotonic revision increments and atomic transitions.
-- **Agent Undo & Stale Protection**: AGENT actions snapshot topology state for undo (`undoLastAgentAction`). Any subsequent user change renders the undo stale (`UNDO_STALE`), preventing accidental loss of user edits.
+- **Atomic Commands & History**: Composite actions (including dual-channel RAM and auto-fill) commit all-or-nothing. User and agent changes support undo/redo while agent-tool stale protection prevents accidental loss of newer user edits.
 - **Pure Simulation**: `simulateChanges` evaluates multi-step actions using pure transitions (`applyDomainAction`) without incrementing revision or mutating store state.
 - **Build Assessment Layer**: Categorizes build readiness into `READY`, `INCOMPLETE`, and `CONFLICT` without breaking constraint validation contracts.
+- **Platform Validation**: Checks active-case mounts and dimensions, motherboard form factor, CPU socket, RAM generation, GPU/radiator clearance, PSU capacity/connectors, and required platform dependencies.
+- **Storage & Cabling**: Includes NVMe storage and an in-app connector panel for creating and removing compatible cables.
+- **Persistence**: Automatically restores the last valid local build and supports validated JSON import/export.
 
 ### 3. Complete 13-Tool WebMCP Interface
 Exposes 13 canonical tools registered via `document.modelContext` with strict schema validation (`additionalProperties: false`) and per-tool `AbortController` lifecycles:
-1. `get_build_state` (readOnly): Returns topology revision, placements, connections, fanConfigs, activity log, catalog summary, and undo availability.
+1. `get_build_state` (readOnly): Returns topology revision, placements, connections, fanConfigs, bounded activity log, catalog summary, and undo/redo availability.
 2. `get_available_mounts` (readOnly): Lists unoccupied mounts filtered by active case profile, occupancy, component type, and dimensions.
 3. `validate_build` (readOnly): Pure validation returning clearance collisions, power capacity, and airflow warnings.
 4. `install_component`: Installs a component into an unoccupied compatible mount.
@@ -45,4 +48,14 @@ Exposes 13 canonical tools registered via `document.modelContext` with strict sc
 
 ### 4. 3D Visualization & Performance
 - **Visuals**: Dual-RAM parallel placement, CPU waterblock with coolant tubes, animated 9-blade fan rotors, intake/exhaust airflow direction visualization, interactive 3D camera controls.
+- **Interaction & Recovery**: Clicking a 3D component selects it, and scene failures render a recoverable in-app error state instead of only logging to the console.
 - **Performance**: Lazy-loaded `PcScene` with manual code-splitting chunks (`three`, `react-three`) to minimize initial bundle size and prevent layout shifts.
+
+### 5. UI Reliability
+- The activity timeline is capped at 200 entries and becomes internally scrollable at 24rem, so it cannot expand the page indefinitely.
+- Catalog tabs expose proper tab semantics, active case buttons expose pressed state, and transient UI timers are cleaned up on unmount.
+- Development-only diagnostics are excluded from production UI.
+
+## Verification
+
+The automated suite covers command invariants, constraints, WebMCP contracts, persistence, pure simulation, atomic rollback, undo/redo, activity bounding, and scene behavior. Run `npm test` followed by `npm run build` before release.

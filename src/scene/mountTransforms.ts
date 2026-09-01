@@ -81,6 +81,16 @@ export const mountTransforms: Readonly<Record<string, SceneTransform>> = {
     rotation: [Math.PI / 2, 0, 0],
     scale: [1, 1, 1],
   },
+  "storage-m2-1": {
+    position: [-0.25, 4.0, 0.6],
+    rotation: [0, 0, Math.PI / 2],
+    scale: [1, 1, 1],
+  },
+  "fan-bottom-2": {
+    position: [0, 0.25, -1.4],
+    rotation: [Math.PI / 2, 0, 0],
+    scale: [1, 1, 1],
+  },
   "fan-side-1": {
     position: [2.35, 4.5, 0],
     rotation: [0, Math.PI / 2, 0],

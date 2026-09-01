@@ -1,5 +1,4 @@
 import { getBuildState } from "../store/buildStore";
-import { recordActivity } from "../domain/commands/recordActivity";
 import { validateBuild } from "../domain/constraints/validateBuild";
 import type { DomainAction } from "../domain/types/action";
 import { componentRegistry } from "../domain/data/components";
@@ -14,6 +13,8 @@ import { simulateChanges } from "../domain/simulation/simulateChanges";
 import { connectComponents } from "../domain/commands/connectComponents";
 import {
   canUndoLastAgentAction,
+  canRedoLastAction,
+  canUndoLastAction,
   getTopologyRevision,
   undoLastAgentAction,
 } from "../domain/commands/commitDomainAction";
@@ -25,6 +26,8 @@ import type { ToolClient } from "./types";
 export interface BuildStateToolResult extends BuildState {
   revision: number;
   canUndoLastAgentAction: boolean;
+  canUndoLastAction: boolean;
+  canRedoLastAction: boolean;
   components: Array<{
     id: string;
     type: string;
@@ -40,6 +43,8 @@ export const getBuildStateTool = (): BuildStateToolResult => {
     ...state,
     revision: getTopologyRevision(),
     canUndoLastAgentAction: canUndoLastAgentAction(),
+    canUndoLastAction: canUndoLastAction(),
+    canRedoLastAction: canRedoLastAction(),
     components: Object.values(componentRegistry).map((component) => ({
       id: component.id,
       type: component.type,
@@ -98,12 +103,7 @@ export const installComponentTool = (input: { componentId: string; mountId: stri
 };
 
 export const simulateChangesTool = (input: { actions: DomainAction[] }): ReturnType<typeof simulateChanges> => {
-  const result = simulateChanges(getBuildState(), input.actions);
-  if (result.ok) {
-    const last = input.actions[input.actions.length - 1];
-    recordActivity({ actor: "AGENT", message: `Simulated ${last?.type ?? "build"}` });
-  }
-  return result;
+  return simulateChanges(getBuildState(), input.actions);
 };
 
 export const removeComponentTool = (input: { componentId: string }): ActionToolResult => {
