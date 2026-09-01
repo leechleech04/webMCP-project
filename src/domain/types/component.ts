@@ -1,6 +1,7 @@
 export type ComponentType =
   | "CASE"
   | "MOTHERBOARD"
+  | "CPU"
   | "GPU"
   | "RAM"
   | "RADIATOR"

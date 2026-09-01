@@ -1,6 +1,6 @@
-import { buildStore } from "../../store/buildStore";
 import type { Connection } from "../types/connection";
-import { applyDomainAction, type DomainTransitionOptions } from "./transition";
+import { commitDomainAction } from "./commitDomainAction";
+import type { DomainTransitionOptions } from "./transition";
 
 export interface ConnectComponentsInput {
   fromComponentId: string;
@@ -13,11 +13,9 @@ export const connectComponents = (
   input: ConnectComponentsInput,
   options: DomainTransitionOptions = {},
 ): Connection => {
-  const transition = applyDomainAction(
-    buildStore.getState(),
+  const transition = commitDomainAction(
     { type: "CONNECT_COMPONENTS", ...input },
     options,
   );
-  buildStore.setState(transition.state);
   return transition.result as Connection;
 };

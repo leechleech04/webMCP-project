@@ -8,6 +8,7 @@ import { removeComponent } from "../../domain/commands/removeComponent";
 import { buildStore, resetBuildStore } from "../../store/buildStore";
 
 vi.mock("@react-three/fiber", () => ({
+  useFrame: vi.fn(),
   Canvas: ({ children }: { children?: ReactNode }) => {
     const components = Children.toArray(children).filter(
       (child) => isValidElement(child) && typeof child.type !== "string",
@@ -162,7 +163,7 @@ describe("PcScene mount-based placement", () => {
     expect(frontHtml).toContain('data-scene-object="radiator-01"');
     expect(frontHtml).toContain('data-mount-position="0,4.9,4.35"');
     expect(frontHtml).toContain(
-      `data-mount-rotation="0,0,${Math.PI / 2}"`,
+      `data-mount-rotation="0,0,0"`,
     );
 
     moveComponent({
@@ -179,7 +180,7 @@ describe("PcScene mount-based placement", () => {
     expect([...topHtml.matchAll(/data-scene-object="radiator-01"/g)]).toHaveLength(1);
     expect(topHtml).toContain('data-mount-position="0,9.3,0"');
     expect(topHtml).toContain(
-      `data-mount-rotation="${Math.PI / 2},0,${Math.PI / 2}"`,
+      `data-mount-rotation="${Math.PI / 2},0,0"`,
     );
     expect(topHtml).toContain("Radiator is installed at radiator-top");
   });
@@ -190,7 +191,7 @@ describe("PcScene mount-based placement", () => {
 
     const html = renderScene({ highlightedComponentIds: [GPU_ID, RADIATOR_ID] });
     expect(html).toContain('data-scene-object="gpu-01" data-mount-position="-0.5,3,0" data-mount-rotation="0,0,0" data-highlight="true"');
-    expect(html).toContain('data-scene-object="radiator-01" data-mount-position="0,4.9,4.35" data-mount-rotation="0,0,1.5707963267948966" data-highlight="true"');
+    expect(html).toContain('data-scene-object="radiator-01" data-mount-position="0,4.9,4.35" data-mount-rotation="0,0,0" data-highlight="true"');
 
     const gpuOnly = renderScene({ highlightedComponentIds: [GPU_ID] });
     expect(gpuOnly).toContain('data-scene-object="gpu-01"');

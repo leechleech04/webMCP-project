@@ -34,10 +34,27 @@ export interface SetFanDirectionAction {
   direction: "INTAKE" | "EXHAUST";
 }
 
+export interface SelectCaseAction {
+  type: "SELECT_CASE";
+  componentId: string;
+}
+
+export interface AutoFillBuildAction {
+  type: "AUTO_FILL_BUILD";
+}
+
+export interface ClearBuildAction {
+  type: "CLEAR_BUILD";
+  confirm: boolean;
+}
+
 export type DomainAction =
   | InstallComponentAction
   | RemoveComponentAction
   | MoveComponentAction
   | ConnectComponentsAction
   | DisconnectComponentsAction
-  | SetFanDirectionAction;
+  | SetFanDirectionAction
+  | SelectCaseAction
+  | AutoFillBuildAction
+  | ClearBuildAction;

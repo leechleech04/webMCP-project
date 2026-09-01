@@ -14,6 +14,7 @@ import { componentRegistry } from "../data/components";
 import { installComponent } from "./installComponent";
 import { moveComponent } from "./moveComponent";
 import { removeComponent } from "./removeComponent";
+import { connectComponents } from "./connectComponents";
 
 describe("build commands", () => {
   beforeEach(() => {
@@ -234,6 +235,125 @@ describe("build commands", () => {
     ).toThrowError(
       expect.objectContaining<Partial<DomainCommandError>>({
         code: "COMPONENT_DOES_NOT_FIT",
+      }),
+    );
+  });
+
+  it("rejects connector type mismatches atomically with a stable error", () => {
+    buildStore.setState({
+      placements: [
+        { componentId: "psu-01", mountId: "psu-bay" },
+        { componentId: "gpu-01", mountId: "pcie-slot-1" },
+      ],
+      connections: [],
+      fanConfigs: [],
+      activity: [],
+    });
+    const before = getBuildState();
+
+    expect(() =>
+      connectComponents({
+        fromComponentId: "psu-01",
+        fromConnectorId: "psu-atx-01",
+        toComponentId: "gpu-01",
+        toConnectorId: "gpu-power",
+      }),
+    ).toThrowError(
+      expect.objectContaining<Partial<DomainCommandError>>({
+        code: "CONNECTOR_TYPE_MISMATCH",
+      }),
+    );
+    expect(getBuildState()).toEqual(before);
+  });
+
+  it("rejects a second connection to an occupied input atomically", () => {
+    buildStore.setState({
+      placements: [
+        { componentId: "psu-01", mountId: "psu-bay" },
+        { componentId: "psu-sfx-01", mountId: "psu-secondary" },
+        { componentId: "motherboard-01", mountId: "motherboard-tray" },
+      ],
+      connections: [],
+      fanConfigs: [],
+      activity: [],
+    });
+    const input = {
+      fromComponentId: "psu-01",
+      fromConnectorId: "psu-atx-01",
+      toComponentId: "motherboard-01",
+      toConnectorId: "motherboard-atx",
+    };
+
+    connectComponents(input);
+    const beforeRejectedConnection = getBuildState();
+
+    expect(() => connectComponents(input)).toThrowError(
+      expect.objectContaining<Partial<DomainCommandError>>({
+        code: "CONNECTION_ALREADY_EXISTS",
+      }),
+    );
+    expect(() => connectComponents({
+      ...input,
+      fromComponentId: "psu-sfx-01",
+    })).toThrowError(
+      expect.objectContaining<Partial<DomainCommandError>>({
+        code: "CONNECTOR_OCCUPIED",
+      }),
+    );
+    expect(getBuildState()).toEqual(beforeRejectedConnection);
+  });
+
+  it("enforces connector validation precedence: not found -> direction -> type -> duplicate -> occupied", () => {
+    buildStore.setState({
+      placements: [
+        { componentId: "psu-01", mountId: "psu-bay" },
+        { componentId: "motherboard-01", mountId: "motherboard-tray" },
+        { componentId: "gpu-01", mountId: "pcie-slot-1" },
+      ],
+      connections: [],
+      fanConfigs: [],
+      activity: [],
+    });
+
+    // 1. Missing connector
+    expect(() =>
+      connectComponents({
+        fromComponentId: "psu-01",
+        fromConnectorId: "nonexistent-connector",
+        toComponentId: "motherboard-01",
+        toConnectorId: "motherboard-atx",
+      }),
+    ).toThrowError(
+      expect.objectContaining<Partial<DomainCommandError>>({
+        code: "CONNECTOR_NOT_FOUND",
+      }),
+    );
+
+    // 2. Invalid direction (INPUT -> INPUT or OUTPUT -> OUTPUT)
+    expect(() =>
+      connectComponents({
+        fromComponentId: "motherboard-01",
+        fromConnectorId: "motherboard-atx", // INPUT
+        toComponentId: "gpu-01",
+        toConnectorId: "gpu-power", // INPUT
+      }),
+    ).toThrowError(
+      expect.objectContaining<Partial<DomainCommandError>>({
+        code: "CONNECTOR_DIRECTION_INVALID",
+      }),
+    );
+
+    // 3. Type mismatch
+    expect(() =>
+      connectComponents({
+        fromComponentId: "psu-01",
+        fromConnectorId: "psu-atx-01", // ATX_24PIN
+        toComponentId: "gpu-01",
+        toConnectorId: "gpu-power", // 12V_2X6
+      }),
+    ).toThrowError(
+      expect.objectContaining<Partial<DomainCommandError>>({
+        code: "CONNECTOR_TYPE_MISMATCH",
       }),
     );
   });

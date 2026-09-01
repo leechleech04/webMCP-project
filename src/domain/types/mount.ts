@@ -1,7 +1,10 @@
 import type { ComponentType } from "./component";
 
 export type MountType =
+  | "CASE"
   | "MOTHERBOARD"
+  | "CPU"
+  | "RAM"
   | "PCIE"
   | "RADIATOR"
   | "PSU"

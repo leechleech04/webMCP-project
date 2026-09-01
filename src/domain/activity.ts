@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   ActivityActor,
   ActivityEntry,
   BuildState,
@@ -14,13 +14,27 @@ let activitySequence = 0;
 export const createActivityEntry = ({
   actor,
   message,
+  affectedComponentIds,
+  undoable,
   now = () => new Date(),
   createId,
-}: ActivitySource & { actor: ActivityActor; message: string }): ActivityEntry => {
+}: ActivitySource & {
+  actor: ActivityActor;
+  message: string;
+  affectedComponentIds?: string[];
+  undoable?: boolean;
+}): ActivityEntry => {
   const createdAt = now();
   const id = createId?.() ?? `activity-${createdAt.getTime()}-${activitySequence++}`;
 
-  return { id, actor, message, createdAt: createdAt.toISOString() };
+  return {
+    id,
+    actor,
+    message,
+    createdAt: createdAt.toISOString(),
+    affectedComponentIds: affectedComponentIds ? [...affectedComponentIds] : undefined,
+    undoable,
+  };
 };
 
 export const appendActivity = (
@@ -39,5 +53,10 @@ export const cloneBuildState = (state: BuildState): BuildState => ({
     to: { ...connection.to },
   })),
   fanConfigs: state.fanConfigs.map((config) => ({ ...config })),
-  activity: state.activity.map((entry) => ({ ...entry })),
+  activity: state.activity.map((entry) => ({
+    ...entry,
+    affectedComponentIds: entry.affectedComponentIds
+      ? [...entry.affectedComponentIds]
+      : undefined,
+  })),
 });

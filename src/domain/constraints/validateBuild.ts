@@ -4,6 +4,7 @@ import type { BuildState } from "../types/build";
 import type { ComponentRegistry } from "../types/component";
 import type { MountRegistry } from "../types/mount";
 import { validateAirflow } from "./airflow";
+import { validateCaseClearance } from "./caseClearance";
 import { validateGpuCable } from "./gpuCableClearance";
 import { validateGpuRadiatorClearance } from "./gpuRadiatorClearance";
 import { validatePsu } from "./psuPower";
@@ -17,6 +18,7 @@ export const validateBuild = (
   state: BuildState,
   context: ValidationContext = {},
 ) => [
+  ...validateCaseClearance(state, context),
   ...validateGpuRadiatorClearance(state, context),
   ...validateGpuCable(state, context),
   ...validatePsu(state, context),

@@ -16,6 +16,10 @@ import {
   getComponentOrThrow,
   getMountOrThrow,
 } from "./commandGuards";
+import { getRecommendedFanDirection } from "../cases/caseProfiles";
+import { getActiveCaseProfile } from "../cases/getActiveCase";
+import { generateAutoFillRecipe } from "../recipes/autoFillRecipe";
+import { validateBuild } from "../constraints/validateBuild";
 
 export interface DomainTransitionOptions extends ActivitySource {
   componentRegistry?: ComponentRegistry;
@@ -79,6 +83,45 @@ export const applyDomainAction = (
   const mounts = options.mountRegistry ?? mountRegistry;
 
   switch (action.type) {
+    case "SELECT_CASE": {
+      const component = getComponentOrThrow(action.componentId, components);
+      if (component.type !== "CASE") {
+        throw new DomainCommandError("INCOMPATIBLE_CASE", `${component.name} is not a CASE component`);
+      }
+
+      const profile = getActiveCaseProfile({
+        ...state,
+        placements: [{ componentId: action.componentId, mountId: "case-root" }],
+      });
+
+      const incompatible = state.placements.filter((p) => {
+        if (p.mountId === "case-root") return false;
+        return !profile.supportedMountIds.includes(p.mountId);
+      });
+
+      if (incompatible.length > 0) {
+        throw new DomainCommandError(
+          "INCOMPATIBLE_CASE",
+          `Cannot switch to ${component.name}: ${incompatible.map((p) => p.componentId).join(", ")} are incompatible with the selected case.`
+        );
+      }
+
+      const nextPlacements = [
+        ...state.placements.filter((p) => p.mountId !== "case-root"),
+        { componentId: action.componentId, mountId: "case-root" },
+      ];
+
+      const placement = { componentId: action.componentId, mountId: "case-root" };
+      return {
+        state: withActivity(
+          { ...state, placements: nextPlacements },
+          `Case switched to ${component.name}`,
+          options
+        ),
+        result: placement,
+      };
+    }
+
     case "INSTALL_COMPONENT": {
       const component = getComponentOrThrow(action.componentId, components);
       const mount = getMountOrThrow(action.mountId, mounts);
@@ -95,9 +138,19 @@ export const applyDomainAction = (
 
       assertComponentFitsMount(component, mount);
       const placement = { componentId: action.componentId, mountId: action.mountId };
+
+      let nextFanConfigs = state.fanConfigs;
+      if (component.type === "FAN") {
+        const defaultDir = getRecommendedFanDirection(action.mountId);
+        nextFanConfigs = [
+          ...state.fanConfigs.filter((c) => c.componentId !== action.componentId),
+          { componentId: action.componentId, direction: defaultDir, mountId: action.mountId },
+        ];
+      }
+
       return {
         state: withActivity(
-          { ...state, placements: [...state.placements, placement] },
+          { ...state, placements: [...state.placements, placement], fanConfigs: nextFanConfigs },
           `${component.name} installed at ${mountLabel(action.mountId)}`,
           options,
         ),
@@ -127,6 +180,20 @@ export const applyDomainAction = (
 
       assertComponentFitsMount(component, mount);
       const placement = { componentId: action.componentId, mountId: action.mountId };
+
+      let nextFanConfigs = state.fanConfigs;
+      if (component.type === "FAN") {
+        const existingCfg = state.fanConfigs.find((c) => c.componentId === action.componentId);
+        nextFanConfigs = [
+          ...state.fanConfigs.filter((c) => c.componentId !== action.componentId),
+          {
+            componentId: action.componentId,
+            direction: existingCfg?.direction ?? getRecommendedFanDirection(action.mountId),
+            mountId: action.mountId,
+          },
+        ];
+      }
+
       return {
         state: withActivity(
           {
@@ -134,6 +201,7 @@ export const applyDomainAction = (
             placements: state.placements.map((item) =>
               item.componentId === action.componentId ? placement : item,
             ),
+            fanConfigs: nextFanConfigs,
           },
           `${component.name} moved to ${mountLabel(action.mountId)}`,
           options,
@@ -188,11 +256,32 @@ export const applyDomainAction = (
       const fromConnector = requireConnector(action.fromComponentId, action.fromConnectorId, components);
       const toConnector = requireConnector(action.toComponentId, action.toConnectorId, components);
       if (fromConnector.direction !== "OUTPUT" || toConnector.direction !== "INPUT") {
-        throw new DomainCommandError("CONNECTOR_NOT_FOUND", "Connections must run from an output to an input");
+        throw new DomainCommandError(
+          "CONNECTOR_DIRECTION_INVALID",
+          "Connections must run from an output to an input",
+        );
+      }
+      if (fromConnector.type !== toConnector.type) {
+        throw new DomainCommandError(
+          "CONNECTOR_TYPE_MISMATCH",
+          `Cannot connect ${fromConnector.type} to ${toConnector.type}`,
+        );
       }
       const id = `${action.fromComponentId}:${action.fromConnectorId}->${action.toComponentId}:${action.toConnectorId}`;
       if (state.connections.some((connection) => connection.id === id)) {
         throw new DomainCommandError("CONNECTION_ALREADY_EXISTS", `Connection ${id} already exists`);
+      }
+      if (
+        state.connections.some(
+          (connection) =>
+            connection.to.componentId === action.toComponentId &&
+            connection.to.connectorId === action.toConnectorId,
+        )
+      ) {
+        throw new DomainCommandError(
+          "CONNECTOR_OCCUPIED",
+          `${action.toConnectorId} is already connected`,
+        );
       }
       const connection = {
         id,
@@ -225,10 +314,11 @@ export const applyDomainAction = (
 
     case "SET_FAN_DIRECTION": {
       const component = getComponentOrThrow(action.componentId, components);
-      if (!state.placements.some((item) => item.componentId === action.componentId)) {
+      const placement = state.placements.find((item) => item.componentId === action.componentId);
+      if (!placement) {
         throw new DomainCommandError("COMPONENT_NOT_INSTALLED", `${component.name} is not installed`);
       }
-      const config = { componentId: action.componentId, direction: action.direction };
+      const config = { componentId: action.componentId, direction: action.direction, mountId: placement.mountId };
       return {
         state: withActivity(
           {
@@ -242,6 +332,92 @@ export const applyDomainAction = (
           options,
         ),
         result: config,
+      };
+    }
+
+    case "AUTO_FILL_BUILD": {
+      const recipe = generateAutoFillRecipe(state);
+      if (recipe.placements.length === 0 && recipe.connections.length === 0 && recipe.fanConfigs.length === 0) {
+        throw new DomainCommandError("AUTO_FILL_NO_CHANGES", "Build already has all compatible slots filled for current case profile.");
+      }
+
+      const nextPlacements = [...state.placements, ...recipe.placements];
+      const nextConnections = [...state.connections, ...recipe.connections];
+      const nextFanConfigs = [
+        ...state.fanConfigs.filter((fc) => !recipe.fanConfigs.some((rfc) => rfc.componentId === fc.componentId)),
+        ...recipe.fanConfigs,
+      ];
+
+      const proposedState: BuildState = {
+        ...state,
+        placements: nextPlacements,
+        connections: nextConnections,
+        fanConfigs: nextFanConfigs,
+      };
+
+      const issues = validateBuild(proposedState);
+      const hasErrors = issues.some((i) => i.severity === "ERROR");
+      const validation = { valid: !hasErrors, issues };
+
+      const outcome = {
+        formFactor: recipe.formFactor,
+        appliedPlacements: recipe.placements,
+        appliedConnections: recipe.connections,
+        appliedFanConfigs: recipe.fanConfigs,
+        skippedMounts: [],
+        validation,
+      };
+
+      return {
+        state: withActivity(
+          proposedState,
+          `Auto-filled build for ${recipe.formFactor}: +${recipe.placements.length} components, +${recipe.connections.length} cables, +${recipe.fanConfigs.length} fan directions`,
+          options,
+        ),
+        result: outcome,
+      };
+    }
+
+    case "CLEAR_BUILD": {
+      if (!action.confirm) {
+        throw new DomainCommandError("CONFIRMATION_REQUIRED", "Clearing build requires explicit confirmation ({ confirm: true }).");
+      }
+
+      const activeCase = state.placements.find((p) => p.mountId === "case-root");
+      const nonCasePlacements = state.placements.filter((p) => p.mountId !== "case-root");
+
+      if (nonCasePlacements.length === 0 && state.connections.length === 0 && state.fanConfigs.length === 0) {
+        throw new DomainCommandError("CLEAR_BUILD_NO_CHANGES", "Build is already empty. Nothing to clear.");
+      }
+
+      const preservedPlacements = activeCase ? [activeCase] : [{ componentId: "case-01", mountId: "case-root" }];
+
+      const proposedState: BuildState = {
+        ...state,
+        placements: preservedPlacements,
+        connections: [],
+        fanConfigs: [],
+      };
+
+      const issues = validateBuild(proposedState);
+      const hasErrors = issues.some((i) => i.severity === "ERROR");
+      const validation = { valid: !hasErrors, issues };
+
+      const outcome = {
+        clearedComponentsCount: nonCasePlacements.length,
+        clearedConnectionsCount: state.connections.length,
+        clearedFanConfigsCount: state.fanConfigs.length,
+        activeCasePreserved: preservedPlacements[0],
+        validation,
+      };
+
+      return {
+        state: withActivity(
+          proposedState,
+          `Cleared build: removed ${nonCasePlacements.length} components, ${state.connections.length} cables. Case preserved.`,
+          options,
+        ),
+        result: outcome,
       };
     }
   }

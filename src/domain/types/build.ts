@@ -6,6 +6,7 @@ export type FanDirection = "INTAKE" | "EXHAUST";
 export interface FanConfig {
   componentId: string;
   direction: FanDirection;
+  mountId?: string;
 }
 
 export type ActivityActor = "USER" | "AGENT" | "SYSTEM";
@@ -15,6 +16,10 @@ export interface ActivityEntry {
   actor: ActivityActor;
   message: string;
   createdAt: string;
+  /** Components whose live topology changed during this activity. */
+  affectedComponentIds?: string[];
+  /** True only while this committed AGENT action is eligible for undo. */
+  undoable?: boolean;
 }
 
 export interface BuildState {

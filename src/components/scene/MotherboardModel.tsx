@@ -1,33 +1,57 @@
 import { Edges } from "@react-three/drei";
-
 import type { SceneTransform } from "../../scene/mountTransforms";
+import type { ComponentDefinition } from "../../domain/types/component";
 
-interface MotherboardModelProps {
+export interface MotherboardModelProps {
   transform: SceneTransform;
+  highlight?: boolean;
+  component?: ComponentDefinition;
 }
 
-export function MotherboardModel({ transform }: MotherboardModelProps) {
+export function MotherboardModel({ transform, highlight = false, component }: MotherboardModelProps) {
+  // Physical mm to scene units
+  const pcbDepth = (component?.dimensions.depth ?? 305) * 0.02; // 6.1 for ATX (305mm), 3.4 for Mini-ITX (170mm)
+  const pcbWidth = (component?.dimensions.width ?? 244) * 0.02; // 4.88 for ATX (244mm), 3.4 for Mini-ITX (170mm)
+  const thickness = 0.22;
+
   return (
     <group
-      name="motherboard-01"
+      name={component?.id ?? "motherboard-model"}
       position={transform.position}
       rotation={transform.rotation}
       scale={transform.scale}
     >
+      {/* PCB Board */}
       <mesh castShadow receiveShadow>
-        <boxGeometry args={[6.1, 6.2, 0.28]} />
-        <meshStandardMaterial color="#14532d" metalness={0.2} roughness={0.72} />
-        <Edges color="#4ade80" threshold={15} />
+        <boxGeometry args={[pcbWidth, pcbDepth, thickness]} />
+        <meshStandardMaterial
+          color={highlight ? "#dc2626" : "#14532d"}
+          emissive={highlight ? "#ef4444" : "#000000"}
+          emissiveIntensity={highlight ? 0.85 : 0}
+          metalness={0.2}
+          roughness={0.72}
+        />
+        <Edges color={highlight ? "#fca5a5" : "#4ade80"} threshold={15} />
       </mesh>
 
-      <mesh position={[0.6, 0.9, 0.22]} castShadow>
-        <boxGeometry args={[1.6, 1.6, 0.18]} />
-        <meshStandardMaterial color="#94a3b8" metalness={0.65} roughness={0.35} />
+      {/* VRM / I/O Shield Heatsink */}
+      <mesh position={[pcbWidth * 0.22, pcbDepth * 0.25, thickness * 0.8]} castShadow>
+        <boxGeometry args={[pcbWidth * 0.35, pcbDepth * 0.32, 0.22]} />
+        <meshStandardMaterial
+          color={highlight ? "#b91c1c" : "#334155"}
+          metalness={0.75}
+          roughness={0.3}
+        />
       </mesh>
 
-      <mesh position={[-1.65, 0, 0.22]} castShadow>
-        <boxGeometry args={[0.34, 3.8, 0.18]} />
-        <meshStandardMaterial color="#1f2937" />
+      {/* Chipset Heatsink */}
+      <mesh position={[-pcbWidth * 0.22, -pcbDepth * 0.22, thickness * 0.7]} castShadow>
+        <boxGeometry args={[pcbWidth * 0.28, pcbDepth * 0.26, 0.18]} />
+        <meshStandardMaterial
+          color={highlight ? "#991b1b" : "#1e293b"}
+          metalness={0.8}
+          roughness={0.25}
+        />
       </mesh>
     </group>
   );

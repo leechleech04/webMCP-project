@@ -14,3 +14,8 @@ export interface ConstraintIssue {
   message: string;
   affectedComponentIds: string[];
 }
+
+export interface ValidationSummary {
+  valid: boolean;
+  issues: ConstraintIssue[];
+}

@@ -1,12 +1,7 @@
-import { componentRegistry } from "../data/components";
-import { mountRegistry } from "../data/mounts";
-import type {
-  ComponentDefinition,
-  ComponentRegistry,
-} from "../types/component";
+﻿import type { ComponentDefinition, ComponentRegistry } from "../types/component";
 import type { MountDefinition, MountRegistry } from "../types/mount";
 
-export type DomainCommandErrorCode =
+export type DomainErrorCode =
   | "COMPONENT_NOT_FOUND"
   | "MOUNT_NOT_FOUND"
   | "COMPONENT_ALREADY_INSTALLED"
@@ -14,46 +9,59 @@ export type DomainCommandErrorCode =
   | "MOUNT_OCCUPIED"
   | "UNSUPPORTED_COMPONENT_TYPE"
   | "COMPONENT_DOES_NOT_FIT"
+  | "INCOMPATIBLE_MOUNT"
+  | "INCOMPATIBLE_CASE"
   | "CONNECTOR_NOT_FOUND"
+  | "CONNECTOR_DIRECTION_INVALID"
+  | "CONNECTOR_TYPE_MISMATCH"
+  | "CONNECTOR_OCCUPIED"
   | "CONNECTION_ALREADY_EXISTS"
-  | "CONNECTION_NOT_FOUND";
+  | "CONNECTION_NOT_FOUND"
+  | "NOTHING_TO_UNDO"
+  | "UNDO_STALE"
+  | "NO_COMPATIBLE_FAN_MOUNT"
+  | "FAN_MOUNT_NOT_EXPOSED"
+  | "FAN_DIRECTION_METADATA_MISSING"
+  | "AUTO_FILL_BLOCKED"
+  | "AUTO_FILL_NO_CHANGES"
+  | "CLEAR_BUILD_NO_CHANGES"
+  | "CONFIRMATION_REQUIRED";
 
 export class DomainCommandError extends Error {
-  constructor(
-    public readonly code: DomainCommandErrorCode,
-    message: string,
-  ) {
-    super(message);
+  readonly code: DomainErrorCode;
+
+  constructor(code: DomainErrorCode, message: string) {
+    super(`[${code}] ${message}`);
     this.name = "DomainCommandError";
+    this.code = code;
   }
 }
 
 export const getComponentOrThrow = (
   componentId: string,
-  registry: ComponentRegistry = componentRegistry,
+  registry: ComponentRegistry,
 ): ComponentDefinition => {
   const component = registry[componentId];
-
   if (!component) {
     throw new DomainCommandError(
       "COMPONENT_NOT_FOUND",
       `Unknown component: ${componentId}`,
     );
   }
-
   return component;
 };
 
 export const getMountOrThrow = (
   mountId: string,
-  registry: MountRegistry = mountRegistry,
+  registry: MountRegistry,
 ): MountDefinition => {
   const mount = registry[mountId];
-
   if (!mount) {
-    throw new DomainCommandError("MOUNT_NOT_FOUND", `Unknown mount: ${mountId}`);
+    throw new DomainCommandError(
+      "MOUNT_NOT_FOUND",
+      `Unknown mount: ${mountId}`,
+    );
   }
-
   return mount;
 };
 
@@ -64,23 +72,23 @@ export const assertComponentFitsMount = (
   if (!mount.supportedComponentTypes.includes(component.type)) {
     throw new DomainCommandError(
       "UNSUPPORTED_COMPONENT_TYPE",
-      `${component.type} cannot be installed in ${mount.id}`,
+      `Component ${component.name} (${component.type}) is incompatible with mount ${mount.id}`,
     );
   }
 
-  const { constraints } = mount;
-  const exceedsDimensions =
-    (constraints?.maxDepth !== undefined &&
-      component.dimensions.depth > constraints.maxDepth) ||
-    (constraints?.maxWidth !== undefined &&
-      component.dimensions.width > constraints.maxWidth) ||
-    (constraints?.maxHeight !== undefined &&
-      component.dimensions.height > constraints.maxHeight);
+  if (mount.constraints && component.dimensions) {
+    const { maxWidth, maxHeight, maxDepth } = mount.constraints;
+    const { width, height, depth } = component.dimensions;
 
-  if (exceedsDimensions) {
-    throw new DomainCommandError(
-      "COMPONENT_DOES_NOT_FIT",
-      `${component.name} does not fit in ${mount.id}`,
-    );
+    if (
+      (maxWidth !== undefined && width > maxWidth) ||
+      (maxHeight !== undefined && height > maxHeight) ||
+      (maxDepth !== undefined && depth > maxDepth)
+    ) {
+      throw new DomainCommandError(
+        "COMPONENT_DOES_NOT_FIT",
+        `Component ${component.name} exceeds dimensions for mount ${mount.id}`,
+      );
+    }
   }
 };
