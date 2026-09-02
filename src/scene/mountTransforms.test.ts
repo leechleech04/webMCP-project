@@ -18,11 +18,11 @@ describe("mount transforms", () => {
 
   it("maps radiator mount IDs to distinct position and rotation transforms", () => {
     expect(getRequiredMountTransform("radiator-front")).toEqual({
-      position: [0, 4.9, 4.35],
-      rotation: [0, 0, 0],
+      position: [0, 4.917, 4.349],
+      rotation: [0, Math.PI, 0],
     });
     expect(getRequiredMountTransform("radiator-top")).toEqual({
-      position: [0, 9.3, 0],
+      position: [0, 9.374, 0],
       rotation: [Math.PI / 2, 0, 0],
     });
   });

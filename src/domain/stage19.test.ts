@@ -47,6 +47,19 @@ describe("Stage 19 — Fan Reliability, Auto Fill, Clear Build, and WebMCP Tools
       expect(cfg?.mountId).toBe("fan-top-2");
       expect(cfg?.direction).toBe("INTAKE");
     });
+
+    it("prevents standalone fans and an integrated-fan radiator from sharing one rail", () => {
+      installComponent({ componentId: "radiator-01", mountId: "radiator-top" });
+      expect(() =>
+        installComponent({ componentId: "fan-top-01", mountId: "fan-top-1" }),
+      ).toThrow(/MOUNT_OCCUPIED/);
+
+      resetBuildStore();
+      installComponent({ componentId: "fan-front-01", mountId: "fan-front-1" });
+      expect(() =>
+        installComponent({ componentId: "radiator-01", mountId: "radiator-front" }),
+      ).toThrow(/MOUNT_OCCUPIED/);
+    });
   });
 
   describe("Auto Fill Build Command", () => {
@@ -63,6 +76,7 @@ describe("Stage 19 — Fan Reliability, Auto Fill, Clear Build, and WebMCP Tools
       const hasPSU = st.placements.some((p) => p.mountId === "psu-bay");
       expect(hasMB).toBe(true);
       expect(hasPSU).toBe(true);
+      expect(st.placements.some((p) => p.mountId.startsWith("fan-top-"))).toBe(false);
     });
 
     it("throws AUTO_FILL_NO_CHANGES if build is already completely auto-filled", () => {
@@ -76,6 +90,12 @@ describe("Stage 19 — Fan Reliability, Auto Fill, Clear Build, and WebMCP Tools
       const st = buildStore.getState();
 
       expect(outcome.appliedPlacements.some((p) => p.componentId === "gpu-1fan-01")).toBe(true);
+      expect(outcome.appliedPlacements).toContainEqual({
+        componentId: "radiator-120-01",
+        mountId: "radiator-top",
+      });
+      expect(outcome.appliedPlacements.some((p) => p.componentId === "radiator-240-01")).toBe(false);
+      expect(st.placements.some((p) => p.mountId.startsWith("fan-top-"))).toBe(false);
       expect(outcome.validation.valid).toBe(true);
     });
   });

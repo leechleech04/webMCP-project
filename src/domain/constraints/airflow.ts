@@ -1,6 +1,10 @@
 import { componentRegistry as defaultComponents } from "../data/components";
 import type { BuildState } from "../types/build";
 import type { ComponentRegistry } from "../types/component";
+import {
+  getIntegratedRadiatorFanCount,
+  getRadiatorAirflowDirection,
+} from "../airflow/radiatorAirflow";
 
 /** MVP demo rule: an active fan set must define both directions and cannot be one-sided. */
 export const AIRFLOW_MAX_DIRECTION_IMBALANCE = 1;
@@ -23,10 +27,31 @@ export const validateAirflow = (state: BuildState, context: AirflowContext = {})
     return [{ id: "AIRFLOW_DIRECTION_UNCONFIGURED", type: "AIRFLOW" as const, severity: "ERROR" as const, message: `Fan direction is not configured for: ${missing.join(", ")}.`, affectedComponentIds: missing }];
   }
 
-  const intake = fans.filter((fan) => configured.get(fan.componentId) === "INTAKE").length;
-  const exhaust = fans.filter((fan) => configured.get(fan.componentId) === "EXHAUST").length;
+  const radiators = state.placements.filter(
+    (placement) => components[placement.componentId]?.type === "RADIATOR",
+  );
+  const integratedIntake = radiators
+    .filter((radiator) => getRadiatorAirflowDirection(radiator.mountId) === "INTAKE")
+    .reduce(
+      (count, radiator) =>
+        count + getIntegratedRadiatorFanCount(components[radiator.componentId]),
+      0,
+    );
+  const integratedExhaust = radiators
+    .filter((radiator) => getRadiatorAirflowDirection(radiator.mountId) === "EXHAUST")
+    .reduce(
+      (count, radiator) =>
+        count + getIntegratedRadiatorFanCount(components[radiator.componentId]),
+      0,
+    );
+  const intake =
+    fans.filter((fan) => configured.get(fan.componentId) === "INTAKE").length +
+    integratedIntake;
+  const exhaust =
+    fans.filter((fan) => configured.get(fan.componentId) === "EXHAUST").length +
+    integratedExhaust;
   if (intake === 0 || exhaust === 0 || Math.abs(intake - exhaust) > AIRFLOW_MAX_DIRECTION_IMBALANCE) {
-    return [{ id: "AIRFLOW_UNBALANCED", type: "AIRFLOW" as const, severity: "WARNING" as const, message: `Airflow is unbalanced: ${intake} intake / ${exhaust} exhaust.`, affectedComponentIds: fans.map((fan) => fan.componentId) }];
+    return [{ id: "AIRFLOW_UNBALANCED", type: "AIRFLOW" as const, severity: "WARNING" as const, message: `Airflow is unbalanced: ${intake} intake / ${exhaust} exhaust.`, affectedComponentIds: [...fans, ...radiators].map((item) => item.componentId) }];
   }
   return [];
 };

@@ -65,9 +65,7 @@ export function App() {
       <section className="debug-card" aria-labelledby="debug-title">
         <header className="workspace-header">
           <div className="brand-lockup">
-            <span className="brand-index" aria-hidden="true">PB</span>
             <div>
-              <div className="eyebrow">{t("app.eyebrow")}</div>
               <h1 id="debug-title">{t("app.title")}</h1>
               <p>{t("app.subtitle")}</p>
             </div>
@@ -121,14 +119,13 @@ export function App() {
                   <PcScene highlightedComponentIds={highlightedComponentIds} />
                 </Suspense>
               </SceneErrorBoundary>
-              <div className="scene-overlay" aria-hidden="true">
-                <span>{t("scene.live")}</span>
+              <div className="scene-overlay scene-overlay--minimal" aria-hidden="true">
                 <strong>{gpuPlacement ? t("scene.gpu", { id: gpuPlacement.componentId, mount: gpuPlacement.mountId }) : t("scene.gpuMissing")}</strong>
                 <strong>{radiatorPlacement ? t("scene.radiator", { id: radiatorPlacement.componentId, mount: radiatorPlacement.mountId }) : t("scene.radiatorMissing")}</strong>
                 {highlightedComponentIds.length > 0 && <em>{t("scene.conflict")}</em>}
               </div>
             </div>
-            <div className="scene-hint">{t("scene.hint")}</div>
+            <div className="scene-hint">{t("scene.hintShort") !== "scene.hintShort" ? t("scene.hintShort") : "Drag to orbit · M to move · Click part to select"}</div>
           </section>
 
           <aside className="parts-rail" aria-label={t("catalog.aria")}>

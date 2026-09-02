@@ -72,6 +72,12 @@ vi.mock("./CaseModel", () => ({
   CaseModel: () => <span data-scene-object="case-model">CASE</span>,
 }));
 
+vi.mock("./AirflowVisualization", () => ({
+  AirflowVisualization: () => (
+    <span data-scene-object="airflow-visualization">AIRFLOW</span>
+  ),
+}));
+
 vi.mock("./MotherboardModel", () => ({
   MotherboardModel: () => (
     <span data-scene-object="motherboard-model">MB</span>
@@ -162,9 +168,9 @@ describe("PcScene mount-based placement", () => {
     const frontHtml = renderScene();
 
     expect(frontHtml).toContain('data-scene-object="radiator-01"');
-    expect(frontHtml).toContain('data-mount-position="0,4.9,4.35"');
+    expect(frontHtml).toContain('data-mount-position="0,4.917,4.349"');
     expect(frontHtml).toContain(
-      `data-mount-rotation="0,0,0"`,
+      `data-mount-rotation="0,${Math.PI},0"`,
     );
 
     moveComponent({
@@ -179,7 +185,7 @@ describe("PcScene mount-based placement", () => {
     const topHtml = renderScene();
 
     expect([...topHtml.matchAll(/data-scene-object="radiator-01"/g)]).toHaveLength(1);
-    expect(topHtml).toContain('data-mount-position="0,9.3,0"');
+    expect(topHtml).toContain('data-mount-position="0,9.374,0"');
     expect(topHtml).toContain(
       `data-mount-rotation="${Math.PI / 2},0,0"`,
     );
@@ -192,7 +198,7 @@ describe("PcScene mount-based placement", () => {
 
     const html = renderScene({ highlightedComponentIds: [GPU_ID, RADIATOR_ID] });
     expect(html).toContain('data-scene-object="gpu-01" data-mount-position="-0.5,3,0" data-mount-rotation="0,0,0" data-highlight="true"');
-    expect(html).toContain('data-scene-object="radiator-01" data-mount-position="0,4.9,4.35" data-mount-rotation="0,0,0" data-highlight="true"');
+    expect(html).toContain(`data-scene-object="radiator-01" data-mount-position="0,4.917,4.349" data-mount-rotation="0,${Math.PI},0" data-highlight="true"`);
 
     const gpuOnly = renderScene({ highlightedComponentIds: [GPU_ID] });
     expect(gpuOnly).toContain('data-scene-object="gpu-01"');

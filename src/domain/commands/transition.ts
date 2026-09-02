@@ -11,6 +11,7 @@ import type { ActivityActor, BuildState } from "../types/build";
 import type { ComponentRegistry } from "../types/component";
 import type { MountRegistry } from "../types/mount";
 import {
+  assertCoolingZoneAvailable,
   assertComponentFitsMount,
   assertComponentFitsActiveCase,
   DomainCommandError,
@@ -152,6 +153,7 @@ export const applyDomainAction = (
       }
 
       assertComponentFitsActiveCase(state, component, mount);
+      assertCoolingZoneAvailable(state, component, mount);
       const placement = { componentId: action.componentId, mountId: action.mountId };
 
       let nextFanConfigs = state.fanConfigs;
@@ -194,6 +196,7 @@ export const applyDomainAction = (
       }
 
       assertComponentFitsActiveCase(state, component, mount);
+      assertCoolingZoneAvailable(state, component, mount);
       const placement = { componentId: action.componentId, mountId: action.mountId };
 
       let nextFanConfigs = state.fanConfigs;

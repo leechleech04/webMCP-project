@@ -119,3 +119,43 @@ export const assertComponentFitsActiveCase = (
     },
   });
 };
+
+const coolingZoneForMount = (mountId: string): "top" | "front" | undefined => {
+  if (mountId === "radiator-top" || mountId.startsWith("fan-top-")) {
+    return "top";
+  }
+  if (mountId === "radiator-front" || mountId.startsWith("fan-front-")) {
+    return "front";
+  }
+  return undefined;
+};
+
+/**
+ * The procedural AIO already includes its own fans, so an AIO and standalone
+ * case fans cannot occupy the same top/front rail in this MVP geometry model.
+ */
+export const assertCoolingZoneAvailable = (
+  state: BuildState,
+  component: ComponentDefinition,
+  mount: MountDefinition,
+): void => {
+  const zone = coolingZoneForMount(mount.id);
+  if (!zone || (component.type !== "RADIATOR" && component.type !== "FAN")) {
+    return;
+  }
+
+  const conflictingPlacement = state.placements.find((placement) => {
+    if (placement.componentId === component.id) return false;
+    if (component.type === "RADIATOR") {
+      return placement.mountId.startsWith(`fan-${zone}-`);
+    }
+    return placement.mountId === `radiator-${zone}`;
+  });
+
+  if (conflictingPlacement) {
+    throw new DomainCommandError(
+      "MOUNT_OCCUPIED",
+      `${mount.id} shares the ${zone} cooling rail with ${conflictingPlacement.componentId}`,
+    );
+  }
+};

@@ -37,28 +37,29 @@ function StudioEnvironment({ mode }: { mode: SceneAppearanceMode }) {
       <>
         <color attach="background" args={["#070b12"]} />
         <fog attach="fog" args={["#070b12", 28, 65]} />
-        <ambientLight intensity={0.55} />
-        <directionalLight intensity={1.2} position={[8, 12, 10]} color="#93c5fd" />
-        <directionalLight intensity={0.7} position={[-8, 6, -8]} color="#38bdf8" />
-        <pointLight color="#60a5fa" intensity={24} position={[-7, 7, 6]} />
+        <ambientLight intensity={0.5} />
+        <directionalLight intensity={1.0} position={[8, 12, 10]} color="#d1d5db" />
+        <directionalLight intensity={0.45} position={[-8, 6, -8]} color="#94a3b8" />
       </>
     );
   }
 
   return (
     <>
-      <color attach="background" args={["#e2e8f0"]} />
-      <fog attach="fog" args={["#cbd5e1", 38, 70]} />
-      <hemisphereLight args={["#ffffff", "#94a3b8", 1.35]} />
+      <color attach="background" args={["#e9edf2"]} />
+      <fog attach="fog" args={["#d4dae3", 42, 75]} />
+      <hemisphereLight args={["#ffffff", "#c8cdd5", 1.10]} />
       <directionalLight
         castShadow
-        intensity={2.2}
-        position={[8, 14, 10]}
+        intensity={1.65}
+        position={[7, 12, 8]}
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
+        shadow-bias={-0.0005}
+        color="#ffffff"
       />
-      <directionalLight intensity={0.95} position={[-8, 6, -8]} color="#cbd5e1" />
-      <directionalLight intensity={1.5} position={[0, 8, -12]} color="#93c5fd" />
+      <directionalLight intensity={0.42} position={[-6, 5, -7]} color="#e5e7eb" />
+      <directionalLight intensity={0.32} position={[0, 7, -10]} color="#dde2e8" />
     </>
   );
 }
@@ -213,6 +214,7 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
         </div>
       )}
       <div
+        className="scene-controls-group"
         style={{
           position: "absolute",
           top: "0.75rem",
@@ -277,21 +279,13 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
 
       {selectedPlacement && selectedComponentDef && (
         <div
+          className="scene-selection-panel"
           style={{
             position: "absolute",
             bottom: "1rem",
             left: "1rem",
             zIndex: 10,
-            background: "rgba(15, 23, 42, 0.94)",
-            border: errorComponentIds.has(selectedPlacement.componentId) ? "1px solid #ef4444" : "1px solid #3b82f6",
-            borderRadius: "10px",
-            padding: "0.75rem 1rem",
-            color: "#f8fafc",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.4rem",
-            maxWidth: "320px",
-            backdropFilter: "blur(8px)",
+            maxWidth: "340px",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

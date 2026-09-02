@@ -119,7 +119,21 @@ export const generateAutoFillRecipe = (state: BuildState): AutoFillPlan => {
   }
 
   // 7. Fans
-  const fanMounts = profile.fanMounts.filter((m) => !occupiedMounts.has(m.mountId) && Boolean(mountRegistry[m.mountId]));
+  const radiatorPlacement = [...state.placements, ...proposedPlacements].find(
+    (placement) => componentRegistry[placement.componentId]?.type === "RADIATOR",
+  );
+  const radiatorOccupiedLocation =
+    radiatorPlacement?.mountId === "radiator-top"
+      ? "top"
+      : radiatorPlacement?.mountId === "radiator-front"
+        ? "front"
+        : undefined;
+  const fanMounts = profile.fanMounts.filter(
+    (mount) =>
+      !occupiedMounts.has(mount.mountId) &&
+      mount.location !== radiatorOccupiedLocation &&
+      Boolean(mountRegistry[mount.mountId]),
+  );
   for (const fm of fanMounts) {
     const fanId = Object.values(componentRegistry)
       .filter((component) => component.type === "FAN" && !installedComponents.has(component.id))

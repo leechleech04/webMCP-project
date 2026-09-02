@@ -15,7 +15,8 @@ export function MountIndicators({
     <group name="mount-indicators">
       {mountCandidates.map((c) => {
         const isHovered = hoveredMountId === c.mountId;
-        const color = c.isValidSnap ? (isHovered ? "#22c55e" : "#3b82f6") : "#ef4444";
+        // R1 restrained palette: muted steel blue / soft green / desaturated red
+        const color = c.isValidSnap ? (isHovered ? "#7FB069" : "#6B8AD4") : "#C85A5A";
 
         return (
           <mesh
@@ -28,8 +29,14 @@ export function MountIndicators({
               }
             }}
           >
-            <boxGeometry args={[0.8, 0.8, 0.8]} />
-            <meshStandardMaterial color={color} transparent opacity={c.isValidSnap ? 0.75 : 0.3} />
+            <boxGeometry args={[0.72, 0.72, 0.72]} />
+            <meshStandardMaterial
+              color={color}
+              transparent
+              opacity={c.isValidSnap ? (isHovered ? 0.62 : 0.52) : 0.26}
+              roughness={0.45}
+              metalness={0.22}
+            />
           </mesh>
         );
       })}

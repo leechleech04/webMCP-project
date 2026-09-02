@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Edges } from "@react-three/drei";
 import * as THREE from "three";
@@ -6,6 +6,7 @@ import type { SceneTransform } from "../../scene/mountTransforms";
 import type { ComponentDefinition } from "../../domain/types/component";
 import { useBuildStore } from "../../store/buildStore";
 import { getActiveCaseProfile } from "../../domain/cases/getActiveCase";
+import { getRadiatorLayout } from "../../scene/radiatorLayout";
 
 export interface RadiatorModelProps {
   transform: SceneTransform;
@@ -13,25 +14,38 @@ export interface RadiatorModelProps {
   component?: ComponentDefinition;
 }
 
+const DEFAULT_RADIATOR_DIMENSIONS = {
+  width: 120,
+  height: 30,
+  depth: 397,
+};
+
 export function RadiatorModel({ transform, highlight = false, component }: RadiatorModelProps) {
   const fanGroupRef = useRef<THREE.Group>(null);
   const state = useBuildStore((s) => s);
   const activeProfile = useMemo(() => getActiveCaseProfile(state), [state]);
 
-  // Physical mm to scene units (1mm = 0.02 units)
-  const radLength = (component?.dimensions.depth ?? 397) * 0.02; // 7.94 for 360mm, 5.5 for 240mm, 3.14 for 120mm
-  const radWidth = (component?.dimensions.width ?? 120) * 0.02;   // 2.4 units for 120mm
-  const radThick = (component?.dimensions.height ?? 30) * 0.02;  // 0.6 units for 30mm
-
-  // Determine fan count based on radiator length
-  const fanCount = radLength > 6.0 ? 3 : radLength > 4.0 ? 2 : 1;
-  const fanRadius = radWidth * 0.44;
+  const {
+    width: radWidth,
+    length: radLength,
+    thickness: radThick,
+    fanCount,
+    fanSize,
+    fanOffsets,
+  } = useMemo(
+    () => getRadiatorLayout(component?.dimensions ?? DEFAULT_RADIATOR_DIMENSIONS),
+    [
+      component?.dimensions.depth,
+      component?.dimensions.height,
+      component?.dimensions.width,
+    ],
+  );
 
   // Spin radiator cooling fan rotors (only internal blades spin, outer square frame stays static)
   useFrame((_, delta) => {
     if (fanGroupRef.current) {
       fanGroupRef.current.children.forEach((fan) => {
-        const rotor = (fan as THREE.Group).children[6] as THREE.Group | undefined;
+        const rotor = fan.getObjectByName("radiator-fan-rotor");
         if (rotor) {
           rotor.rotation.z += delta * 6.5;
         }
@@ -39,34 +53,61 @@ export function RadiatorModel({ transform, highlight = false, component }: Radia
     }
   });
 
-  // Calculate exact relative position of CPU socket in local group space
-  const cpuWorldPos: [number, number, number] = useMemo(() => {
-    const cpuTrans = activeProfile.mountTransforms["cpu-socket-1"];
-    return cpuTrans ? cpuTrans.position : [-1.0, 6.1, -0.6];
-  }, [activeProfile]);
-
   const isTopMount = Math.abs(transform.rotation[0] - Math.PI / 2) < 0.1;
 
-  const pumpRelPos: [number, number, number] = useMemo(() => {
-    const [tx, ty, tz] = transform.position;
-    const [cx, cy, cz] = cpuWorldPos;
+  // Convert the CPU socket's world transform into radiator-local space. This
+  // keeps the pump and tube endpoints correct for both front and top mounts.
+  const { pumpRelPos, pumpRelRotation, pumpPort1, pumpPort2 } = useMemo(() => {
+    const cpuTransform = activeProfile.mountTransforms["cpu-socket-1"] ?? {
+      position: [-1.0, 6.1, -0.6] as [number, number, number],
+      rotation: [0, Math.PI / 2, 0] as [number, number, number],
+    };
+    const radiatorPosition = new THREE.Vector3(...transform.position);
+    const radiatorQuaternion = new THREE.Quaternion().setFromEuler(
+      new THREE.Euler(...transform.rotation, "XYZ"),
+    );
+    const inverseRadiatorQuaternion = radiatorQuaternion.clone().invert();
+    const localPosition = new THREE.Vector3(...cpuTransform.position)
+      .sub(radiatorPosition)
+      .applyQuaternion(inverseRadiatorQuaternion);
+    const cpuWorldQuaternion = new THREE.Quaternion().setFromEuler(
+      new THREE.Euler(...cpuTransform.rotation, "XYZ"),
+    );
+    const localQuaternion = inverseRadiatorQuaternion
+      .clone()
+      .multiply(cpuWorldQuaternion);
+    const localRotation = new THREE.Euler().setFromQuaternion(
+      localQuaternion,
+      "XYZ",
+    );
 
-    if (isTopMount) {
-      // Rotation [PI/2, 0, 0]: Plx = cx - tx, Ply = cz - tz, Plz = ty - cy
-      return [cx - tx, cz - tz, ty - cy];
-    } else {
-      // Rotation [0, 0, 0]: Plx = cx - tx, Ply = cy - ty, Plz = cz - tz
-      return [cx - tx, cy - ty, cz - tz];
-    }
-  }, [transform.position, cpuWorldPos, isTopMount]);
+    const toRadiatorLocalPort = (offset: THREE.Vector3): THREE.Vector3 =>
+      offset.applyQuaternion(localQuaternion).add(localPosition);
+
+    return {
+      pumpRelPos: localPosition.toArray() as [number, number, number],
+      pumpRelRotation: [
+        localRotation.x,
+        localRotation.y,
+        localRotation.z,
+      ] as [number, number, number],
+      pumpPort1: toRadiatorLocalPort(new THREE.Vector3(0.35, 0.2, 0.35)),
+      pumpPort2: toRadiatorLocalPort(new THREE.Vector3(-0.35, -0.2, 0.35)),
+    };
+  }, [
+    activeProfile,
+    transform.position[0],
+    transform.position[1],
+    transform.position[2],
+    transform.rotation[0],
+    transform.rotation[1],
+    transform.rotation[2],
+  ]);
 
   // Curved braided coolant tubes (Inlet & Outlet)
   const [tube1Geometry, tube2Geometry] = useMemo(() => {
     const radPort1 = new THREE.Vector3(radWidth * 0.28, -radLength * 0.42, radThick * 0.55);
     const radPort2 = new THREE.Vector3(-radWidth * 0.28, -radLength * 0.42, radThick * 0.55);
-
-    const pumpPort1 = new THREE.Vector3(pumpRelPos[0] + 0.35, pumpRelPos[1] + 0.2, pumpRelPos[2] + 0.35);
-    const pumpPort2 = new THREE.Vector3(pumpRelPos[0] - 0.35, pumpRelPos[1] - 0.2, pumpRelPos[2] + 0.35);
 
     const mid1 = new THREE.Vector3(
       (radPort1.x + pumpPort1.x) * 0.5 + (isTopMount ? 0.3 : 0.5),
@@ -86,7 +127,15 @@ export function RadiatorModel({ transform, highlight = false, component }: Radia
     const geom2 = new THREE.TubeGeometry(curve2, 32, 0.12, 10, false);
 
     return [geom1, geom2];
-  }, [radLength, radWidth, radThick, pumpRelPos, isTopMount]);
+  }, [radLength, radWidth, radThick, pumpPort1, pumpPort2, isTopMount]);
+
+  useEffect(
+    () => () => {
+      tube1Geometry.dispose();
+      tube2Geometry.dispose();
+    },
+    [tube1Geometry, tube2Geometry],
+  );
 
   return (
     <group
@@ -122,17 +171,15 @@ export function RadiatorModel({ transform, highlight = false, component }: Radia
       {/* 2. Integrated Radiator PWM Aerodynamic Fans */}
       <group ref={fanGroupRef} position={[0, 0, radThick * 0.5 + 0.25]}>
         {Array.from({ length: fanCount }).map((_, idx) => {
-          const fanSize = radWidth * 0.96;
           const fanThick = 0.5; // 25mm fan thickness
           const holeOffset = fanSize * 0.42;
-          const fanOffsetY =
-            fanCount === 1 ? 0 : (idx - (fanCount - 1) / 2) * ((radLength * 0.88) / Math.max(1, fanCount - 1));
+          const fanOffsetY = fanOffsets[idx];
 
           return (
             <group key={idx} position={[0, fanOffsetY, 0]}>
-              {/* Fan Housing Frame */}
-              <mesh castShadow receiveShadow>
-                <boxGeometry args={[fanSize, fanSize, fanThick]} />
+              {/* Open fan frame: four rails preserve the silhouette without hiding the rotor. */}
+              <mesh castShadow receiveShadow position={[0, fanSize * 0.45, 0]}>
+                <boxGeometry args={[fanSize, fanSize * 0.1, fanThick]} />
                 <meshStandardMaterial
                   color={highlight ? "#dc2626" : "#1e293b"}
                   emissive={highlight ? "#ef4444" : "#000000"}
@@ -141,6 +188,18 @@ export function RadiatorModel({ transform, highlight = false, component }: Radia
                   roughness={0.5}
                 />
                 <Edges color={highlight ? "#fca5a5" : "#64748b"} threshold={15} />
+              </mesh>
+              <mesh castShadow receiveShadow position={[0, -fanSize * 0.45, 0]}>
+                <boxGeometry args={[fanSize, fanSize * 0.1, fanThick]} />
+                <meshStandardMaterial color={highlight ? "#dc2626" : "#1e293b"} metalness={0.5} roughness={0.5} />
+              </mesh>
+              <mesh castShadow receiveShadow position={[fanSize * 0.45, 0, 0]}>
+                <boxGeometry args={[fanSize * 0.1, fanSize * 0.8, fanThick]} />
+                <meshStandardMaterial color={highlight ? "#dc2626" : "#1e293b"} metalness={0.5} roughness={0.5} />
+              </mesh>
+              <mesh castShadow receiveShadow position={[-fanSize * 0.45, 0, 0]}>
+                <boxGeometry args={[fanSize * 0.1, fanSize * 0.8, fanThick]} />
+                <meshStandardMaterial color={highlight ? "#dc2626" : "#1e293b"} metalness={0.5} roughness={0.5} />
               </mesh>
 
               {/* 4 Corner Rubber Anti-Vibration Dampers */}
@@ -161,14 +220,14 @@ export function RadiatorModel({ transform, highlight = false, component }: Radia
                 <meshStandardMaterial color={highlight ? "#991b1b" : "#0f172a"} roughness={0.9} />
               </mesh>
 
-              {/* Circular Tunnel Intake Stator (aligned with Z axis) */}
-              <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-                <cylinderGeometry args={[fanSize * 0.46, fanSize * 0.46, fanThick * 1.02, 28]} />
+              {/* Circular tunnel lip in the same X-Y plane as the rotor. */}
+              <mesh position={[0, 0, 0]}>
+                <torusGeometry args={[fanSize * 0.41, fanSize * 0.045, 8, 32]} />
                 <meshStandardMaterial color="#0b1120" roughness={0.7} />
               </mesh>
 
               {/* Spinning Impeller Rotor Assembly (spins in X-Y plane around Z) */}
-              <group position={[0, 0, 0]}>
+              <group name="radiator-fan-rotor" position={[0, 0, 0]}>
                 {/* Center Motor Hub Cylinder (aligned with Z axis) */}
                 <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow>
                   <cylinderGeometry args={[fanSize * 0.18, fanSize * 0.18, fanThick * 0.75, 20]} />
@@ -233,11 +292,11 @@ export function RadiatorModel({ transform, highlight = false, component }: Radia
       </group>
 
       {/* 3. Radiator Rotary Hose Fittings */}
-      <mesh position={[radWidth * 0.28, -radLength * 0.42, radThick * 0.6]}>
+      <mesh position={[radWidth * 0.28, -radLength * 0.42, radThick * 0.6]} rotation={[Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.18, 0.18, 0.25, 12]} />
         <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />
       </mesh>
-      <mesh position={[-radWidth * 0.28, -radLength * 0.42, radThick * 0.6]}>
+      <mesh position={[-radWidth * 0.28, -radLength * 0.42, radThick * 0.6]} rotation={[Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.18, 0.18, 0.25, 12]} />
         <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />
       </mesh>
@@ -259,7 +318,7 @@ export function RadiatorModel({ transform, highlight = false, component }: Radia
       </mesh>
 
       {/* 5. CPU Water Block & Pump Unit (Attached directly over CPU socket) */}
-      <group position={pumpRelPos} rotation={isTopMount ? [-Math.PI / 2, 0, 0] : [0, 0, 0]}>
+      <group position={pumpRelPos} rotation={pumpRelRotation}>
         {/* Micro-skived Copper Cold Plate */}
         <mesh position={[0, 0, -0.2]}>
           <boxGeometry args={[1.5, 1.5, 0.1]} />
@@ -267,7 +326,7 @@ export function RadiatorModel({ transform, highlight = false, component }: Radia
         </mesh>
 
         {/* Ceramic Pump Housing Cylinder */}
-        <mesh position={[0, 0, 0.15]} castShadow>
+        <mesh position={[0, 0, 0.15]} rotation={[Math.PI / 2, 0, 0]} castShadow>
           <cylinderGeometry args={[0.75, 0.75, 0.65, 24]} />
           <meshStandardMaterial
             color={highlight ? "#dc2626" : "#0f172a"}
@@ -279,7 +338,7 @@ export function RadiatorModel({ transform, highlight = false, component }: Radia
         </mesh>
 
         {/* RGB Infinity Mirror Top Cap */}
-        <mesh position={[0, 0, 0.52]}>
+        <mesh position={[0, 0, 0.52]} rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.65, 0.65, 0.08, 24]} />
           <meshStandardMaterial
             color={highlight ? "#ef4444" : "#0284c7"}
@@ -290,11 +349,11 @@ export function RadiatorModel({ transform, highlight = false, component }: Radia
         </mesh>
 
         {/* 90-Degree Swivel Pump Fittings */}
-        <mesh position={[0.35, 0.2, 0.35]}>
+        <mesh position={[0.35, 0.2, 0.35]} rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.16, 0.16, 0.2, 12]} />
           <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />
         </mesh>
-        <mesh position={[-0.35, -0.2, 0.35]}>
+        <mesh position={[-0.35, -0.2, 0.35]} rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.16, 0.16, 0.2, 12]} />
           <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />
         </mesh>

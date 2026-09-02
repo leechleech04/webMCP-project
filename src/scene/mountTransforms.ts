@@ -1,8 +1,63 @@
+import { mmToSceneUnit } from "./units";
+
 export interface SceneTransform {
   position: [number, number, number];
   rotation: [number, number, number];
   scale?: [number, number, number];
 }
+
+export const RADIATOR_TOP_ROTATION: SceneTransform["rotation"] = [
+  Math.PI / 2,
+  0,
+  0,
+];
+
+export const RADIATOR_FRONT_ROTATION: SceneTransform["rotation"] = [
+  0,
+  Math.PI,
+  0,
+];
+
+const RADIATOR_CORE_THICKNESS_MM = 30;
+const RADIATOR_PANEL_GAP_MM = 8;
+const roundSceneUnit = (value: number): number => Math.round(value * 1000) / 1000;
+
+/**
+ * Places the radiator core just inside the case shell. RadiatorModel's local
+ * Y axis is its long axis and local Z is its fan-facing normal:
+ * - top: long axis follows case depth and fans face down into the case;
+ * - front: long axis follows case height and fans face toward the case rear.
+ */
+export const createRadiatorMountTransforms = (dimensionsMm: {
+  height: number;
+  depth: number;
+}): Record<"radiator-front" | "radiator-top", SceneTransform> => {
+  const shellInset =
+    mmToSceneUnit(RADIATOR_CORE_THICKNESS_MM) / 2 +
+    mmToSceneUnit(RADIATOR_PANEL_GAP_MM);
+  const caseHeight = mmToSceneUnit(dimensionsMm.height);
+  const caseDepth = mmToSceneUnit(dimensionsMm.depth);
+
+  return {
+    "radiator-front": {
+      position: [
+        0,
+        roundSceneUnit(caseHeight / 2),
+        roundSceneUnit(caseDepth / 2 - shellInset),
+      ],
+      rotation: [...RADIATOR_FRONT_ROTATION],
+    },
+    "radiator-top": {
+      position: [0, roundSceneUnit(caseHeight - shellInset), 0],
+      rotation: [...RADIATOR_TOP_ROTATION],
+    },
+  };
+};
+
+const mffRadiatorTransforms = createRadiatorMountTransforms({
+  height: 491.7,
+  depth: 480.9,
+});
 
 export const mountTransforms: Readonly<Record<string, SceneTransform>> = {
   "case-root": {
@@ -29,14 +84,8 @@ export const mountTransforms: Readonly<Record<string, SceneTransform>> = {
     position: [-0.5, 3, 0],
     rotation: [0, 0, 0],
   },
-  "radiator-front": {
-    position: [0, 4.9, 4.35],
-    rotation: [0, 0, 0],
-  },
-  "radiator-top": {
-    position: [0, 9.3, 0],
-    rotation: [Math.PI / 2, 0, 0],
-  },
+  "radiator-front": mffRadiatorTransforms["radiator-front"],
+  "radiator-top": mffRadiatorTransforms["radiator-top"],
   "psu-bay": {
     position: [0, 1.2, 0],
     rotation: [0, 0, 0],

@@ -529,7 +529,7 @@ export function ComponentPalette() {
                           wordBreak: "break-word",
                         }}
                       >
-                        📐 {comp.dimensions.width}×{comp.dimensions.height}×{comp.dimensions.depth} mm
+                        {comp.dimensions.width}×{comp.dimensions.height}×{comp.dimensions.depth} mm
                       </span>
                       {comp.power?.consumption ? (
                         <span
@@ -543,7 +543,7 @@ export function ComponentPalette() {
                             wordBreak: "break-word",
                           }}
                         >
-                          ⚡ {comp.power.consumption}W
+                          {comp.power.consumption}W
                         </span>
                       ) : null}
                       {comp.power?.capacity ? (
@@ -558,7 +558,7 @@ export function ComponentPalette() {
                             wordBreak: "break-word",
                           }}
                         >
-                          🔋 {comp.power.capacity}W {t("catalog.capacity")}
+                          {comp.power.capacity}W {t("catalog.capacity")}
                         </span>
                       ) : null}
                     </div>

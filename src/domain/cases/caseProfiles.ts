@@ -1,6 +1,9 @@
 import type { CaseProfile, CaseFanMountMetadata } from "./types";
 import type { SceneTransform } from "../../scene/mountTransforms";
-import { mountTransforms } from "../../scene/mountTransforms";
+import {
+  createRadiatorMountTransforms,
+  mountTransforms,
+} from "../../scene/mountTransforms";
 
 const cameraTargetFor = (dimMm: { width: number; height: number; depth: number }): [number, number, number] => {
   return [0, (dimMm.height * 0.02) * 0.5, 0];
@@ -45,6 +48,7 @@ const makeFanMounts = (transforms: Record<string, SceneTransform>, fanIds: strin
 // 1. MINI_PC (190 x 200 x 200 mm -> 3.8 x 4.0 x 4.0 units)
 const DIM_MINI = { width: 190, height: 200, depth: 200 };
 const MINI_FAN_IDS = ["fan-top-1", "fan-rear-1", "fan-front-1"];
+const MINI_RADIATOR_TRANSFORMS = createRadiatorMountTransforms(DIM_MINI);
 const MINI_TRANSFORMS: Record<string, SceneTransform> = {
   "case-root": { position: [0, 2.0, 0], rotation: [0, 0, 0] },
   "motherboard-tray": { position: [-1.0, 2.5, 0], rotation: [0, Math.PI / 2, 0] },
@@ -54,8 +58,7 @@ const MINI_TRANSFORMS: Record<string, SceneTransform> = {
   "storage-m2-1": { position: [-0.65, 2.15, 0], rotation: [0, Math.PI / 2, 0] },
   "pcie-slot-1": { position: [-0.2, 1.4, 0], rotation: [0, 0, 0] },
   "psu-bay": { position: [0.7, 0.8, 0], rotation: [0, 0, 0] },
-  "radiator-top": { position: [0, 3.85, 0], rotation: [Math.PI / 2, 0, Math.PI / 2] },
-  "radiator-front": { position: [0, 2.5, 1.85], rotation: [0, 0, Math.PI / 2] },
+  ...MINI_RADIATOR_TRANSFORMS,
   "fan-top-1": { position: [0, 3.85, 0], rotation: [Math.PI / 2, 0, 0] },
   "fan-rear-1": { position: [0, 2.5, -1.85], rotation: [0, 0, 0] },
   "fan-front-1": { position: [0, 2.5, 1.85], rotation: [0, 0, 0] },
@@ -64,6 +67,7 @@ const MINI_TRANSFORMS: Record<string, SceneTransform> = {
 // 2. SFF (210 x 350 x 340 mm -> 4.2 x 7.0 x 6.8 units)
 const DIM_SFF = { width: 210, height: 350, depth: 340 };
 const SFF_FAN_IDS = ["fan-top-1", "fan-top-2", "fan-rear-1", "fan-front-1", "fan-front-2"];
+const SFF_RADIATOR_TRANSFORMS = createRadiatorMountTransforms(DIM_SFF);
 const SFF_TRANSFORMS: Record<string, SceneTransform> = {
   "case-root": { position: [0, 3.5, 0], rotation: [0, 0, 0] },
   "motherboard-tray": { position: [-1.1, 4.2, 0], rotation: [0, Math.PI / 2, 0] },
@@ -75,10 +79,9 @@ const SFF_TRANSFORMS: Record<string, SceneTransform> = {
   "psu-bay": { position: [0, 0.9, -1.2], rotation: [0, 0, 0] },
   "fan-top-1": { position: [0, 6.85, 1.3], rotation: [Math.PI / 2, 0, 0] },
   "fan-top-2": { position: [0, 6.85, -1.3], rotation: [Math.PI / 2, 0, 0] },
-  "radiator-top": { position: [0, 6.85, 0], rotation: [Math.PI / 2, 0, Math.PI / 2] },
   "fan-front-1": { position: [0, 4.8, 3.25], rotation: [0, 0, 0] },
   "fan-front-2": { position: [0, 2.6, 3.25], rotation: [0, 0, 0] },
-  "radiator-front": { position: [0, 3.7, 3.25], rotation: [0, 0, Math.PI / 2] },
+  ...SFF_RADIATOR_TRANSFORMS,
   "fan-rear-1": { position: [0, 4.8, -3.25], rotation: [0, 0, 0] },
 };
 
@@ -90,6 +93,7 @@ const MFF_TRANSFORMS = mountTransforms;
 // 4. LFF (270 x 560 x 580 mm -> 5.4 x 11.2 x 11.6 units)
 const DIM_LFF = { width: 270, height: 560, depth: 580 };
 const LFF_FAN_IDS = ["fan-top-1", "fan-top-2", "fan-top-3", "fan-front-1", "fan-front-2", "fan-front-3", "fan-rear-1", "fan-bottom-1", "fan-side-1"];
+const LFF_RADIATOR_TRANSFORMS = createRadiatorMountTransforms(DIM_LFF);
 const LFF_TRANSFORMS: Record<string, SceneTransform> = {
   "case-root": { position: [0, 5.6, 0], rotation: [0, 0, 0] },
   "motherboard-tray": { position: [-1.5, 6.3, 0], rotation: [0, Math.PI / 2, 0] },
@@ -102,11 +106,10 @@ const LFF_TRANSFORMS: Record<string, SceneTransform> = {
   "fan-top-1": { position: [0, 11.0, 3.2], rotation: [Math.PI / 2, 0, 0] },
   "fan-top-2": { position: [0, 11.0, 0], rotation: [Math.PI / 2, 0, 0] },
   "fan-top-3": { position: [0, 11.0, -3.2], rotation: [Math.PI / 2, 0, 0] },
-  "radiator-top": { position: [0, 11.0, 0], rotation: [Math.PI / 2, 0, Math.PI / 2] },
   "fan-front-1": { position: [0, 8.5, 5.6], rotation: [0, 0, 0] },
   "fan-front-2": { position: [0, 5.8, 5.6], rotation: [0, 0, 0] },
   "fan-front-3": { position: [0, 3.1, 5.6], rotation: [0, 0, 0] },
-  "radiator-front": { position: [0, 6.0, 5.6], rotation: [0, 0, Math.PI / 2] },
+  ...LFF_RADIATOR_TRANSFORMS,
   "fan-rear-1": { position: [0, 7.6, -5.6], rotation: [0, 0, 0] },
   "fan-bottom-1": { position: [0, 2.55, 1.5], rotation: [Math.PI / 2, 0, 0] },
   "fan-side-1": { position: [2.5, 6.5, 0], rotation: [0, Math.PI / 2, 0] },
@@ -126,8 +129,8 @@ export const caseProfiles: CaseProfile[] = [
       "motherboard-tray": { maxDepth: 175, maxWidth: 175, maxHeight: 45 },
       "pcie-slot-1": { maxDepth: 180, maxWidth: 165, maxHeight: 45 },
       "psu-bay": { maxDepth: 110, maxWidth: 130, maxHeight: 70 },
-      "radiator-top": { maxDepth: 275, maxWidth: 125, maxHeight: 35 },
-      "radiator-front": { maxDepth: 275, maxWidth: 125, maxHeight: 35 },
+      "radiator-top": { maxDepth: 160, maxWidth: 125, maxHeight: 35 },
+      "radiator-front": { maxDepth: 160, maxWidth: 125, maxHeight: 35 },
     },
     camera: { target: cameraTargetFor(DIM_MINI), distance: 13, minDistance: 5, maxDistance: 24, fov: 40 },
     fanMounts: makeFanMounts(MINI_TRANSFORMS, MINI_FAN_IDS),
