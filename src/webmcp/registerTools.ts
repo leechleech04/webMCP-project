@@ -3,8 +3,11 @@ import {
   autoFillBuildTool,
   clearBuildTool,
   connectComponentTool,
+  disconnectComponentTool,
   getAvailableMountsTool,
   getBuildStateTool,
+  getCaseProfilesTool,
+  getComponentCatalogTool,
   installComponentTool,
   moveComponentTool,
   removeComponentTool,
@@ -55,6 +58,19 @@ const requiredString = (input: InputRecord, key: string): string => {
 const optionalString = (input: InputRecord, key: string): string | undefined => {
   if (!(key in input)) return undefined;
   return requiredString(input, key);
+};
+
+const componentTypes = [
+  "CASE", "MOTHERBOARD", "CPU", "GPU", "RAM", "STORAGE", "RADIATOR", "FAN", "PSU",
+] as const;
+
+const optionalComponentType = (input: InputRecord, key: string): (typeof componentTypes)[number] | undefined => {
+  const value = optionalString(input, key);
+  if (value === undefined) return undefined;
+  if (!componentTypes.includes(value as (typeof componentTypes)[number])) {
+    throw new TypeError(`${key} must be a supported component type`);
+  }
+  return value as (typeof componentTypes)[number];
 };
 
 const requiredBoolean = (input: InputRecord, key: string): boolean => {
@@ -185,6 +201,28 @@ const definitionsFor = (telemetry: WebMcpTelemetry): ToolDefinition[] => {
       },
     },
     {
+      name: "get_component_catalog",
+      title: "Inspect component catalog",
+      description: "Discover component IDs, names, dimensions, power, compatibility, and connector IDs/types/directions, optionally filtered by component type.",
+      inputSchema: objectSchema({ componentType: { enum: componentTypes } }),
+      annotations: { readOnlyHint: true },
+      execute: async (input) => {
+        const value = strictObject(input, "get_component_catalog", ["componentType"]);
+        return getComponentCatalogTool({ componentType: optionalComponentType(value, "componentType") });
+      },
+    },
+    {
+      name: "get_case_profiles",
+      title: "Inspect case profiles",
+      description: "Discover available case IDs, dimensions, motherboard support, mounts, clearances, and recommended fan metadata.",
+      inputSchema: objectSchema({}),
+      annotations: { readOnlyHint: true },
+      execute: async (input) => {
+        strictObject(input, "get_case_profiles", []);
+        return getCaseProfilesTool();
+      },
+    },
+    {
       name: "get_available_mounts",
       title: "Inspect available mounts",
       description: "List unoccupied mounts supported by the active case, optionally filtered for one catalog component.",
@@ -198,7 +236,7 @@ const definitionsFor = (telemetry: WebMcpTelemetry): ToolDefinition[] => {
     {
       name: "validate_build",
       title: "Validate PC build",
-      description: "Read every deterministic compatibility issue without changing build or activity state.",
+      description: "Assess readiness as READY, INCOMPLETE, or CONFLICT, including compatibility issues, missing essential components, and missing PSU power connections without changing state.",
       inputSchema: objectSchema({}),
       annotations: { readOnlyHint: true },
       execute: async (input, client) => {
@@ -249,6 +287,16 @@ const definitionsFor = (telemetry: WebMcpTelemetry): ToolDefinition[] => {
           toComponentId: requiredString(value, "toComponentId"),
           toConnectorId: requiredString(value, "toConnectorId"),
         });
+      },
+    },
+    {
+      name: "disconnect_component",
+      title: "Disconnect component headers",
+      description: "Remove one existing cable by the connection ID returned by get_build_state.",
+      inputSchema: objectSchema({ connectionId: { type: "string", minLength: 1 } }, ["connectionId"]),
+      execute: async (input) => {
+        const value = strictObject(input, "disconnect_component", ["connectionId"]);
+        return disconnectComponentTool({ connectionId: requiredString(value, "connectionId") });
       },
     },
     {

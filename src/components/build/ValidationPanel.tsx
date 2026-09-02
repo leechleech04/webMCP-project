@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { validateBuild } from "../../domain/constraints/validateBuild";
+import { assessBuildState } from "../../domain/constraints/buildAssessment";
 import { useBuildStore } from "../../store/buildStore";
 import { useLanguage } from "../../i18n/LanguageContext";
 
@@ -14,10 +14,19 @@ export function ValidationPanel({ onSelectionChange }: ValidationPanelProps) {
   const connections = useBuildStore((state) => state.connections);
   const fanConfigs = useBuildStore((state) => state.fanConfigs);
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
-  const issues = useMemo(
-    () => validateBuild({ placements, connections, fanConfigs, activity: [] }),
+  const assessment = useMemo(
+    () => assessBuildState({ placements, connections, fanConfigs, activity: [] }),
     [placements, connections, fanConfigs],
   );
+  const { issues } = assessment;
+  const tone = assessment.status === "CONFLICT"
+    ? "error"
+    : assessment.status === "INCOMPLETE" || issues.length > 0
+      ? "warning"
+      : "valid";
+  const badge = assessment.status === "READY" && issues.length > 0
+    ? t("validation.status.warning")
+    : t(`validation.status.${assessment.status.toLowerCase()}`);
 
   useEffect(() => {
     const nextId = issues.some((issue) => issue.id === selectedIssueId)
@@ -35,16 +44,23 @@ export function ValidationPanel({ onSelectionChange }: ValidationPanelProps) {
           <h2 id="validation-title">{t("validation.title")}</h2>
           <p className="panel-caption">{t("validation.caption")}</p>
         </div>
-        <span className={issues.length === 0 ? "valid-pill" : "error-pill"}>
-          {issues.length === 0 ? t("validation.valid") : t("validation.issues", { count: issues.length })}
+        <span className={`${tone}-pill`}>
+          {badge}
         </span>
       </div>
 
-      {issues.length === 0 ? (
-        <p className="valid-state" role="status" data-testid="validation-valid">
-          {t("validation.clear")}
-        </p>
-      ) : (
+      <p className={`assessment-state ${tone}`} role="status" data-testid={`validation-${tone}`}>
+        {assessment.status === "READY" && issues.length === 0
+          ? t("validation.clear")
+          : assessment.status === "INCOMPLETE"
+            ? t("validation.incompleteSummary", {
+                components: assessment.missingComponentTypes.length,
+                cables: assessment.missingPowerConnections.length,
+              })
+            : assessment.summary}
+      </p>
+
+      {issues.length > 0 && (
         <div className="validation-list" role="list">
           {issues.map((issue) => {
             const selected = issue.id === selectedIssueId;
@@ -53,7 +69,7 @@ export function ValidationPanel({ onSelectionChange }: ValidationPanelProps) {
                 key={issue.id}
                 type="button"
                 role="listitem"
-                className={`validation-card${selected ? " selected" : ""}`}
+                className={`validation-card ${issue.severity.toLowerCase()}${selected ? " selected" : ""}`}
                 aria-pressed={selected}
                 onClick={() => setSelectedIssueId(issue.id)}
                 onKeyDown={(event) => {

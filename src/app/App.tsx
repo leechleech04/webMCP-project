@@ -24,7 +24,7 @@ export function App() {
   const [runtimeMode, setRuntimeMode] = useState<RuntimeMode>(() => getRuntimeMode());
   const [toolCounts, setToolCounts] = useState<{ registered: number; total: number }>({
     registered: 0,
-    total: 13,
+    total: 16,
   });
 
   useEffect(() => {

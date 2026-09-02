@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildStore, getBuildState, resetBuildStore } from "../store/buildStore";
 import {
   getAvailableMountsTool,
+  getCaseProfilesTool,
+  getComponentCatalogTool,
   installComponentTool,
   moveComponentTool,
   selectCaseTool,
@@ -19,12 +21,15 @@ import type { ToolDefinition } from "./types";
 
 const expectedToolNames = [
   "get_build_state",
+  "get_component_catalog",
+  "get_case_profiles",
   "get_available_mounts",
   "validate_build",
   "install_component",
   "move_component",
   "remove_component",
   "connect_component",
+  "disconnect_component",
   "set_fan_direction",
   "simulate_changes",
   "select_case",
@@ -54,7 +59,7 @@ describe("WebMCP tool boundary", () => {
     vi.unstubAllGlobals();
   });
 
-  it("registers all 13 canonical tools with one abort controller per tool", async () => {
+  it("registers all 16 canonical tools with one abort controller per tool", async () => {
     const context = makeContext();
     vi.stubGlobal("document", { modelContext: context });
     const registration = await registerTools();
@@ -62,8 +67,8 @@ describe("WebMCP tool boundary", () => {
     expect(registration.mode).toBe("webmcp");
     expect(registration.supported).toBe(true);
     expect(registration.registeredTools).toEqual(expectedToolNames);
-    expect(context.tools.size).toBe(13);
-    expect(new Set(context.signals.values()).size).toBe(13);
+    expect(context.tools.size).toBe(16);
+    expect(new Set(context.signals.values()).size).toBe(16);
     registration.cleanup();
     expect(context.tools.size).toBe(0);
     expect([...context.signals.values()].every((signal) => signal.aborted)).toBe(true);
@@ -74,10 +79,10 @@ describe("WebMCP tool boundary", () => {
     vi.stubGlobal("document", { modelContext: context });
     const [first, second] = await Promise.all([registerTools(), registerTools()]);
 
-    expect(context.tools.size).toBe(13);
+    expect(context.tools.size).toBe(16);
     first.cleanup();
     first.cleanup();
-    expect(context.tools.size).toBe(13);
+    expect(context.tools.size).toBe(16);
     second.cleanup();
     expect(context.tools.size).toBe(0);
   });
@@ -89,7 +94,7 @@ describe("WebMCP tool boundary", () => {
     expect(registration.supported).toBe(false);
     expect(registration.registeredTools).toEqual([]);
     expect(telemetry.mode).toBe("simulation");
-    expect(telemetry.events.filter((event) => event.kind === "registration")).toHaveLength(13);
+    expect(telemetry.events.filter((event) => event.kind === "registration")).toHaveLength(16);
     registration.cleanup();
   });
 
@@ -101,7 +106,7 @@ describe("WebMCP tool boundary", () => {
 
     expect(registration.mode).toBe("partial");
     expect(registration.supported).toBe(false);
-    expect(registration.registeredTools).toHaveLength(12);
+    expect(registration.registeredTools).toHaveLength(15);
     expect(registration.registeredTools).not.toContain("clear_build");
     expect(telemetry.mode).toBe("partial");
     registration.cleanup();
@@ -114,7 +119,7 @@ describe("WebMCP tool boundary", () => {
     setTimeout(() => vi.stubGlobal("document", { modelContext: context }), 20);
     const registration = await registerTools({ timeoutMs: 100, intervalMs: 5 });
     expect(registration.mode).toBe("webmcp");
-    expect(registration.registeredTools).toHaveLength(13);
+    expect(registration.registeredTools).toHaveLength(16);
     registration.cleanup();
   });
 
@@ -124,6 +129,28 @@ describe("WebMCP tool boundary", () => {
     validateBuildTool();
     validateBuildTool();
     expect(getBuildState()).toEqual(before);
+  });
+
+  it("reports empty and uncabled builds as incomplete instead of valid", () => {
+    expect(validateBuildTool()).toMatchObject({
+      status: "INCOMPLETE",
+      valid: false,
+      missingComponentTypes: ["CASE", "MOTHERBOARD", "CPU", "RAM", "STORAGE", "PSU"],
+    });
+  });
+
+  it("exposes discoverable component connectors and case capabilities", () => {
+    expect(getComponentCatalogTool({ componentType: "PSU" })).toContainEqual(expect.objectContaining({
+      id: "psu-01",
+      connectors: expect.arrayContaining([
+        expect.objectContaining({ id: "psu-gpu-01", type: "12V_2X6", direction: "OUTPUT" }),
+      ]),
+    }));
+    expect(getCaseProfilesTool()).toContainEqual(expect.objectContaining({
+      componentId: "case-01",
+      active: true,
+      mounts: expect.arrayContaining([expect.objectContaining({ id: "pcie-slot-1" })]),
+    }));
   });
 
   it("filters available mounts by the active case, occupancy, type, and clearance", () => {
@@ -173,6 +200,28 @@ describe("WebMCP tool boundary", () => {
     expect(getBuildState().connections).toHaveLength(0);
   });
 
+  it("shares cooling-zone compatibility with the 3D and catalog mount query", () => {
+    installComponentTool({ componentId: "fan-front-01", mountId: "fan-front-1" });
+    const radiatorMounts = getAvailableMountsTool({ componentId: "radiator-01" }).map((mount) => mount.id);
+    expect(radiatorMounts).toContain("radiator-top");
+    expect(radiatorMounts).not.toContain("radiator-front");
+  });
+
+  it("disconnects a selected cable through the agent command path", async () => {
+    installComponentTool({ componentId: "psu-01", mountId: "psu-bay" });
+    installComponentTool({ componentId: "gpu-01", mountId: "pcie-slot-1" });
+    const connectionId = "psu-01:psu-gpu-01->gpu-01:gpu-power";
+    await executeWebMcpTool("connect_component", {
+      fromComponentId: "psu-01",
+      fromConnectorId: "psu-gpu-01",
+      toComponentId: "gpu-01",
+      toConnectorId: "gpu-power",
+    });
+    const disconnected = await executeWebMcpTool("disconnect_component", { connectionId });
+    expect(disconnected.isError).not.toBe(true);
+    expect(getBuildState().connections).toEqual([]);
+  });
+
   it("proves the Front-to-Top vertical slice through tools and store state", () => {
     installComponentTool({ componentId: "gpu-01", mountId: "pcie-slot-1" });
     installComponentTool({ componentId: "radiator-01", mountId: "radiator-front" });
@@ -203,6 +252,8 @@ describe("WebMCP tool boundary", () => {
 
     const stateBefore = getBuildState();
     await executeWebMcpTool("get_build_state", {});
+    await executeWebMcpTool("get_component_catalog", { componentType: "GPU" });
+    await executeWebMcpTool("get_case_profiles", {});
     await executeWebMcpTool("get_available_mounts", {});
     await executeWebMcpTool("get_available_mounts", { componentId: "gpu-01" });
     await executeWebMcpTool("validate_build", {});

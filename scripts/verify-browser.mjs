@@ -2,10 +2,14 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
-const CHROME_PATH = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
-const PORT = 9222;
-const URL = "http://localhost:5173/";
-const SCREENSHOT_DIR = "D:\\컴퓨터 조립\\webMCP-project-stage15-component-expansion\\docs\\screenshots";
+const CHROME_PATH = process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+const PORT = Number(process.env.CHROME_DEBUG_PORT ?? 9222);
+const URL = process.env.WEBMCP_VERIFY_URL ?? "http://localhost:5173/";
+const SCREENSHOT_DIR = path.resolve(process.cwd(), "docs", "screenshots");
+
+if (!fs.existsSync(CHROME_PATH)) {
+  throw new Error(`Chrome executable not found at ${CHROME_PATH}. Set CHROME_PATH to override it.`);
+}
 
 if (!fs.existsSync(SCREENSHOT_DIR)) {
   fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });

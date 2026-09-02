@@ -1064,6 +1064,7 @@ button:disabled {
 }
 
 .valid-pill,
+.warning-pill,
 .error-pill,
 .simulation-pill,
 .activity-count {
@@ -1083,6 +1084,12 @@ button:disabled {
   background: var(--color-success-bg);
 }
 
+.warning-pill {
+  border-color: var(--color-warning-border);
+  color: var(--color-warning-text);
+  background: var(--color-warning-bg);
+}
+
 .error-pill {
   border-color: var(--color-error-border);
   color: var(--color-error-text);
@@ -1096,14 +1103,30 @@ button:disabled {
   background: var(--surface-glass-strong);
 }
 
-.valid-state {
-  border: 1px solid var(--color-success-border);
+.assessment-state {
+  border: 1px solid var(--border-glass-medium);
   border-radius: var(--radius-control);
   padding: 0.85rem 1rem;
-  color: var(--color-success-text);
-  background: var(--color-success-bg);
   font-size: 0.78rem;
   font-weight: 600;
+}
+
+.assessment-state.valid {
+  border-color: var(--color-success-border);
+  color: var(--color-success-text);
+  background: var(--color-success-bg);
+}
+
+.assessment-state.warning {
+  border-color: var(--color-warning-border);
+  color: var(--color-warning-text);
+  background: var(--color-warning-bg);
+}
+
+.assessment-state.error {
+  border-color: var(--color-error-border);
+  color: var(--color-error-text);
+  background: var(--color-error-bg);
 }
 
 .validation-list {
@@ -1124,6 +1147,31 @@ button:disabled {
   text-align: left;
   cursor: pointer;
   transition: all 140ms ease;
+}
+
+.validation-card.warning,
+.validation-card.info {
+  border-color: var(--color-warning-border);
+  color: var(--color-warning-text);
+  background: var(--color-warning-bg);
+}
+
+.validation-card.warning:hover,
+.validation-card.info:hover {
+  background: rgba(245, 158, 11, 0.14);
+}
+
+.validation-card.warning.selected,
+.validation-card.info.selected {
+  border-color: var(--color-warning);
+  box-shadow: 0 0 0 2px var(--color-warning-border), var(--shadow-sm);
+}
+
+.validation-card.warning .issue-kicker,
+.validation-card.warning .issue-footnote,
+.validation-card.info .issue-kicker,
+.validation-card.info .issue-footnote {
+  color: var(--color-warning-text);
 }
 
 .validation-card:hover {

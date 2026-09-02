@@ -1,5 +1,5 @@
 import { getBuildState } from "../store/buildStore";
-import { validateBuild } from "../domain/constraints/validateBuild";
+import { assessBuildState } from "../domain/constraints/buildAssessment";
 import type { DomainAction } from "../domain/types/action";
 import { componentRegistry } from "../domain/data/components";
 import { installComponent } from "../domain/commands/installComponent";
@@ -11,6 +11,7 @@ import { autoFillBuild } from "../domain/commands/autoFillBuild";
 import { clearBuild } from "../domain/commands/clearBuild";
 import { simulateChanges } from "../domain/simulation/simulateChanges";
 import { connectComponents } from "../domain/commands/connectComponents";
+import { disconnectComponents } from "../domain/commands/disconnectComponents";
 import {
   canUndoLastAgentAction,
   canRedoLastAction,
@@ -20,7 +21,10 @@ import {
 } from "../domain/commands/commitDomainAction";
 import { mountRegistry } from "../domain/data/mounts";
 import { getActiveCaseProfile } from "../domain/cases/getActiveCase";
+import { caseProfiles } from "../domain/cases/caseProfiles";
+import { getCompatibleMountCandidates } from "../domain/interaction/getCompatibleMounts";
 import type { BuildState } from "../domain/types/build";
+import type { ComponentType } from "../domain/types/component";
 import type { ToolClient } from "./types";
 
 export interface BuildStateToolResult extends BuildState {
@@ -54,14 +58,10 @@ export const getBuildStateTool = (): BuildStateToolResult => {
   };
 };
 
-export interface ValidateBuildToolResult {
-  valid: boolean;
-  issues: ReturnType<typeof validateBuild>;
-}
+export type ValidateBuildToolResult = ReturnType<typeof assessBuildState>;
 
 export const validateBuildTool = (_input: unknown = {}, _client?: ToolClient): ValidateBuildToolResult => {
-  const issues = validateBuild(getBuildState());
-  return { valid: issues.length === 0, issues };
+  return assessBuildState(getBuildState());
 };
 
 export interface MoveComponentToolInput {
@@ -86,8 +86,7 @@ const normalizeError = (error: unknown) => ({
 export const moveComponentTool = (input: MoveComponentToolInput): ActionToolResult => {
   try {
     const placement = moveComponent(input, { actor: "AGENT" });
-    const issues = validateBuild(getBuildState());
-    return { ok: true, placement, validation: { valid: issues.length === 0, issues } };
+    return { ok: true, placement, validation: validateBuildTool() };
   } catch (error) {
     return { ok: false, error: normalizeError(error) };
   }
@@ -115,28 +114,6 @@ export const removeComponentTool = (input: { componentId: string }): ActionToolR
   }
 };
 
-const componentFitsLimit = (
-  componentId: string,
-  mountId: string,
-  state: BuildState,
-): boolean => {
-  const component = componentRegistry[componentId];
-  const mount = mountRegistry[mountId];
-  if (!component || !mount || !mount.supportedComponentTypes.includes(component.type)) return false;
-
-  const profileLimit = getActiveCaseProfile(state).clearanceLimits[mountId];
-  const limit = {
-    maxWidth: profileLimit?.maxWidth ?? mount.constraints?.maxWidth,
-    maxHeight: profileLimit?.maxHeight ?? mount.constraints?.maxHeight,
-    maxDepth: profileLimit?.maxDepth ?? mount.constraints?.maxDepth,
-  };
-  return !(
-    (limit.maxWidth !== undefined && component.dimensions.width > limit.maxWidth) ||
-    (limit.maxHeight !== undefined && component.dimensions.height > limit.maxHeight) ||
-    (limit.maxDepth !== undefined && component.dimensions.depth > limit.maxDepth)
-  );
-};
-
 export const getAvailableMountsTool = (input: { componentId?: string } = {}) => {
   const state = getBuildState();
   const occupied = new Set(state.placements.map((placement) => placement.mountId));
@@ -147,11 +124,64 @@ export const getAvailableMountsTool = (input: { componentId?: string } = {}) => 
 
   const profile = getActiveCaseProfile(state);
   const supportedByCase = new Set(profile.supportedMountIds);
+  if (component) {
+    const currentMountId = state.placements.find(
+      (placement) => placement.componentId === component.id,
+    )?.mountId ?? "";
+    const candidates = getCompatibleMountCandidates({
+      componentId: component.id,
+      currentMountId,
+      state,
+      caseProfile: profile,
+    });
+    return candidates
+      .filter((candidate) => candidate.isValidSnap && candidate.mountId !== currentMountId)
+      .map((candidate) => mountRegistry[candidate.mountId]);
+  }
   return Object.values(mountRegistry).filter((mount) => {
     if (occupied.has(mount.id)) return false;
     if (mount.id !== "case-root" && !supportedByCase.has(mount.id)) return false;
-    return !component || componentFitsLimit(component.id, mount.id, state);
+    return true;
   });
+};
+
+export const getComponentCatalogTool = (input: { componentType?: ComponentType } = {}) => {
+  return Object.values(componentRegistry)
+    .filter((component) => !input.componentType || component.type === input.componentType)
+    .map((component) => ({
+      id: component.id,
+      name: component.name,
+      type: component.type,
+      dimensions: { ...component.dimensions },
+      power: component.power ? { ...component.power } : undefined,
+      compatibility: component.compatibility ? { ...component.compatibility } : undefined,
+      connectors: component.connectors?.map((connector) => ({ ...connector })) ?? [],
+    }));
+};
+
+export const getCaseProfilesTool = () => {
+  const state = getBuildState();
+  const active = getActiveCaseProfile(state);
+  return caseProfiles.map((profile) => ({
+    id: profile.id,
+    componentId: profile.componentId,
+    label: profile.label,
+    formFactor: profile.formFactor,
+    active: profile.id === active.id,
+    dimensionsMm: { ...profile.dimensionsMm },
+    supportedMotherboardFormFactors: [...profile.supportedMotherboardFormFactors],
+    mounts: profile.supportedMountIds.map((mountId) => ({
+      id: mountId,
+      type: mountRegistry[mountId]?.type ?? "UNKNOWN",
+      supportedComponentTypes: [...(mountRegistry[mountId]?.supportedComponentTypes ?? [])],
+      clearance: profile.clearanceLimits[mountId]
+        ? { ...profile.clearanceLimits[mountId] }
+        : mountRegistry[mountId]?.constraints
+          ? { ...mountRegistry[mountId].constraints }
+          : undefined,
+    })),
+    fanMounts: profile.fanMounts.map(({ transform: _transform, ...fanMount }) => ({ ...fanMount })),
+  }));
 };
 
 export const connectComponentTool = (
@@ -159,6 +189,15 @@ export const connectComponentTool = (
 ): ActionToolResult => {
   try {
     const result = connectComponents(input, { actor: "AGENT" });
+    return { ok: true, result, validation: validateBuildTool() };
+  } catch (error) {
+    return { ok: false, error: normalizeError(error) };
+  }
+};
+
+export const disconnectComponentTool = (input: { connectionId: string }): ActionToolResult => {
+  try {
+    const result = disconnectComponents(input.connectionId, { actor: "AGENT" });
     return { ok: true, result, validation: validateBuildTool() };
   } catch (error) {
     return { ok: false, error: normalizeError(error) };
@@ -212,6 +251,8 @@ export const undoLastAgentActionTool = (): ActionToolResult => {
 
 export const toolImplementations = {
   get_build_state: getBuildStateTool,
+  get_component_catalog: getComponentCatalogTool,
+  get_case_profiles: getCaseProfilesTool,
   validate_build: validateBuildTool,
   move_component: moveComponentTool,
   install_component: installComponentTool,
@@ -219,6 +260,7 @@ export const toolImplementations = {
   simulate_changes: simulateChangesTool,
   get_available_mounts: getAvailableMountsTool,
   connect_component: connectComponentTool,
+  disconnect_component: disconnectComponentTool,
   select_case: selectCaseTool,
   set_fan_direction: setFanDirectionTool,
   auto_fill_build: autoFillBuildTool,

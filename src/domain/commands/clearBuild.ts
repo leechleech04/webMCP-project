@@ -1,6 +1,6 @@
 import { commitDomainAction } from "./commitDomainAction";
 import type { DomainTransitionOptions } from "./transition";
-import type { ValidationSummary } from "../types/constraint";
+import type { BuildAssessment } from "../constraints/buildAssessment";
 import type { Placement } from "../types/placement";
 
 export interface ClearBuildOutcome {
@@ -8,7 +8,7 @@ export interface ClearBuildOutcome {
   clearedConnectionsCount: number;
   clearedFanConfigsCount: number;
   activeCasePreserved: Placement;
-  validation: ValidationSummary;
+  validation: BuildAssessment;
 }
 
 export const clearBuild = (

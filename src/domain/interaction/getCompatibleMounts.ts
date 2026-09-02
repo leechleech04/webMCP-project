@@ -2,7 +2,10 @@ import type { BuildState } from "../types/build";
 import type { CaseProfile } from "../cases/types";
 import { componentRegistry } from "../data/components";
 import { mountRegistry } from "../data/mounts";
-import { assertComponentFitsActiveCase } from "../commands/commandGuards";
+import {
+  assertComponentFitsActiveCase,
+  assertCoolingZoneAvailable,
+} from "../commands/commandGuards";
 
 export interface CompatibleMountCandidate {
   mountId: string;
@@ -38,6 +41,7 @@ export const getCompatibleMountCandidates = ({
       if (!mount || !mount.supportedComponentTypes.includes(component.type)) return false;
       try {
         assertComponentFitsActiveCase(state, component, mount);
+        assertCoolingZoneAvailable(state, component, mount);
         return true;
       } catch {
         return false;

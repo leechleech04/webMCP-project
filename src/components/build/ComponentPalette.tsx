@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useBuildStore } from "../../store/buildStore";
 import { getActiveCaseProfile } from "../../domain/cases/getActiveCase";
 import { componentRegistry } from "../../domain/data/components";
-import { mountRegistry } from "../../domain/data/mounts";
+import { getCompatibleMountCandidates } from "../../domain/interaction/getCompatibleMounts";
 import { installComponent } from "../../domain/commands/installComponent";
 import { removeComponent } from "../../domain/commands/removeComponent";
 import { moveComponent } from "../../domain/commands/moveComponent";
@@ -48,10 +48,12 @@ export function ComponentPalette() {
   }, [activeTab]);
 
   const getCompatibleMountsForComponent = (component: ComponentDefinition) => {
-    return activeProfile.supportedMountIds.filter((mid) => {
-      const def = mountRegistry[mid];
-      return def && def.supportedComponentTypes.includes(component.type);
-    });
+    return getCompatibleMountCandidates({
+      componentId: component.id,
+      currentMountId: installedMap.get(component.id) ?? "",
+      state,
+      caseProfile: activeProfile,
+    }).map((candidate) => candidate.mountId);
   };
 
   const checkClearanceFit = (component: ComponentDefinition, mountId: string) => {
@@ -87,7 +89,10 @@ export function ComponentPalette() {
     if (!component) return;
 
     const availableMounts = getCompatibleMountsForComponent(component);
-    const targetMount = selectedMounts[componentId] || availableMounts.find((m) => !occupiedMounts.has(m)) || availableMounts[0];
+    const selectedMount = selectedMounts[componentId];
+    const targetMount = selectedMount && availableMounts.includes(selectedMount)
+      ? selectedMount
+      : availableMounts.find((m) => !occupiedMounts.has(m)) ?? availableMounts[0];
 
     if (!targetMount) {
       setErrorMessage(t("catalog.noMount", { component: componentName(component.id, component.name), case: caseName(activeProfile.label) }));
@@ -464,7 +469,10 @@ export function ComponentPalette() {
             const installedMount = installedMap.get(comp.id);
             const isInstalled = !!installedMount;
             const compatibleMounts = getCompatibleMountsForComponent(comp);
-            const selectedTargetMount = selectedMounts[comp.id] || compatibleMounts.find((m) => !occupiedMounts.has(m)) || compatibleMounts[0];
+            const selectedMount = selectedMounts[comp.id];
+            const selectedTargetMount = selectedMount && compatibleMounts.includes(selectedMount)
+              ? selectedMount
+              : compatibleMounts.find((m) => !occupiedMounts.has(m)) ?? compatibleMounts[0];
             const fanConfig = state.fanConfigs.find((c) => c.componentId === comp.id);
             const clearanceFit = selectedTargetMount ? checkClearanceFit(comp, selectedTargetMount) : { fits: true, reason: "" };
 

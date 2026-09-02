@@ -161,7 +161,7 @@ export const assessBuildState = (
 
   return {
     status,
-    valid: issues.length === 0,
+    valid: status === "READY",
     issues,
     missingComponentTypes,
     missingPowerConnections,

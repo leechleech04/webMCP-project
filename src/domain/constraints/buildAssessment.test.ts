@@ -13,6 +13,7 @@ describe("buildAssessment layer", () => {
   it("reports INCOMPLETE for an empty build and lists missing essential component types", () => {
     const assessment = assessBuildState(getBuildState());
     expect(assessment.status).toBe("INCOMPLETE");
+    expect(assessment.valid).toBe(false);
     expect(assessment.missingComponentTypes).toEqual([
       "CASE",
       "MOTHERBOARD",

@@ -201,7 +201,7 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
             }
           : undefined
       }
-      role="img"
+      role="region"
       aria-label={t("scene.aria", {
         gpu: gpuInstalled ? t("scene.installed") : t("scene.notInstalled"),
         radiator: radiatorPlacement ? t("scene.installedAt", { mount: radiatorPlacement.mountId }) : t("scene.notInstalled"),

@@ -70,7 +70,7 @@ describe("Stage 19 — Fan Reliability, Auto Fill, Clear Build, and WebMCP Tools
       expect(outcome.appliedPlacements.length).toBeGreaterThan(3);
       expect(outcome.appliedConnections.length).toBeGreaterThan(0);
       expect(outcome.appliedFanConfigs.length).toBeGreaterThan(0);
-      expect(outcome.validation.valid).toBe(true);
+      expect(outcome.validation).toMatchObject({ status: "READY", valid: true });
 
       const hasMB = st.placements.some((p) => p.mountId === "motherboard-tray");
       const hasPSU = st.placements.some((p) => p.mountId === "psu-bay");
@@ -96,7 +96,7 @@ describe("Stage 19 — Fan Reliability, Auto Fill, Clear Build, and WebMCP Tools
       });
       expect(outcome.appliedPlacements.some((p) => p.componentId === "radiator-240-01")).toBe(false);
       expect(st.placements.some((p) => p.mountId.startsWith("fan-top-"))).toBe(false);
-      expect(outcome.validation.valid).toBe(true);
+      expect(outcome.validation).toMatchObject({ status: "READY", valid: true });
     });
   });
 
@@ -121,7 +121,7 @@ describe("Stage 19 — Fan Reliability, Auto Fill, Clear Build, and WebMCP Tools
       expect(st.placements).toEqual([{ componentId: "case-01", mountId: "case-root" }]);
       expect(st.connections).toEqual([]);
       expect(st.fanConfigs).toEqual([]);
-      expect(outcome.validation.valid).toBe(true);
+      expect(outcome.validation).toMatchObject({ status: "INCOMPLETE", valid: false });
     });
 
     it("throws CLEAR_BUILD_NO_CHANGES if no components are installed", () => {

@@ -21,7 +21,7 @@ import {
 import { getRecommendedFanDirection } from "../cases/caseProfiles";
 import { getActiveCaseProfile } from "../cases/getActiveCase";
 import { generateAutoFillRecipe } from "../recipes/autoFillRecipe";
-import { validateBuild } from "../constraints/validateBuild";
+import { assessBuildState } from "../constraints/buildAssessment";
 
 export interface DomainTransitionOptions extends ActivitySource {
   componentRegistry?: ComponentRegistry;
@@ -398,9 +398,7 @@ export const applyDomainAction = (
         );
       }
 
-      const issues = validateBuild(proposedState);
-      const hasErrors = issues.some((i) => i.severity === "ERROR");
-      const validation = { valid: !hasErrors, issues };
+      const validation = assessBuildState(proposedState);
 
       const outcome = {
         formFactor: recipe.formFactor,
@@ -442,9 +440,7 @@ export const applyDomainAction = (
         fanConfigs: [],
       };
 
-      const issues = validateBuild(proposedState);
-      const hasErrors = issues.some((i) => i.severity === "ERROR");
-      const validation = { valid: !hasErrors, issues };
+      const validation = assessBuildState(proposedState);
 
       const outcome = {
         clearedComponentsCount: nonCasePlacements.length,
