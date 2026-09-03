@@ -617,7 +617,7 @@ export function ComponentPalette() {
                 )}
 
                 {/* RAM Dual-Channel Kit Action */}
-                {activeTab === "RAM" && ramQuantity === 2 ? (
+                {activeTab === "RAM" && ramQuantity === 2 && comp.id === "ram-01" ? (
                   <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.65rem", flexWrap: "wrap" }}>
                     {!isDualRamInstalled ? (
                       <button

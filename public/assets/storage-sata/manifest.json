@@ -1,0 +1,18 @@
+{
+  "assetId": "STORAGE_SATA",
+  "category": "PC_COMPONENT",
+  "productionMethod": "DETERMINISTIC_PROCEDURAL_RECONSTRUCTION",
+  "license": "CC0-1.0",
+  "coordinateSystem": "GLTF_Y_UP",
+  "nativeBounds": [
+    1,
+    1,
+    1
+  ],
+  "file": {
+    "url": "/assets/storage-sata/lod0.glb",
+    "bytes": 2864,
+    "sha256": "c828614c9380235c9d00c147b3df2630b79414b585dcb3f7bd0f31f8ddd116ef"
+  },
+  "generator": "scripts/generate_catalog_assets.py"
+}

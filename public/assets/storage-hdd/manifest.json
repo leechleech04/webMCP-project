@@ -1,0 +1,18 @@
+{
+  "assetId": "STORAGE_HDD",
+  "category": "PC_COMPONENT",
+  "productionMethod": "DETERMINISTIC_PROCEDURAL_RECONSTRUCTION",
+  "license": "CC0-1.0",
+  "coordinateSystem": "GLTF_Y_UP",
+  "nativeBounds": [
+    1,
+    1,
+    1
+  ],
+  "file": {
+    "url": "/assets/storage-hdd/lod0.glb",
+    "bytes": 4184,
+    "sha256": "6daa5014d14250f7972304374d703da6d51860f1c83775a26f830607be9d9ea8"
+  },
+  "generator": "scripts/generate_catalog_assets.py"
+}

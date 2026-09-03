@@ -17,6 +17,12 @@ const mountDefinitions: MountDefinition[] = [
     supportedComponentTypes: ["CPU"],
   },
   {
+    id: "cpu-cooler-1",
+    type: "CPU_COOLER",
+    supportedComponentTypes: ["CPU_COOLER"],
+    constraints: { maxWidth: 165, maxHeight: 170, maxDepth: 165 },
+  },
+  {
     id: "dimm-a1",
     type: "RAM",
     supportedComponentTypes: ["RAM"],
@@ -93,6 +99,19 @@ const mountDefinitions: MountDefinition[] = [
     id: "storage-m2-1",
     type: "STORAGE",
     supportedComponentTypes: ["STORAGE"],
+    supportedStorageFormFactors: ["M2_2280"],
+  },
+  {
+    id: "storage-2-5-1",
+    type: "STORAGE",
+    supportedComponentTypes: ["STORAGE"],
+    supportedStorageFormFactors: ["SATA_2_5"],
+  },
+  {
+    id: "storage-3-5-1",
+    type: "STORAGE",
+    supportedComponentTypes: ["STORAGE"],
+    supportedStorageFormFactors: ["HDD_3_5"],
   },
   {
     id: "fan-bottom-2",

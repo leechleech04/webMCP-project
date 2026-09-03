@@ -1,0 +1,18 @@
+{
+  "assetId": "PSU_ATX",
+  "category": "PC_COMPONENT",
+  "productionMethod": "DETERMINISTIC_PROCEDURAL_RECONSTRUCTION",
+  "license": "CC0-1.0",
+  "coordinateSystem": "GLTF_Y_UP",
+  "nativeBounds": [
+    1,
+    1,
+    1
+  ],
+  "file": {
+    "url": "/assets/psu-atx/lod0.glb",
+    "bytes": 4184,
+    "sha256": "bbb6e6969f7e422ed772e18d0182a93d62a842bf1ebced6eff4396a3d34ee85b"
+  },
+  "generator": "scripts/generate_catalog_assets.py"
+}

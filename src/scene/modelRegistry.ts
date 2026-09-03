@@ -8,7 +8,9 @@ import { CpuModel } from "../components/scene/CpuModel";
 import { RamModel } from "../components/scene/RamModel";
 import { StorageModel } from "../components/scene/StorageModel";
 import type { SceneTransform } from "./mountTransforms";
-import type { ComponentDefinition } from "../domain/types/component";
+import type { ComponentDefinition, ComponentType as DomainComponentType } from "../domain/types/component";
+import { componentRegistry } from "../domain/data/components";
+import { SharedGlbModel } from "../components/scene/SharedGlbModel";
 
 export interface SceneModelProps {
   transform: SceneTransform;
@@ -28,6 +30,7 @@ export const modelRegistry: Readonly<
   "radiator-01": RadiatorModel,
   "radiator-240-01": RadiatorModel,
   "radiator-120-01": RadiatorModel,
+  "radiator-280-01": RadiatorModel,
 
   // Fans
   "fan-top-01": FanModel,
@@ -52,12 +55,37 @@ export const modelRegistry: Readonly<
 
   // Storage
   "storage-nvme-01": StorageModel,
+  "storage-nvme-heatsink": StorageModel,
 
   // PSUs
   "psu-01": PsuModel,
   "psu-sfx-01": PsuModel,
 };
 
+/**
+ * Keep procedural rendering available for every component family even when a
+ * catalog entry was added without an explicit ID registration. Catalog growth
+ * should never result in a successfully installed but invisible component.
+ */
+const proceduralModelByType: Readonly<
+  Partial<Record<DomainComponentType, ComponentType<SceneModelProps>>>
+> = {
+  MOTHERBOARD: MotherboardModel,
+  CPU: CpuModel,
+  GPU: GpuModel,
+  RAM: RamModel,
+  STORAGE: StorageModel,
+  RADIATOR: RadiatorModel,
+  FAN: FanModel,
+  PSU: PsuModel,
+};
+
 export const getSceneModel = (
   componentId: string,
-): ComponentType<SceneModelProps> | undefined => modelRegistry[componentId];
+): ComponentType<SceneModelProps> | undefined => {
+  const component = componentRegistry[componentId];
+  if (component?.visualAsset?.mode === "GLB" && component.visualAsset.url) {
+    return SharedGlbModel;
+  }
+  return modelRegistry[componentId] ?? (component ? proceduralModelByType[component.type] : undefined);
+};

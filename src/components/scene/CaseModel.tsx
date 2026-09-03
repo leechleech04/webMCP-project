@@ -4,6 +4,7 @@ import { useBuildStore } from "../../store/buildStore";
 import { getActiveCaseProfile } from "../../domain/cases/getActiveCase";
 import type { CaseProfile } from "../../domain/cases/types";
 import { GlbAsset, preloadGlb } from "./GlbAsset";
+import { componentRegistry } from "../../domain/data/components";
 
 export const CASE_LIAN_LI_GLB_URL = "/assets/case-lian-li-lancool-216/lod0.glb";
 preloadGlb(CASE_LIAN_LI_GLB_URL);
@@ -47,7 +48,7 @@ function MiniPcChassisStructure({ profile }: { profile: CaseProfile }) {
       {/* Bottom Floor & Mini PSU Cradle — interior */}
       <mesh position={[0.7, 0.8, 0]} receiveShadow>
         <boxGeometry args={[1.8, 1.4, 2.4]} />
-        <meshStandardMaterial color="#858C95" metalness={0.42} roughness={0.52} />
+        <meshStandardMaterial color="#858C95" metalness={0.42} roughness={0.52} transparent opacity={0.24} depthWrite={false} />
       </mesh>
 
       {/* Mini-ITX Motherboard Tray Plate */}
@@ -105,7 +106,7 @@ function SffChassisStructure({ profile }: { profile: CaseProfile }) {
       {/* Bottom PSU Basement Tunnel — main shell */}
       <mesh position={[0, 0.9, 0]} receiveShadow>
         <boxGeometry args={[4.1, 1.8, 6.6]} />
-        <meshStandardMaterial color="#AEB3BA" metalness={0.40} roughness={0.48} />
+        <meshStandardMaterial color="#AEB3BA" metalness={0.40} roughness={0.48} transparent opacity={0.24} depthWrite={false} />
         <Edges color="#8A919C" threshold={20} />
       </mesh>
 
@@ -168,7 +169,7 @@ function MffChassisStructure({ profile }: { profile: CaseProfile }) {
       {/* Bottom Full-Length PSU Shroud — main shell */}
       <mesh position={[0, 1.1, 0]} receiveShadow>
         <boxGeometry args={[4.6, 2.2, 9.4]} />
-        <meshStandardMaterial color="#B0B6BE" metalness={0.38} roughness={0.48} />
+        <meshStandardMaterial color="#B0B6BE" metalness={0.38} roughness={0.48} transparent opacity={0.24} depthWrite={false} />
         <Edges color="#8E959F" threshold={20} />
       </mesh>
 
@@ -234,7 +235,7 @@ function LffChassisStructure({ profile }: { profile: CaseProfile }) {
       {/* Bottom Dual-Chamber PSU Basement */}
       <mesh position={[0, 1.2, 0]} receiveShadow>
         <boxGeometry args={[5.2, 2.4, 11.2]} />
-        <meshStandardMaterial color="#B0B6BE" metalness={0.38} roughness={0.50} />
+        <meshStandardMaterial color="#B0B6BE" metalness={0.38} roughness={0.50} transparent opacity={0.24} depthWrite={false} />
         <Edges color="#8E959F" threshold={20} />
       </mesh>
 
@@ -262,16 +263,39 @@ function LffChassisStructure({ profile }: { profile: CaseProfile }) {
 export function CaseModel() {
   const state = useBuildStore((s) => s);
   const activeProfile = useMemo(() => getActiveCaseProfile(state), [state]);
+  const component = componentRegistry[activeProfile.componentId];
+  const isGeneratedGlb = activeProfile.componentId === "case-matx-airflow" || activeProfile.componentId === "case-dual-chamber-atx";
+
+  const procedural = (
+    <>
+      {activeProfile.id === "case-profile-mini-pc" && <MiniPcChassisStructure profile={activeProfile} />}
+      {(activeProfile.id === "case-sff-01" || activeProfile.id === "case-profile-sff") && <SffChassisStructure profile={activeProfile} />}
+      {(activeProfile.id === "case-01" || activeProfile.id === "case-profile-mff") && <MffChassisStructure profile={activeProfile} />}
+      {(activeProfile.id === "case-lff-01" || activeProfile.id === "case-profile-lff") && <LffChassisStructure profile={activeProfile} />}
+    </>
+  );
 
   return (
     <group name="case" position={[0, 0, 0]}>
-      {activeProfile.id === "case-profile-mini-pc" && <MiniPcChassisStructure profile={activeProfile} />}
-      {activeProfile.id === "case-sff-01" && <SffChassisStructure profile={activeProfile} />}
-      {activeProfile.id === "case-profile-sff" && <SffChassisStructure profile={activeProfile} />}
-      {activeProfile.id === "case-01" && <MffChassisStructure profile={activeProfile} />}
-      {activeProfile.id === "case-profile-mff" && <MffChassisStructure profile={activeProfile} />}
-      {activeProfile.id === "case-lff-01" && <LffChassisStructure profile={activeProfile} />}
-      {activeProfile.id === "case-profile-lff" && <LffChassisStructure profile={activeProfile} />}
+      {isGeneratedGlb && component?.visualAsset?.url ? (
+        <group position={[0, activeProfile.dimensionsMm.height * 0.01, 0]}>
+          <GlbAsset
+            url={component.visualAsset.url}
+            opacity={0.32}
+            scale={[
+              activeProfile.dimensionsMm.width * 0.02,
+              activeProfile.dimensionsMm.height * 0.02,
+              activeProfile.dimensionsMm.depth * 0.02,
+            ]}
+            fallback={(
+              <mesh receiveShadow>
+                <boxGeometry args={activeProfile.proceduralFallback.envelopeScale} />
+                <meshStandardMaterial color={activeProfile.proceduralFallback.color} transparent opacity={0.18} wireframe />
+              </mesh>
+            )}
+          />
+        </group>
+      ) : procedural}
     </group>
   );
 }

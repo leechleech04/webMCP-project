@@ -72,6 +72,10 @@ export const mountTransforms: Readonly<Record<string, SceneTransform>> = {
     position: [-1.05, 6.1, -0.6],
     rotation: [0, Math.PI / 2, 0],
   },
+  "cpu-cooler-1": {
+    position: [-1.0, 6.15, -0.6],
+    rotation: [0, Math.PI / 2, 0],
+  },
   "dimm-a1": {
     position: [-1.05, 5.2, 1.65],
     rotation: [0, Math.PI / 2, 0],
@@ -131,9 +135,19 @@ export const mountTransforms: Readonly<Record<string, SceneTransform>> = {
     scale: [1, 1, 1],
   },
   "storage-m2-1": {
-    position: [-0.25, 4.0, 0.6],
+    // Flush with the visible face of the motherboard. StorageModel's local Y
+    // axis is its thickness, so the Z rotation makes that axis the board normal.
+    position: [-1.0, 4.0, 0.6],
     rotation: [0, 0, Math.PI / 2],
     scale: [1, 1, 1],
+  },
+  "storage-2-5-1": {
+    position: [1.0, 2.35, -1.55],
+    rotation: [0, 0, 0],
+  },
+  "storage-3-5-1": {
+    position: [0.7, 1.55, 1.9],
+    rotation: [0, 0, 0],
   },
   "fan-bottom-2": {
     position: [0, 0.25, -1.4],

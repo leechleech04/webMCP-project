@@ -1,0 +1,18 @@
+{
+  "assetId": "COOLER_SINGLE_TOWER",
+  "category": "PC_COMPONENT",
+  "productionMethod": "DETERMINISTIC_PROCEDURAL_RECONSTRUCTION",
+  "license": "CC0-1.0",
+  "coordinateSystem": "GLTF_Y_UP",
+  "nativeBounds": [
+    1,
+    1,
+    1
+  ],
+  "file": {
+    "url": "/assets/cooler-single-tower/lod0.glb",
+    "bytes": 4168,
+    "sha256": "88af6b8595de818f117cbe6952170a9a4c7a172c3b31e380cfa9091c7e304302"
+  },
+  "generator": "scripts/generate_catalog_assets.py"
+}

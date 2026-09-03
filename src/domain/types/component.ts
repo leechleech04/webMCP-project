@@ -5,6 +5,7 @@ export type ComponentType =
   | "GPU"
   | "RAM"
   | "STORAGE"
+  | "CPU_COOLER"
   | "RADIATOR"
   | "FAN"
   | "PSU";
@@ -45,6 +46,8 @@ export interface ComponentDefinition {
     motherboardFormFactor?: "MINI_ITX" | "MICRO_ATX" | "ATX" | "E_ATX";
     cpuSocket?: string;
     memoryType?: string;
+    supportedCpuSockets?: string[];
+    storageFormFactor?: "M2_2280" | "SATA_2_5" | "HDD_3_5";
   };
   visualAsset?: {
     mode: "GLB" | "PROCEDURAL_FALLBACK";
@@ -52,6 +55,8 @@ export interface ComponentDefinition {
     url?: string;
     license?: string;
     attributionPath?: string;
+    /** Dimensions of the source GLB in its own coordinate units. */
+    nativeDimensions?: Dimensions;
   };
 }
 

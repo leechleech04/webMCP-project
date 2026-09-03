@@ -1,0 +1,18 @@
+{
+  "assetId": "CASE_MATX_AIRFLOW",
+  "category": "PC_COMPONENT",
+  "productionMethod": "DETERMINISTIC_PROCEDURAL_RECONSTRUCTION",
+  "license": "CC0-1.0",
+  "coordinateSystem": "GLTF_Y_UP",
+  "nativeBounds": [
+    1,
+    1,
+    1
+  ],
+  "file": {
+    "url": "/assets/case-matx-airflow/lod0.glb",
+    "bytes": 8076,
+    "sha256": "c0060354f71a337e3b4fdaa7219e347518b16294acb1fe043270524b51431e6c"
+  },
+  "generator": "scripts/generate_catalog_assets.py"
+}

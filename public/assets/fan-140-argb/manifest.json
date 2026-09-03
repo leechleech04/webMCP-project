@@ -1,0 +1,18 @@
+{
+  "assetId": "FAN_140_ARGB",
+  "category": "PC_COMPONENT",
+  "productionMethod": "DETERMINISTIC_PROCEDURAL_RECONSTRUCTION",
+  "license": "CC0-1.0",
+  "coordinateSystem": "GLTF_Y_UP",
+  "nativeBounds": [
+    1,
+    1,
+    1
+  ],
+  "file": {
+    "url": "/assets/fan-140-argb/lod0.glb",
+    "bytes": 4168,
+    "sha256": "9d0a002abeddd5ca7914779d88e583eb4c645b966464f3f244003ff437e0f559"
+  },
+  "generator": "scripts/generate_catalog_assets.py"
+}

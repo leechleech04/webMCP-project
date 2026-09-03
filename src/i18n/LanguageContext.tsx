@@ -261,10 +261,30 @@ const componentNamesKo: Record<string, string> = {
   "fan-side-01": "120mm 측면 브래킷 팬",
   "fan-140-01": "140mm 고풍량 PWM 팬 (85 CFM)",
   "fan-160-01": "160mm 대형 흡기 팬 (110 CFM)",
+  "motherboard-matx-am5": "Micro-ATX AM5 DDR5 메인보드",
+  "motherboard-atx-lga1851": "ATX LGA1851 DDR5 메인보드",
+  "motherboard-itx-lga1851": "Mini-ITX LGA1851 DDR5 메인보드",
+  "cpu-am5-65w": "AM5 고효율 8코어 CPU (65W)",
+  "cpu-am5-170w": "AM5 고성능 16코어 CPU (170W)",
+  "cpu-lga1851-125w": "LGA1851 고성능 CPU (125W)",
+  "gpu-compact-200": "소형 듀얼 팬 GPU (200mm, 160W)",
+  "gpu-performance-280": "고성능 듀얼 팬 GPU (280mm, 285W)",
+  "gpu-enthusiast-360": "하이엔드 4슬롯 GPU (360mm, 575W)",
+  "ram-lowprofile-32": "32GB DDR5-6000 저상형 RAM",
+  "ram-lowprofile-48": "48GB DDR5-6400 저상형 RAM",
+  "storage-nvme-heatsink": "방열판 포함 4TB PCIe 5.0 NVMe SSD",
+  "storage-sata-2tb": "2TB 2.5인치 SATA SSD",
+  "storage-hdd-4tb": "4TB 3.5인치 하드디스크",
+  "radiator-280-01": "280mm 듀얼 수랭 라디에이터 (315mm)",
+  "cooler-single-tower": "싱글타워 120mm 공랭 쿨러 (155mm)",
+  "cooler-dual-tower": "듀얼타워 140mm 공랭 쿨러 (165mm)",
+  "psu-atx-650": "650W ATX 모듈러 골드 파워서플라이",
+  "psu-atx-short-850": "850W 숏 ATX 모듈러 골드 파워서플라이",
+  "fan-140-argb-01": "140mm ARGB PWM 팬 (90 CFM)",
 };
 
 const categoryNamesKo: Record<string, string> = {
-  GPU: "그래픽카드", RADIATOR: "수랭 쿨러", FAN: "팬과 공기 흐름", MOTHERBOARD: "메인보드",
+  GPU: "그래픽카드", RADIATOR: "수랭 쿨러", CPU_COOLER: "공랭 쿨러", FAN: "팬과 공기 흐름", MOTHERBOARD: "메인보드",
   CPU: "CPU", RAM: "메모리 (RAM)", STORAGE: "저장장치", PSU: "파워서플라이", DIAGRAMS: "도면",
 };
 
@@ -277,6 +297,10 @@ const caseNamesKo: Record<string, string> = {
   "Micro-ATX (Internal Demo)": "Micro-ATX (내부 데모)",
   "Mid Tower (Internal Demo)": "미들 타워 (내부 데모)",
   "Full Tower (Internal Demo)": "풀 타워 (내부 데모)",
+  "MFF — Mesh Airflow Micro-ATX": "MFF — 메쉬 에어플로 Micro-ATX",
+  "MFF — Dual-Chamber Panoramic ATX": "MFF — 듀얼챔버 파노라마 ATX",
+  "Micro-ATX": "Micro-ATX",
+  "ATX Dual Chamber": "ATX 듀얼챔버",
 };
 
 const interpolate = (value: string, vars?: Record<string, string | number>) =>

@@ -29,13 +29,24 @@ export const validatePlatformCompatibility = (
   }
 
   for (const component of installed) {
-    if (["CPU", "RAM", "GPU", "STORAGE"].includes(component.type) && !motherboard) {
+    if (["CPU", "CPU_COOLER", "RAM", "GPU", "STORAGE"].includes(component.type) && !motherboard) {
       issues.push({
         id: `MOTHERBOARD_REQUIRED:${component.id}`,
         type: "CONNECTOR",
         severity: "ERROR",
         message: `${component.name} requires an installed motherboard.`,
         affectedComponentIds: [component.id],
+      });
+    }
+    if (component.type === "CPU_COOLER" && motherboard &&
+        component.compatibility?.supportedCpuSockets &&
+        !component.compatibility.supportedCpuSockets.includes(motherboard.compatibility?.cpuSocket ?? "")) {
+      issues.push({
+        id: `CPU_COOLER_SOCKET_MISMATCH:${component.id}`,
+        type: "CONNECTOR",
+        severity: "ERROR",
+        message: `${component.name} does not support ${motherboard.compatibility?.cpuSocket ?? "the selected motherboard socket"}.`,
+        affectedComponentIds: [component.id, motherboard.id],
       });
     }
     if (component.type === "CPU" && motherboard &&
@@ -58,6 +69,18 @@ export const validatePlatformCompatibility = (
         affectedComponentIds: [component.id, motherboard.id],
       });
     }
+  }
+
+  const airCooler = installed.find((component) => component.type === "CPU_COOLER");
+  const liquidCooler = installed.find((component) => component.type === "RADIATOR");
+  if (airCooler && liquidCooler) {
+    issues.push({
+      id: "CPU_COOLING_SOLUTION_CONFLICT",
+      type: "CLEARANCE",
+      severity: "ERROR",
+      message: "Choose either an air CPU cooler or an AIO liquid cooler, not both.",
+      affectedComponentIds: [airCooler.id, liquidCooler.id],
+    });
   }
 
   return issues;

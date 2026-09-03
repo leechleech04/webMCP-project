@@ -79,6 +79,14 @@ export const assertComponentFitsMount = (
     );
   }
 
+  if (component.type === "STORAGE" && mount.supportedStorageFormFactors &&
+      !mount.supportedStorageFormFactors.includes(component.compatibility?.storageFormFactor ?? "M2_2280")) {
+    throw new DomainCommandError(
+      "UNSUPPORTED_COMPONENT_TYPE",
+      `${component.name} cannot use the ${mount.id} storage form factor`,
+    );
+  }
+
   if (mount.constraints && component.dimensions) {
     const { maxWidth, maxHeight, maxDepth } = mount.constraints;
     const { width, height, depth } = component.dimensions;
@@ -107,6 +115,16 @@ export const assertComponentFitsActiveCase = (
       "INCOMPATIBLE_MOUNT",
       `Mount ${mount.id} is not available in ${profile.label}`,
     );
+  }
+
+  if (component.type === "FAN") {
+    const fanMount = profile.fanMounts.find((item) => item.mountId === mount.id);
+    if (fanMount && component.dimensions.width > fanMount.sizeMm) {
+      throw new DomainCommandError(
+        "COMPONENT_DOES_NOT_FIT",
+        `${component.name} is ${component.dimensions.width}mm but ${mount.id} supports up to ${fanMount.sizeMm}mm`,
+      );
+    }
   }
 
   const profileLimit = profile.clearanceLimits[mount.id];

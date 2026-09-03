@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 
-export type TabCategory = "GPU" | "RADIATOR" | "FAN" | "MOTHERBOARD" | "CPU" | "RAM" | "STORAGE" | "PSU" | "DIAGRAMS";
+export type TabCategory = "GPU" | "RADIATOR" | "CPU_COOLER" | "FAN" | "MOTHERBOARD" | "CPU" | "RAM" | "STORAGE" | "PSU" | "DIAGRAMS";
 
 const categories: Array<{ id: TabCategory; label: string }> = [
   { id: "GPU", label: "Graphics" }, { id: "RADIATOR", label: "Liquid Cooler" },
+  { id: "CPU_COOLER", label: "Air Cooler" },
   { id: "FAN", label: "Fans & Air" }, { id: "MOTHERBOARD", label: "Motherboard" },
   { id: "CPU", label: "CPU" }, { id: "RAM", label: "Memory (RAM)" },
   { id: "STORAGE", label: "Storage" }, { id: "PSU", label: "Power Supply" },
@@ -14,6 +15,7 @@ function CategoryIcon({ category }: { category: TabCategory }) {
   const paths: Record<TabCategory, ReactNode> = {
     GPU: <><rect x="3" y="6" width="18" height="12" rx="3" /><circle cx="9" cy="12" r="3" /><path d="M15 10h3M15 14h2M7 18v2M11 18v2" /></>,
     RADIATOR: <><rect x="4" y="3" width="16" height="18" rx="3" /><circle cx="12" cy="9" r="3.5" /><circle cx="12" cy="16" r="2.5" /></>,
+    CPU_COOLER: <><path d="M7 3h10v18H7z" /><path d="M9 5v14M12 5v14M15 5v14" /><circle cx="19" cy="12" r="3" /></>,
     FAN: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="1.5" /><path d="M12 10c-1-4 1-6 3-5 2 2 1 5-3 7M14 12c4-1 6 1 5 3-2 2-5 1-7-3M12 14c1 4-1 6-3 5-2-2-1-5 3-7M10 12c-4 1-6-1-5-3 2-2 5-1 7 3" /></>,
     MOTHERBOARD: <><rect x="4" y="3" width="16" height="18" rx="2" /><rect x="8" y="7" width="7" height="7" rx="1" /><path d="M8 17h8M18 7v5M6 7v3" /></>,
     CPU: <><rect x="6" y="6" width="12" height="12" rx="2" /><rect x="9" y="9" width="6" height="6" rx="1" /><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3" /></>,

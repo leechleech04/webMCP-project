@@ -1,0 +1,18 @@
+{
+  "assetId": "MOTHERBOARD_FAMILY",
+  "category": "PC_COMPONENT",
+  "productionMethod": "DETERMINISTIC_PROCEDURAL_RECONSTRUCTION",
+  "license": "CC0-1.0",
+  "coordinateSystem": "GLTF_Y_UP",
+  "nativeBounds": [
+    1,
+    1,
+    1
+  ],
+  "file": {
+    "url": "/assets/motherboard-family/lod0.glb",
+    "bytes": 5568,
+    "sha256": "140ae0b5a74a3562f58e7fd275eae483a108ddfffa1d4e217898e807ffcea5a8"
+  },
+  "generator": "scripts/generate_catalog_assets.py"
+}

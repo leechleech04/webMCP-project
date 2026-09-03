@@ -1,0 +1,18 @@
+{
+  "assetId": "GPU_DUAL_FAN",
+  "category": "PC_COMPONENT",
+  "productionMethod": "DETERMINISTIC_PROCEDURAL_RECONSTRUCTION",
+  "license": "CC0-1.0",
+  "coordinateSystem": "GLTF_Y_UP",
+  "nativeBounds": [
+    1,
+    1,
+    1
+  ],
+  "file": {
+    "url": "/assets/gpu-dual-fan/lod0.glb",
+    "bytes": 4864,
+    "sha256": "17cd2bc649476d80e9c35c74cfaf8e958fc984bbbc8dd2374891080f38fec897"
+  },
+  "generator": "scripts/generate_catalog_assets.py"
+}

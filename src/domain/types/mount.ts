@@ -4,6 +4,7 @@ export type MountType =
   | "CASE"
   | "MOTHERBOARD"
   | "CPU"
+  | "CPU_COOLER"
   | "RAM"
   | "STORAGE"
   | "PCIE"
@@ -20,6 +21,7 @@ export interface MountDefinition {
     maxWidth?: number;
     maxHeight?: number;
   };
+  supportedStorageFormFactors?: Array<"M2_2280" | "SATA_2_5" | "HDD_3_5">;
 }
 
 export type MountRegistry = Readonly<Record<string, MountDefinition>>;

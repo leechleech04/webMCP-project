@@ -61,7 +61,7 @@ const optionalString = (input: InputRecord, key: string): string | undefined => 
 };
 
 const componentTypes = [
-  "CASE", "MOTHERBOARD", "CPU", "GPU", "RAM", "STORAGE", "RADIATOR", "FAN", "PSU",
+  "CASE", "MOTHERBOARD", "CPU", "GPU", "RAM", "STORAGE", "CPU_COOLER", "RADIATOR", "FAN", "PSU",
 ] as const;
 
 const optionalComponentType = (input: InputRecord, key: string): (typeof componentTypes)[number] | undefined => {

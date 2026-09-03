@@ -1,0 +1,18 @@
+{
+  "assetId": "COOLER_DUAL_TOWER",
+  "category": "PC_COMPONENT",
+  "productionMethod": "DETERMINISTIC_PROCEDURAL_RECONSTRUCTION",
+  "license": "CC0-1.0",
+  "coordinateSystem": "GLTF_Y_UP",
+  "nativeBounds": [
+    1,
+    1,
+    1
+  ],
+  "file": {
+    "url": "/assets/cooler-dual-tower/lod0.glb",
+    "bytes": 4824,
+    "sha256": "d0deed74f2dc1d1074ed5361581cacd33d0e50ff3a79bd259cf837e23d3a93a6"
+  },
+  "generator": "scripts/generate_catalog_assets.py"
+}

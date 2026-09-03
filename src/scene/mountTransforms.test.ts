@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { componentRegistry } from "../domain/data/components";
 import { mounts } from "../domain/data/mounts";
-import { modelRegistry } from "./modelRegistry";
+import { getSceneModel, modelRegistry } from "./modelRegistry";
+import { caseProfiles } from "../domain/cases/caseProfiles";
 import {
   getMountTransform,
   getRequiredMountTransform,
@@ -44,6 +45,24 @@ describe("mount transforms", () => {
       compatibleMounts.forEach((mount) => {
         expect(getMountTransform(mount.id), mount.id).toBeDefined();
       });
+    });
+  });
+
+  it("resolves a visible scene model for every installable catalog component", () => {
+    Object.values(componentRegistry)
+      .filter((component) => component.type !== "CASE")
+      .forEach((component) => {
+        expect(getSceneModel(component.id), component.id).toBeDefined();
+      });
+  });
+
+  it("keeps M.2 storage flush with the motherboard in every case profile", () => {
+    caseProfiles.forEach((profile) => {
+      const motherboard = profile.mountTransforms["motherboard-tray"];
+      const storage = profile.mountTransforms["storage-m2-1"];
+
+      expect(storage.rotation, profile.id).toEqual([0, 0, Math.PI / 2]);
+      expect(storage.position[0] - motherboard.position[0], profile.id).toBeCloseTo(0.38);
     });
   });
 });

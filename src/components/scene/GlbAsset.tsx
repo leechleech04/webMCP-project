@@ -1,5 +1,6 @@
 import { Suspense, Component, type ReactNode } from "react";
 import * as Drei from "@react-three/drei";
+import * as THREE from "three";
 import type { Object3D } from "three";
 
 interface LoadedAsset {
@@ -17,12 +18,30 @@ try {
 interface GlbAssetProps {
   url: string;
   scale?: number | [number, number, number];
+  opacity?: number;
 }
 
-function LoadedGlb({ url, scale }: GlbAssetProps) {
+function LoadedGlb({ url, scale, opacity }: GlbAssetProps) {
   if (!useGLTF) throw new Error("GLB loader is unavailable");
   const asset = useGLTF(url);
-  return <primitive object={asset.scene.clone()} scale={scale} />;
+  const scene = asset.scene.clone();
+
+  if (opacity !== undefined) {
+    scene.traverse((object) => {
+      if (!(object instanceof THREE.Mesh)) return;
+      const sourceMaterials = Array.isArray(object.material) ? object.material : [object.material];
+      const materials = sourceMaterials.map((source) => {
+        const material = source.clone();
+        material.transparent = true;
+        material.opacity = Math.min(material.opacity, opacity);
+        material.depthWrite = false;
+        return material;
+      });
+      object.material = Array.isArray(object.material) ? materials : materials[0];
+    });
+  }
+
+  return <primitive object={scene} scale={scale} />;
 }
 
 class GlbErrorBoundary extends Component<

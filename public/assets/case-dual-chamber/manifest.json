@@ -1,0 +1,18 @@
+{
+  "assetId": "CASE_DUAL_CHAMBER",
+  "category": "PC_COMPONENT",
+  "productionMethod": "DETERMINISTIC_PROCEDURAL_RECONSTRUCTION",
+  "license": "CC0-1.0",
+  "coordinateSystem": "GLTF_Y_UP",
+  "nativeBounds": [
+    1,
+    1,
+    1
+  ],
+  "file": {
+    "url": "/assets/case-dual-chamber/lod0.glb",
+    "bytes": 8724,
+    "sha256": "c723c5b873f38b1329f6049d333f65ab18be6f473beaeadcb35c25632091eefe"
+  },
+  "generator": "scripts/generate_catalog_assets.py"
+}
