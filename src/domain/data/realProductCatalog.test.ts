@@ -10,11 +10,11 @@ describe("real product catalog and installed instances", () => {
   beforeEach(() => resetBuildStore());
 
   it("publishes every purchasable SKU with stable MPN and estimated KRW prices", () => {
-    expect(components).toHaveLength(33);
-    expect(new Set(components.map((product) => product.id)).size).toBe(33);
+    expect(components).toHaveLength(32);
+    expect(new Set(components.map((product) => product.id)).size).toBe(32);
     expect(Object.fromEntries([...new Set(components.map((product) => product.type))].map((type) => [
       type, components.filter((product) => product.type === type).length,
-    ]))).toEqual({ CASE: 5, MOTHERBOARD: 4, CPU: 4, GPU: 5, RAM: 2, STORAGE: 3, CPU_COOLER: 3, RADIATOR: 2, PSU: 3, FAN: 2 });
+    ]))).toEqual({ CASE: 4, MOTHERBOARD: 4, CPU: 4, GPU: 5, RAM: 2, STORAGE: 3, CPU_COOLER: 3, RADIATOR: 2, PSU: 3, FAN: 2 });
     for (const product of components) {
       expect(product.manufacturer).toBeTruthy();
       expect(product.model).toBeTruthy();

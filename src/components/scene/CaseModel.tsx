@@ -19,6 +19,11 @@ preloadGlb(CASE_LIAN_LI_GLB_URL);
 
 /** 1. MINI_PC: Compact Mini-ITX Cube (190 x 200 x 200 mm -> 3.8 x 4.0 x 4.0 units) */
 function MiniPcChassisStructure({ profile }: { profile: CaseProfile }) {
+  const mbTransform = profile.mountTransforms["motherboard-tray"];
+  const mbX = mbTransform ? mbTransform.position[0] - 0.05 : -0.45;
+  const mbY = mbTransform ? mbTransform.position[1] : 2.42;
+  const mbZ = mbTransform ? mbTransform.position[2] : 0;
+
   return (
     <group name="mini-pc-chassis">
       {/* Outer Cage Wireframe Envelope — subtle neutral */}
@@ -52,7 +57,7 @@ function MiniPcChassisStructure({ profile }: { profile: CaseProfile }) {
       </mesh>
 
       {/* Mini-ITX Motherboard Tray Plate */}
-      <mesh position={[-1.1, 2.5, 0]} receiveShadow>
+      <mesh position={[mbX, mbY, mbZ]} receiveShadow>
         <boxGeometry args={[0.08, 3.2, 3.2]} />
         <meshStandardMaterial color="#AEB3BA" metalness={0.38} roughness={0.42} />
         <Edges color="#8A919C" threshold={20} />
@@ -81,6 +86,11 @@ function MiniPcChassisStructure({ profile }: { profile: CaseProfile }) {
 
 /** 2. SFF: Mini Tower Micro-ATX (210 x 350 x 340 mm -> 4.2 x 7.0 x 6.8 units) */
 function SffChassisStructure({ profile }: { profile: CaseProfile }) {
+  const mbTransform = profile.mountTransforms["motherboard-tray"];
+  const mbX = mbTransform ? mbTransform.position[0] - 0.05 : -1.45;
+  const mbY = mbTransform ? mbTransform.position[1] : 4.2;
+  const mbZ = mbTransform ? mbTransform.position[2] : 0;
+
   return (
     <group name="sff-chassis">
       {/* Outer Envelope */}
@@ -111,7 +121,7 @@ function SffChassisStructure({ profile }: { profile: CaseProfile }) {
       </mesh>
 
       {/* Micro-ATX Motherboard Tray */}
-      <mesh position={[-1.2, 4.2, 0]} receiveShadow>
+      <mesh position={[mbX, mbY, mbZ]} receiveShadow>
         <boxGeometry args={[0.08, 4.4, 5.2]} />
         <meshStandardMaterial color="#858C95" metalness={0.42} roughness={0.50} />
         <Edges color="#7A818D" threshold={20} />
@@ -140,6 +150,11 @@ function SffChassisStructure({ profile }: { profile: CaseProfile }) {
 
 /** 3. MFF: Mid Tower Lian Li Lancool 216 (235 x 491.7 x 480.9 mm -> 4.7 x 9.834 x 9.618 units) */
 function MffChassisStructure({ profile }: { profile: CaseProfile }) {
+  const mbTransform = profile.mountTransforms["motherboard-tray"];
+  const mbX = mbTransform ? mbTransform.position[0] - 0.05 : -1.95;
+  const mbY = mbTransform ? mbTransform.position[1] : 5.3;
+  const mbZ = mbTransform ? mbTransform.position[2] : 0;
+
   return (
     <group name="mff-chassis">
       {/* Chassis Frame Structure — faint wire */}
@@ -174,7 +189,7 @@ function MffChassisStructure({ profile }: { profile: CaseProfile }) {
       </mesh>
 
       {/* ATX Motherboard Tray — interior lighter than frame */}
-      <mesh position={[-1.4, 5.6, 0]} receiveShadow>
+      <mesh position={[mbX, mbY, mbZ]} receiveShadow>
         <boxGeometry args={[0.08, 6.8, 7.8]} />
         <meshStandardMaterial color="#AEB3BA" metalness={0.40} roughness={0.46} />
         <Edges color="#8A919C" threshold={20} />
@@ -203,6 +218,11 @@ function MffChassisStructure({ profile }: { profile: CaseProfile }) {
 
 /** 4. LFF: Massive Full Tower Chassis (270 x 560 x 580 mm -> 5.4 x 11.2 x 11.6 units) */
 function LffChassisStructure({ profile }: { profile: CaseProfile }) {
+  const mbTransform = profile.mountTransforms["motherboard-tray"];
+  const mbX = mbTransform ? mbTransform.position[0] - 0.05 : -2.30;
+  const mbY = mbTransform ? mbTransform.position[1] : 5.7;
+  const mbZ = mbTransform ? mbTransform.position[2] : 0;
+
   return (
     <group name="lff-chassis">
       {/* Massive Outer Frame */}
@@ -226,7 +246,7 @@ function LffChassisStructure({ profile }: { profile: CaseProfile }) {
       </mesh>
 
       {/* E-ATX Reinforced Motherboard Backplate */}
-      <mesh position={[-1.6, 6.3, 0]} receiveShadow>
+      <mesh position={[mbX, mbY, mbZ]} receiveShadow>
         <boxGeometry args={[0.1, 8.4, 9.4]} />
         <meshStandardMaterial color="#AEB3BA" metalness={0.40} roughness={0.48} />
         <Edges color="#8A919C" threshold={20} />
@@ -298,7 +318,7 @@ export function CaseModel() {
   const state = useBuildStore((s) => s);
   const activeProfile = useMemo(() => getActiveCaseProfile(state), [state]);
   const component = componentRegistry[activeProfile.componentId];
-  const isGeneratedGlb = activeProfile.componentId === "case-matx-airflow" || activeProfile.componentId === "case-dual-chamber-atx";
+  const isGeneratedGlb = activeProfile.componentId === "case-matx-airflow";
 
   const procedural = (
     <>

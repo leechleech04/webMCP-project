@@ -41,7 +41,7 @@ const caseTerra01: ComponentDefinition = {
   id: "case-terra-01",
   type: "CASE",
   name: "Fractal Design Terra",
-  dimensions: { width: 153, height: 218, depth: 343 },
+  dimensions: { width: 185, height: 218, depth: 343 },
 };
 
 const caseMatxAirflow: ComponentDefinition = {
@@ -56,17 +56,6 @@ const caseMatxAirflow: ComponentDefinition = {
   },
 };
 
-const caseDualChamberAtx: ComponentDefinition = {
-  id: "case-dual-chamber-atx",
-  type: "CASE",
-  name: "Dual-Chamber Panoramic ATX Tower",
-  dimensions: { width: 285, height: 466, depth: 456 },
-  visualAsset: {
-    mode: "GLB", assetId: "CASE_DUAL_CHAMBER", url: "/assets/case-dual-chamber/lod0.glb",
-    license: "Original procedural asset — CC0-1.0", attributionPath: "assets/case-dual-chamber/ATTRIBUTION.md",
-    nativeDimensions: { width: 1, height: 1, depth: 1 },
-  },
-};
 
 // Motherboards
 const motherboard01: ComponentDefinition = {
@@ -434,7 +423,6 @@ const legacyComponentRegistry: Record<string, ComponentDefinition> = {
   [caseSff01.id]: caseSff01,
   [caseLff01.id]: caseLff01,
   [caseMatxAirflow.id]: caseMatxAirflow,
-  [caseDualChamberAtx.id]: caseDualChamberAtx,
   [motherboard01.id]: motherboard01,
   [motherboardItx01.id]: motherboardItx01,
   [motherboardMatxAm5.id]: motherboardMatxAm5,

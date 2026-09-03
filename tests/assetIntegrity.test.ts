@@ -22,8 +22,8 @@ const parseGlb = (payload: Buffer) => {
 };
 
 describe("generated GLB asset integrity", () => {
-  it("contains exactly 13 shared generated asset families", () => {
-    expect(generatedUrls).toHaveLength(13);
+  it("contains exactly 12 shared generated asset families", () => {
+    expect(generatedUrls).toHaveLength(12);
   });
 
   for (const url of generatedUrls) {

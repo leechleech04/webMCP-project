@@ -87,12 +87,9 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
   const gpuInstalled = placements.some((placement) => componentRegistry[placement.componentId]?.type === "GPU");
   const radiatorPlacement = placements.find((placement) => componentRegistry[placement.componentId]?.type === "RADIATOR");
 
-  const [appearanceMode, setAppearanceMode] = useState<SceneAppearanceMode>("STUDIO");
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
   const [isMoveArmed, setIsMoveArmed] = useState(false);
   const [hoveredMountId] = useState<string | null>(null);
-  const [cameraResetKey, setCameraResetKey] = useState(0);
   const [interactionError, setInteractionError] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -124,8 +121,6 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
           setIsMoveArmed(false);
         } else if (selectedComponentId) {
           setSelectedComponentId(null);
-        } else if (isFullscreen) {
-          setIsFullscreen(false);
         }
       } else if ((e.key === "m" || e.key === "M") && selectedComponentId && componentRegistry[selectedComponentId]?.type !== "CASE") {
         setIsMoveArmed((prev) => !prev);
@@ -133,7 +128,7 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isMoveArmed, selectedComponentId, isFullscreen]);
+  }, [isMoveArmed, selectedComponentId]);
 
   const handleSelectComponent = (componentId: string) => {
     if (componentRegistry[componentId]?.type === "CASE") return;
@@ -187,20 +182,7 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
   return (
     <div
       ref={containerRef}
-      className={`scene-canvas ${isFullscreen ? "scene-canvas-fullscreen" : ""}`}
-      style={
-        isFullscreen
-          ? {
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "100vw",
-              height: "100vh",
-              zIndex: 9999,
-              background: appearanceMode === "STUDIO" ? "#e2e8f0" : "#070b12",
-            }
-          : undefined
-      }
+      className="scene-canvas"
       role="region"
       aria-label={t("scene.aria", {
         gpu: gpuInstalled ? t("scene.installed") : t("scene.notInstalled"),
@@ -213,69 +195,6 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
           <button type="button" onClick={() => setInteractionError(null)} aria-label={t("scene.dismissError")}>×</button>
         </div>
       )}
-      <div
-        className="scene-controls-group"
-        style={{
-          position: "absolute",
-          top: "0.75rem",
-          right: "0.75rem",
-          zIndex: 10,
-          display: "flex",
-          gap: "0.45rem",
-          alignItems: "center",
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => setAppearanceMode((prev) => (prev === "STUDIO" ? "DARK" : "STUDIO"))}
-          style={{
-            padding: "0.35rem 0.65rem",
-            borderRadius: "6px",
-            background: "#1e293b",
-            color: "#f8fafc",
-            border: "1px solid #334155",
-            fontSize: "0.74rem",
-            cursor: "pointer",
-            fontWeight: 600,
-          }}
-        >
-          {appearanceMode === "STUDIO" ? t("scene.studio") : t("scene.dark")}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setIsFullscreen((prev) => !prev)}
-          style={{
-            padding: "0.35rem 0.65rem",
-            borderRadius: "6px",
-            background: isFullscreen ? "#dc2626" : "#2563eb",
-            color: "#ffffff",
-            border: "none",
-            fontSize: "0.74rem",
-            cursor: "pointer",
-            fontWeight: 700,
-          }}
-        >
-          {isFullscreen ? t("scene.exitFullscreen") : t("scene.fullscreen")}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setCameraResetKey((prev) => prev + 1)}
-          style={{
-            padding: "0.35rem 0.65rem",
-            borderRadius: "6px",
-            background: "#0f172a",
-            color: "#94a3b8",
-            border: "1px solid #334155",
-            fontSize: "0.74rem",
-            cursor: "pointer",
-          }}
-          title={t("scene.resetTitle")}
-        >
-          {t("scene.reset")}
-        </button>
-      </div>
 
       {selectedPlacement && selectedComponentDef && (
         <div
@@ -375,13 +294,12 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
       )}
 
       <Canvas
-        key={cameraResetKey}
         shadows="basic"
         camera={{ position: initialCameraPos, fov: activeProfile.camera.fov, near: 0.1, far: 120 }}
         gl={{
           antialias: true,
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: appearanceMode === "STUDIO" ? 1.08 : 0.95,
+          toneMappingExposure: 1.08,
         }}
       >
         <OrbitControls
@@ -392,7 +310,7 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
           enableDamping
           dampingFactor={0.06}
         />
-        <StudioEnvironment mode={appearanceMode} />
+        <StudioEnvironment mode="STUDIO" />
 
         <CaseModel />
 

@@ -72,6 +72,7 @@ const intentionalAttachment = (a: Placement, ac: ComponentDefinition, b: Placeme
     const other = ac.type === "MOTHERBOARD" ? b : a;
     return ["cpu-socket-1", "dimm-a1", "dimm-b1", "storage-m2-1", "pcie-slot-1"].includes(other.mountId);
   }
+  if (types.has("STORAGE") && types.has("GPU")) return true;
   return types.has("CPU") && types.has("CPU_COOLER");
 };
 

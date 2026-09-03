@@ -39,7 +39,9 @@ interface LayoutOptions {
   sandwich?: boolean;
   motherboardX?: number;
   motherboardZ?: number;
+  gpuX?: number;
   gpuY?: number;
+  gpuZ?: number;
   psuY?: number;
   bottomFanY?: number;
   fanIds?: string[];
@@ -48,7 +50,8 @@ interface LayoutOptions {
 /**
  * Builds every transform from the physical case envelope. Motherboards are
  * vertical in the Y/Z plane. CPU, M.2 and air-cooler mounts share their +X
- * normal. GPUs are vertical as well, with card length along case depth.
+ * normal. GPUs are horizontal in the X/Z plane at 90° to the motherboard,
+ * slotted directly into the PCIe slot with card length along case depth.
  */
 const createLayout = (dim: Dimensions, options: LayoutOptions): Record<string, SceneTransform> => {
   const height = mm(dim.height);
@@ -61,17 +64,21 @@ const createLayout = (dim: Dimensions, options: LayoutOptions): Record<string, S
   const componentFaceX = motherboardX + 0.38;
   const cpuY = motherboardY + Math.min(0.55, motherboardHeight * 0.12);
   const cpuZ = -Math.min(0.55, halfDepth * 0.18);
+  const ramY = cpuY + 0.04;
   const fanIds = options.fanIds ?? [];
+  const gpuX = options.gpuX ?? (motherboardX + 1.55);
+  const gpuY = options.gpuY ?? (motherboardY - 1.4);
+  const gpuZ = options.gpuZ ?? motherboardZ;
   const transforms: Record<string, SceneTransform> = {
     "case-root": { position: [0, height / 2, 0], rotation: [0, 0, 0] },
     "motherboard-tray": { position: [motherboardX, motherboardY, motherboardZ], rotation: [0, Math.PI / 2, 0] },
     "cpu-socket-1": { position: [componentFaceX, cpuY, motherboardZ + cpuZ], rotation: [0, Math.PI / 2, 0] },
     // AirCoolerModel uses this as the CPU contact plane and extends along +X.
     "cpu-cooler-1": { position: [componentFaceX + 0.08, cpuY, motherboardZ + cpuZ], rotation: [0, 0, 0] },
-    "dimm-a1": { position: [componentFaceX, motherboardY, motherboardZ + 1.25], rotation: [0, Math.PI / 2, 0] },
-    "dimm-b1": { position: [componentFaceX, motherboardY, motherboardZ + 1.52], rotation: [0, Math.PI / 2, 0] },
+    "dimm-a1": { position: [componentFaceX, ramY, motherboardZ + 1.25], rotation: [0, Math.PI / 2, 0] },
+    "dimm-b1": { position: [componentFaceX, ramY, motherboardZ + 1.52], rotation: [0, Math.PI / 2, 0] },
     "storage-m2-1": { position: [componentFaceX, motherboardY - motherboardHeight * 0.28, motherboardZ - 0.25], rotation: [0, 0, Math.PI / 2] },
-    "pcie-slot-1": { position: [options.sandwich ? -0.72 : 0.65, options.gpuY ?? Math.max(2.2, options.motherboardBottom + 1.15), 0], rotation: [0, 0, Math.PI / 2] },
+    "pcie-slot-1": { position: [gpuX, gpuY, gpuZ], rotation: [0, 0, 0] },
     "psu-bay": { position: [0, options.psuY ?? 0.95, halfDepth * 0.22], rotation: [0, 0, 0] },
     "storage-2-5-1": { position: [Math.max(0, halfWidth - 0.8), 0.18, Math.max(0, halfDepth - 1.15)], rotation: [0, 0, 0] },
     "storage-3-5-1": { position: [Math.max(0, halfWidth - 1.05), 0.32, -Math.max(0, halfDepth - 1.55)], rotation: [0, 0, 0] },
@@ -133,27 +140,23 @@ const profile = (input: {
 
 const DIM_CHOPIN = { width: 84, height: 244, depth: 217 };
 const CHOPIN_T = createLayout(DIM_CHOPIN, { motherboardBottom: 0.72, maxMotherboardDepth: 170, sandwich: true, motherboardX: -0.4 });
-const DIM_TERRA = { width: 153, height: 218, depth: 343 };
+const DIM_TERRA = { width: 185, height: 218, depth: 343 };
 const TERRA_FANS = ["fan-bottom-1"];
-const TERRA_T = createLayout(DIM_TERRA, { motherboardBottom: 0.48, maxMotherboardDepth: 170, sandwich: true, motherboardX: -0.1, motherboardZ: -1.45, gpuY: 2.0, psuY: 2.8, fanIds: TERRA_FANS });
+const TERRA_T = createLayout(DIM_TERRA, { motherboardBottom: 0.48, maxMotherboardDepth: 170, motherboardX: -1.35, gpuY: 0.65, psuY: 2.8, fanIds: TERRA_FANS });
 TERRA_T["psu-bay"] = { position: [0.85, 2.8, 2.0], rotation: [0, 0, Math.PI / 2] };
 const DIM_NR200 = { width: 185, height: 292, depth: 372 };
 const NR200_FANS = ["fan-top-1", "fan-top-2", "fan-bottom-1", "fan-bottom-2"];
-const NR200_T = createLayout(DIM_NR200, { motherboardBottom: 0.95, maxMotherboardDepth: 180, gpuY: 1.75, psuY: 3.94, fanIds: NR200_FANS });
-NR200_T["psu-bay"] = { position: [0.55, 3.94, 0.82], rotation: [0, 0, 0] };
+const NR200_T = createLayout(DIM_NR200, { motherboardBottom: 0.95, maxMotherboardDepth: 180, motherboardX: -1.40, gpuY: 1.15, psuY: 3.94, fanIds: NR200_FANS });
+NR200_T["psu-bay"] = { position: [0.58, 2.60, 2.10], rotation: [0, 0, 0] };
 const DIM_MFF = { width: 235, height: 491.7, depth: 480.9 };
 const MFF_FANS = ["fan-top-1", "fan-top-2", "fan-top-3", "fan-front-1", "fan-front-2", "fan-rear-1", "fan-bottom-1", "fan-bottom-2"];
-const MFF_T = createLayout(DIM_MFF, { motherboardBottom: 2.25, maxMotherboardDepth: 305, gpuY: 3.9, psuY: 1.05, bottomFanY: 2.15, fanIds: MFF_FANS });
+const MFF_T = createLayout(DIM_MFF, { motherboardBottom: 2.25, maxMotherboardDepth: 305, motherboardX: -1.90, gpuY: 3.4, psuY: 1.05, bottomFanY: 2.15, fanIds: MFF_FANS });
 const DIM_LFF = { width: 270, height: 560, depth: 580 };
 const LFF_FANS = ["fan-top-1", "fan-top-2", "fan-top-3", "fan-front-1", "fan-front-2", "fan-front-3", "fan-rear-1", "fan-bottom-1", "fan-side-1"];
-const LFF_T = createLayout(DIM_LFF, { motherboardBottom: 2.4, maxMotherboardDepth: 330, gpuY: 4.1, psuY: 1.1, bottomFanY: 2.2, fanIds: LFF_FANS });
+const LFF_T = createLayout(DIM_LFF, { motherboardBottom: 2.4, maxMotherboardDepth: 330, motherboardX: -2.25, gpuY: 3.8, psuY: 1.1, bottomFanY: 2.2, fanIds: LFF_FANS });
 const DIM_MATX = { width: 215, height: 400, depth: 390 };
 const MATX_FANS = ["fan-top-1", "fan-top-2", "fan-front-1", "fan-front-2", "fan-rear-1"];
-const MATX_T = createLayout(DIM_MATX, { motherboardBottom: 2.1, maxMotherboardDepth: 244, gpuY: 3.5, psuY: 0.95, bottomFanY: 2.0, fanIds: MATX_FANS });
-const DIM_DUAL = { width: 290, height: 471, depth: 478 };
-const DUAL_FANS = ["fan-top-1", "fan-top-2", "fan-top-3", "fan-side-1", "fan-front-1", "fan-front-2", "fan-rear-1", "fan-bottom-1"];
-const DUAL_T = createLayout(DIM_DUAL, { motherboardBottom: 2.2, maxMotherboardDepth: 305, gpuY: 3.95, psuY: 1.05, bottomFanY: 2.15, fanIds: DUAL_FANS });
-DUAL_T["psu-bay"] = { position: [1.35, 1.0, -2.25], rotation: [0, 0, 0] };
+const MATX_T = createLayout(DIM_MATX, { motherboardBottom: 2.1, maxMotherboardDepth: 244, motherboardX: -1.70, gpuY: 2.9, psuY: 0.95, bottomFanY: 2.0, fanIds: MATX_FANS });
 
 export const caseProfiles: CaseProfile[] = [
   profile({
@@ -198,13 +201,6 @@ export const caseProfiles: CaseProfile[] = [
     supported: [...commonMounts, "pcie-slot-1", "radiator-front", "radiator-top", "psu-bay", ...storageMounts, ...MATX_FANS],
     clearances: { "motherboard-tray": { maxDepth: 244, maxWidth: 244, maxHeight: 35 }, "pcie-slot-1": { maxDepth: 335, maxWidth: 150, maxHeight: 65 }, "psu-bay": { maxDepth: 180, maxWidth: 150, maxHeight: 86 }, "radiator-front": { maxDepth: 315, maxWidth: 145, maxHeight: 40 }, "radiator-top": { maxDepth: 275, maxWidth: 125, maxHeight: 40 }, "cpu-cooler-1": { maxDepth: 145, maxWidth: 150, maxHeight: 165 }, "storage-2-5-1": { maxDepth: 105, maxWidth: 75, maxHeight: 15 }, "storage-3-5-1": { maxDepth: 150, maxWidth: 105, maxHeight: 30 } },
     color: "#263241", asset: { glbUrl: "/assets/case-matx-airflow/lod0.glb", license: "CC0-1.0" },
-  }),
-  profile({
-    id: "case-profile-dual-chamber", componentId: "case-dual-chamber-atx", label: "Lian Li O11D EVO RGB", formFactor: "ATX Dual Chamber", dim: DIM_DUAL,
-    motherboardFactors: ["MINI_ITX", "MICRO_ATX", "ATX"], transforms: DUAL_T, fanIds: DUAL_FANS,
-    supported: [...commonMounts, "pcie-slot-1", "radiator-front", "radiator-top", "psu-bay", ...storageMounts, ...DUAL_FANS],
-    clearances: { "motherboard-tray": { maxDepth: 305, maxWidth: 244, maxHeight: 35 }, "pcie-slot-1": { maxDepth: 400, maxWidth: 165, maxHeight: 85 }, "psu-bay": { maxDepth: 220, maxWidth: 150, maxHeight: 86 }, "radiator-front": { maxDepth: 400, maxWidth: 145, maxHeight: 45 }, "radiator-top": { maxDepth: 400, maxWidth: 145, maxHeight: 45 }, "cpu-cooler-1": { maxDepth: 165, maxWidth: 165, maxHeight: 180 }, "storage-2-5-1": { maxDepth: 105, maxWidth: 75, maxHeight: 15 }, "storage-3-5-1": { maxDepth: 150, maxWidth: 105, maxHeight: 30 } },
-    color: "#172033", asset: { glbUrl: "/assets/case-dual-chamber/lod0.glb", license: "CC0-1.0" },
   }),
 ];
 

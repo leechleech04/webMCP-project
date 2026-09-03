@@ -53,6 +53,31 @@ export function MotherboardModel({ transform, highlight = false, component }: Mo
           roughness={0.25}
         />
       </mesh>
+
+      {/* PCIe x16 Slot Socket */}
+      <group position={[0, -pcbDepth * 0.22, thickness * 0.8]}>
+        {/* PCIe slot plastic housing */}
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[pcbWidth * 0.65, 0.18, 0.18]} />
+          <meshStandardMaterial color="#0f172a" metalness={0.7} roughness={0.35} />
+          <Edges color="#64748b" threshold={20} />
+        </mesh>
+        {/* PCIe slot central insertion channel */}
+        <mesh position={[0, 0, 0.05]}>
+          <boxGeometry args={[pcbWidth * 0.58, 0.05, 0.10]} />
+          <meshStandardMaterial color="#020617" roughness={0.9} />
+        </mesh>
+        {/* PCIe slot gold pin contacts */}
+        <mesh position={[0, 0, 0.06]}>
+          <boxGeometry args={[pcbWidth * 0.54, 0.02, 0.06]} />
+          <meshStandardMaterial color="#f59e0b" metalness={0.95} roughness={0.1} />
+        </mesh>
+        {/* PCIe slot steel armor reinforcement */}
+        <mesh position={[0, 0, 0.01]}>
+          <boxGeometry args={[pcbWidth * 0.66, 0.19, 0.14]} />
+          <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} wireframe />
+        </mesh>
+      </group>
     </group>
   );
 }

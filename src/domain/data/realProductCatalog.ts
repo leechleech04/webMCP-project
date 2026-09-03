@@ -36,7 +36,6 @@ export const realProductOverrides: Readonly<Record<string, ProductOverride>> = {
     officialUrl: "https://www.in-win.com/en/gaming-chassis/chopin-max", dimensions: { width: 84, height: 244, depth: 217 },
     integratedPsu: { capacity: 200, connectors: psuOutputs("PCIE_8PIN") }, price: estimated(179000),
   },
-  "case-dual-chamber-atx": { name: "Lian Li O11D EVO RGB", manufacturer: "Lian Li", model: "O11D EVO RGB", mpn: "O11DERGBX", officialUrl: "https://lian-li.com/product/o11d-evo-rgb/", dimensions: { width: 290, height: 471, depth: 478 }, price: estimated(239000) },
 
   "motherboard-01": { name: "ASUS TUF GAMING B850-PLUS WIFI", manufacturer: "ASUS", model: "TUF GAMING B850-PLUS WIFI", mpn: "90MB1J90-M0EAY0", officialUrl: "https://www.asus.com/us/motherboards-components/motherboards/tuf-gaming/tuf-gaming-b850-plus-wifi/techspec/", compatibility: { motherboardFormFactor: "ATX", cpuSocket: "AM5", memoryType: "DDR5" }, connectors: atxInputs, price: estimated(279000) },
   "motherboard-matx-am5": { name: "ASUS TUF GAMING B850M-PLUS WIFI", manufacturer: "ASUS", model: "TUF GAMING B850M-PLUS WIFI", mpn: "TUF-GAMING-B850M-PLUS-WIFI", officialUrl: "https://www.asus.com/uk/motherboards-components/motherboards/tuf-gaming/tuf-gaming-b850m-plus-wifi/techspec/", compatibility: { motherboardFormFactor: "MICRO_ATX", cpuSocket: "AM5", memoryType: "DDR5" }, connectors: atxInputs, price: estimated(249000) },

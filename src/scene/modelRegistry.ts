@@ -86,9 +86,12 @@ export const getSceneModel = (
   componentId: string,
 ): ComponentType<SceneModelProps> | undefined => {
   const component = componentRegistry[componentId];
-  if (component?.type === "CPU_COOLER") return AirCoolerModel;
-  if (component?.visualAsset?.mode === "GLB" && component.visualAsset.url) {
+  if (!component) return undefined;
+  if (component.type === "CPU_COOLER") return AirCoolerModel;
+  if (component.type === "FAN") return FanModel;
+  if (component.visualAsset?.mode === "GLB" && component.visualAsset.url) {
     return SharedGlbModel;
   }
-  return modelRegistry[componentId] ?? (component ? proceduralModelByType[component.type] : undefined);
+  const productId = componentId.split("#", 1)[0];
+  return modelRegistry[productId] ?? modelRegistry[componentId] ?? proceduralModelByType[component.type];
 };
