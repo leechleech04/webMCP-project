@@ -4,16 +4,11 @@ import { fetchLivePrices, type LivePriceMap } from "../../domain/pricing/livePri
 import { componentRegistry, getProductId } from "../../domain/data/components";
 import type { ComponentDefinition } from "../../domain/types/component";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { formatCurrency } from "../../i18n/formatCurrency";
 import { useBuildStore } from "../../store/buildStore";
 
-const formatKrw = (amount: number) => new Intl.NumberFormat("ko-KR", {
-  style: "currency",
-  currency: "KRW",
-  maximumFractionDigits: 0,
-}).format(amount);
-
 export function BuildPriceSummary() {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const state = useBuildStore((value) => value);
   const [livePrices, setLivePrices] = useState<LivePriceMap>({});
   const installedProducts = useMemo(() => [...new Set(state.placements.map((placement) => placement.productId ?? getProductId(placement.componentId)))]
@@ -43,11 +38,11 @@ export function BuildPriceSummary() {
       <dl className="price-summary-values">
         <div>
           <dt>{t("price.selected")}</dt>
-          <dd>{formatKrw(summary.selectedTotal)}</dd>
+          <dd>{formatCurrency(summary.selectedTotal, language)}</dd>
         </div>
         <div>
           <dt>{summary.projectedMissingProducts.length > 0 ? t("price.completion") : t("price.estimatedPc")}</dt>
-          <dd>{formatKrw(summary.completionEstimate)}</dd>
+          <dd>{formatCurrency(summary.completionEstimate, language)}</dd>
         </div>
       </dl>
       {summary.projectedMissingProducts.length > 0 && (

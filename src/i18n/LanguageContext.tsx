@@ -5,7 +5,7 @@ export type Language = "en" | "ko";
 const STORAGE_KEY = "pc-build-language";
 
 const en: Record<string, string> = {
-  "language.label": "Select language", "app.eyebrow": "PC CONFIGURATOR", "app.title": "Build Workbench",
+  "language.label": "Select language", "app.eyebrow": "PC CONFIGURATOR", "app.title": "Build from Scratch",
   "app.subtitle": "Choose a chassis, fit the parts, then check the build.",
   "workflow.label": "Build workflow", "workflow.case": "Choose chassis", "workflow.parts": "Fit components", "workflow.check": "Check build",
   "workspace.assemblyTitle": "Assembly workspace", "workspace.assemblyCaption": "Inspect the build in 3D while making changes alongside it.",
@@ -76,7 +76,7 @@ const en: Record<string, string> = {
 const ko: Record<string, string> = {
   "language.label": "언어 선택",
   "app.eyebrow": "PC 구성 도구",
-  "app.title": "PC 조립 작업대",
+  "app.title": "Build from Scratch",
   "app.subtitle": "케이스를 고르고 부품을 배치한 다음 빌드를 점검하세요.",
   "workflow.label": "조립 순서",
   "workflow.case": "케이스 선택",

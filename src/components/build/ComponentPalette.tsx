@@ -9,18 +9,13 @@ import { moveComponent } from "../../domain/commands/moveComponent";
 import { setFanDirection } from "../../domain/commands/setFanDirection";
 import type { ComponentDefinition } from "../../domain/types/component";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { formatCurrency } from "../../i18n/formatCurrency";
 import { commitDomainActions } from "../../domain/commands/commitDomainAction";
 import { useTimeoutQueue } from "../useTimeoutQueue";
 import { CatalogTabs, type TabCategory } from "./CatalogTabs";
 
-const formatKrw = (amount: number) => new Intl.NumberFormat("ko-KR", {
-  style: "currency",
-  currency: "KRW",
-  maximumFractionDigits: 0,
-}).format(amount);
-
 export function ComponentPalette() {
-  const { t, componentName, categoryName, caseName } = useLanguage();
+  const { language, t, componentName, categoryName, caseName } = useLanguage();
   const state = useBuildStore((s) => s);
   const activeProfile = useMemo(() => getActiveCaseProfile(state), [state]);
   const [activeTab, setActiveTab] = useState<TabCategory>("GPU");
@@ -588,7 +583,7 @@ export function ComponentPalette() {
                             fontWeight: 800,
                           }}
                         >
-                          {formatKrw(comp.price.amount)} · {t("price.estimateShort")}
+                          {formatCurrency(comp.price.amount, language)} · {t("price.estimateShort")}
                         </span>
                       ) : null}
                     </div>
