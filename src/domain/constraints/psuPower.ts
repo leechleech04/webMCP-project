@@ -40,10 +40,15 @@ export const validatePsu = (state: BuildState, context: PsuContext = {}) => {
     .map((id) => components[id])
     .filter((component) => component?.type === "GPU");
   for (const gpu of installedGpus) {
-    const gpuConnector = gpu.connectors?.find((connector) => connector.direction === "INPUT" && ["PCIE_8PIN", "12V_2X6"].includes(connector.type));
-    const compatible = gpuConnector && psu.connectors?.some((connector) => connector.direction === "OUTPUT" && connector.type === gpuConnector.type);
-    if (gpuConnector && !compatible) {
-      issues.push({ id: gpu.id === "gpu-01" ? "PSU_GPU_CONNECTOR_MISMATCH" : `PSU_GPU_CONNECTOR_MISMATCH:${gpu.id}`, type: "CONNECTOR", severity: "ERROR", message: `PSU does not expose a compatible ${gpuConnector.type} output for ${gpu.name}.`, affectedComponentIds: [gpu.id, psu.id] });
+    const requiredByType = new Map<string, number>();
+    for (const connector of gpu.connectors?.filter((item) => item.direction === "INPUT" && ["PCIE_8PIN", "12V_2X6"].includes(item.type)) ?? []) {
+      requiredByType.set(connector.type, (requiredByType.get(connector.type) ?? 0) + 1);
+    }
+    for (const [connectorType, requiredCount] of requiredByType) {
+      const availableCount = psu.connectors?.filter((connector) => connector.direction === "OUTPUT" && connector.type === connectorType).length ?? 0;
+      if (availableCount < requiredCount) {
+        issues.push({ id: gpu.id === "gpu-01" ? "PSU_GPU_CONNECTOR_MISMATCH" : `PSU_GPU_CONNECTOR_MISMATCH:${gpu.id}`, type: "CONNECTOR", severity: "ERROR", message: `PSU exposes ${availableCount} compatible ${connectorType} output(s), but ${gpu.name} requires ${requiredCount}.`, affectedComponentIds: [gpu.id, psu.id] });
+      }
     }
   }
   return issues;

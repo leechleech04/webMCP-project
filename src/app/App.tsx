@@ -4,6 +4,7 @@ import { ReviewerSimulationPanel } from "../components/build/ReviewerSimulationP
 import { ValidationPanel } from "../components/build/ValidationPanel";
 import { CasePicker } from "../components/build/CasePicker";
 import { BuildControls } from "../components/build/BuildControls";
+import { BuildPriceSummary } from "../components/build/BuildPriceSummary";
 import { ConnectionPanel } from "../components/build/ConnectionPanel";
 import { ComponentPalette } from "../components/build/ComponentPalette";
 import { useBuildStore } from "../store/buildStore";
@@ -11,6 +12,7 @@ import { getRuntimeMode, registerTools, type RuntimeMode } from "../webmcp/regis
 import { useLanguage } from "../i18n/LanguageContext";
 import { getActiveCaseProfile } from "../domain/cases/getActiveCase";
 import { SceneErrorBoundary } from "../components/scene/SceneErrorBoundary";
+import { componentRegistry } from "../domain/data/components";
 
 const PcScene = lazy(() =>
   import("../components/scene/PcScene").then((module) => ({ default: module.PcScene })),
@@ -48,8 +50,8 @@ export function App() {
     };
   }, []);
 
-  const gpuPlacement = placements.find((placement) => placement.componentId.startsWith("gpu"));
-  const radiatorPlacement = placements.find((placement) => placement.componentId.startsWith("radiator"));
+  const gpuPlacement = placements.find((placement) => componentRegistry[placement.componentId]?.type === "GPU");
+  const radiatorPlacement = placements.find((placement) => componentRegistry[placement.componentId]?.type === "RADIATOR");
   const installedPartCount = placements.filter((placement) => placement.mountId !== "case-root").length;
   const availablePartMountCount = activeProfile.supportedMountIds.filter((mountId) => mountId !== "case-root").length;
 
@@ -96,6 +98,7 @@ export function App() {
             </div>
             <CasePicker />
             <BuildControls />
+            <BuildPriceSummary />
             <ConnectionPanel />
           </aside>
 

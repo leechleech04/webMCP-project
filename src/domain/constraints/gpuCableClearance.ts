@@ -30,7 +30,7 @@ export const validateGpuCable = (state: BuildState, context: GpuCableContext = {
       type: "CABLE" as const,
       severity: "ERROR" as const,
       message: `GPU power cable clearance: ${available} mm available; ${GPU_POWER_CABLE_REQUIRED_CLEARANCE_MM} mm required; Margin: ${margin} mm`,
-      affectedComponentIds: [gpu.id],
+      affectedComponentIds: [placement.componentId],
       details: { availableMm: available, requiredMm: GPU_POWER_CABLE_REQUIRED_CLEARANCE_MM, marginMm: margin },
     }];
   });

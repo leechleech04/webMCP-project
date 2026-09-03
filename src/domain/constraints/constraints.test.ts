@@ -41,9 +41,9 @@ describe("GPU and radiator clearance", () => {
       id: "GPU_RADIATOR_COLLISION",
       type: "CLEARANCE",
       severity: "ERROR",
-      message: "GPU length: 340 mm; Available clearance: 320 mm; Margin: -20 mm",
+      message: "GPU length: 348 mm; Available clearance: 320 mm; Margin: -28 mm",
       affectedComponentIds: ["gpu-01", "radiator-01"],
-      details: { gpuLengthMm: 340, availableClearanceMm: 320, marginMm: -20 },
+      details: { gpuLengthMm: 348, availableClearanceMm: 320, marginMm: -28 },
     }]);
     expect(state).toEqual(before);
   });

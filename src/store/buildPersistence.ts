@@ -10,7 +10,8 @@ import { validateBuild } from "../domain/constraints/validateBuild";
 import type { BuildState } from "../domain/types/build";
 import { buildStore } from "./buildStore";
 
-const STORAGE_KEY = "pc-build-workspace:v1";
+const STORAGE_KEY = "pc-build-workspace:v2";
+const LEGACY_STORAGE_KEY = "pc-build-workspace:v1";
 
 const isRecord = (value: unknown): value is Record<string, unknown> => (
   typeof value === "object" && value !== null && !Array.isArray(value)
@@ -21,6 +22,52 @@ const requireString = (value: unknown, field: string): string => {
     throw new TypeError(`${field} must be a non-empty string`);
   }
   return value;
+};
+
+const V1_PRODUCT_MIGRATIONS: Readonly<Record<string, string>> = {
+  "psu-01": "psu-atx-short-850",
+  "ram-02": "ram-01",
+  "fan-front-01": "fan-top-01",
+  "fan-rear-01": "fan-top-01",
+  "fan-bottom-01": "fan-top-01",
+  "fan-side-01": "fan-top-01",
+};
+
+const migrateV1State = (value: unknown): unknown => {
+  if (!isRecord(value) || !Array.isArray(value.placements)) return value;
+  const usedIds = new Set<string>();
+  const idMap = new Map<string, string>();
+  const placements = value.placements.map((rawPlacement) => {
+    if (!isRecord(rawPlacement) || typeof rawPlacement.componentId !== "string") return rawPlacement;
+    const originalId = rawPlacement.componentId;
+    const productId = V1_PRODUCT_MIGRATIONS[originalId] ?? originalId;
+    let instanceId = productId;
+    if (usedIds.has(instanceId)) {
+      let sequence = 2;
+      while (usedIds.has(`${productId}#${sequence}`)) sequence += 1;
+      instanceId = `${productId}#${sequence}`;
+    }
+    usedIds.add(instanceId);
+    idMap.set(originalId, instanceId);
+    return { ...rawPlacement, componentId: instanceId, ...(instanceId === productId ? {} : { productId }) };
+  });
+  const mapEndpoint = (endpoint: unknown) => isRecord(endpoint) && typeof endpoint.componentId === "string"
+    ? { ...endpoint, componentId: idMap.get(endpoint.componentId) ?? endpoint.componentId }
+    : endpoint;
+  const connections = Array.isArray(value.connections) ? value.connections.map((connection) => {
+    if (!isRecord(connection)) return connection;
+    const from = mapEndpoint(connection.from);
+    const to = mapEndpoint(connection.to);
+    const id = isRecord(from) && isRecord(to) && typeof from.componentId === "string" && typeof from.connectorId === "string" && typeof to.componentId === "string" && typeof to.connectorId === "string"
+      ? `${from.componentId}:${from.connectorId}->${to.componentId}:${to.connectorId}`
+      : connection.id;
+    return { ...connection, id, from, to };
+  }) : value.connections;
+  const fanConfigs = Array.isArray(value.fanConfigs) ? value.fanConfigs.map((config) => isRecord(config) && typeof config.componentId === "string" ? {
+    ...config,
+    componentId: idMap.get(config.componentId) ?? config.componentId,
+  } : config) : value.fanConfigs;
+  return { ...value, placements, connections, fanConfigs };
 };
 
 const normalizeState = (value: unknown): BuildState => {
@@ -34,6 +81,7 @@ const normalizeState = (value: unknown): BuildState => {
   candidate.placements.forEach((placement, index) => {
     if (!isRecord(placement)) throw new TypeError(`placements[${index}] must be an object`);
     requireString(placement.componentId, `placements[${index}].componentId`);
+    if (placement.productId !== undefined) requireString(placement.productId, `placements[${index}].productId`);
     requireString(placement.mountId, `placements[${index}].mountId`);
   });
   candidate.connections.forEach((connection, index) => {
@@ -76,6 +124,7 @@ const normalizeState = (value: unknown): BuildState => {
   const mountIds = new Set<string>();
   for (const placement of state.placements) {
     if (!componentRegistry[placement.componentId]) throw new TypeError(`Unknown component: ${placement.componentId}`);
+    if (placement.productId && !componentRegistry[placement.productId]) throw new TypeError(`Unknown product: ${placement.productId}`);
     if (!mountRegistry[placement.mountId]) throw new TypeError(`Unknown mount: ${placement.mountId}`);
     if (componentIds.has(placement.componentId)) throw new TypeError(`Duplicate component: ${placement.componentId}`);
     if (mountIds.has(placement.mountId)) throw new TypeError(`Duplicate mount occupancy: ${placement.mountId}`);
@@ -148,7 +197,7 @@ const normalizeState = (value: unknown): BuildState => {
 };
 
 export const exportBuildState = (): string => JSON.stringify({
-  version: 1,
+  version: 2,
   exportedAt: new Date().toISOString(),
   build: getSerializableBuildState(),
 }, null, 2);
@@ -157,10 +206,12 @@ const getSerializableBuildState = (): BuildState => cloneBuildState(buildStore.g
 
 export const importBuildState = (json: string): BuildState => {
   const parsed = JSON.parse(json) as unknown;
+  const version = isRecord(parsed) && typeof parsed.version === "number" ? parsed.version : undefined;
+  const rawBuild = parsed && typeof parsed === "object" && "build" in parsed
+    ? (parsed as { build?: unknown }).build
+    : parsed;
   const state = normalizeState(
-    parsed && typeof parsed === "object" && "build" in parsed
-      ? (parsed as { build?: unknown }).build
-      : parsed,
+    version === 1 ? migrateV1State(rawBuild) : rawBuild,
   );
   resetCommandHistory();
   buildStore.setState(state, true);
@@ -169,7 +220,7 @@ export const importBuildState = (json: string): BuildState => {
 
 export const initializeBuildStorePersistence = (): (() => void) => {
   try {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
+    const saved = window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_STORAGE_KEY);
     if (saved) {
       importBuildState(saved);
     } else if (!buildStore.getState().placements.some((placement) => placement.mountId === "case-root")) {
@@ -190,7 +241,7 @@ export const initializeBuildStorePersistence = (): (() => void) => {
 
   return buildStore.subscribe((state) => {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, build: cloneBuildState(state) }));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 2, build: cloneBuildState(state) }));
     } catch (error) {
       console.warn("Build state could not be persisted.", error);
     }

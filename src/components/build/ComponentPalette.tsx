@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useBuildStore } from "../../store/buildStore";
 import { getActiveCaseProfile } from "../../domain/cases/getActiveCase";
-import { componentRegistry } from "../../domain/data/components";
+import { componentRegistry, components, getProductId } from "../../domain/data/components";
 import { getCompatibleMountCandidates } from "../../domain/interaction/getCompatibleMounts";
 import { installComponent } from "../../domain/commands/installComponent";
 import { removeComponent } from "../../domain/commands/removeComponent";
@@ -13,6 +13,11 @@ import { commitDomainActions } from "../../domain/commands/commitDomainAction";
 import { useTimeoutQueue } from "../useTimeoutQueue";
 import { CatalogTabs, type TabCategory } from "./CatalogTabs";
 
+const formatKrw = (amount: number) => new Intl.NumberFormat("ko-KR", {
+  style: "currency",
+  currency: "KRW",
+  maximumFractionDigits: 0,
+}).format(amount);
 
 export function ComponentPalette() {
   const { t, componentName, categoryName, caseName } = useLanguage();
@@ -27,9 +32,10 @@ export function ComponentPalette() {
   const schedule = useTimeoutQueue();
 
   const installedMap = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, typeof state.placements>();
     for (const p of state.placements) {
-      map.set(p.componentId, p.mountId);
+      const productId = p.productId ?? getProductId(p.componentId);
+      map.set(productId, [...(map.get(productId) ?? []), p]);
     }
     return map;
   }, [state.placements]);
@@ -38,19 +44,15 @@ export function ComponentPalette() {
     return new Set(state.placements.map((p) => p.mountId));
   }, [state.placements]);
 
-  const isDualRamInstalled = useMemo(() => {
-    return installedMap.has("ram-01") && installedMap.has("ram-02");
-  }, [installedMap]);
-
   const componentsInTab = useMemo(() => {
     if (activeTab === "DIAGRAMS") return [];
-    return Object.values(componentRegistry).filter((c) => c.type === activeTab);
+    return components.filter((c) => c.type === activeTab);
   }, [activeTab]);
 
   const getCompatibleMountsForComponent = (component: ComponentDefinition) => {
     return getCompatibleMountCandidates({
       componentId: component.id,
-      currentMountId: installedMap.get(component.id) ?? "",
+      currentMountId: installedMap.get(component.id)?.[0]?.mountId ?? "",
       state,
       caseProfile: activeProfile,
     }).map((candidate) => candidate.mountId);
@@ -116,11 +118,13 @@ export function ComponentPalette() {
     }
   };
 
-  const handleInstallRamDual = () => {
+  const handleInstallRamDual = (productId: string) => {
     try {
-      const actions = [];
-      if (!occupiedMounts.has("dimm-a1")) actions.push({ type: "INSTALL_COMPONENT" as const, componentId: "ram-01", mountId: "dimm-a1" });
-      if (!occupiedMounts.has("dimm-b1") && activeProfile.supportedMountIds.includes("dimm-b1")) actions.push({ type: "INSTALL_COMPONENT" as const, componentId: "ram-02", mountId: "dimm-b1" });
+      const dualSlots = ["dimm-a1", "dimm-b1"].filter((mountId) => activeProfile.supportedMountIds.includes(mountId));
+      if (dualSlots.length < 2 || dualSlots.some((mountId) => occupiedMounts.has(mountId))) {
+        throw new Error("Both dual-channel DIMM slots must be available.");
+      }
+      const actions = dualSlots.map((mountId) => ({ type: "INSTALL_COMPONENT" as const, componentId: productId, mountId }));
       commitDomainActions(actions, "Installed dual-channel RAM kit");
       setStatusMessage(t("catalog.ramInstalled"));
       setErrorMessage(null);
@@ -132,11 +136,10 @@ export function ComponentPalette() {
     }
   };
 
-  const handleRemoveRamDual = () => {
+  const handleRemoveRamDual = (productId: string) => {
     try {
-      const actions = ["ram-01", "ram-02", "ram-03"]
-        .filter((componentId) => installedMap.has(componentId))
-        .map((componentId) => ({ type: "REMOVE_COMPONENT" as const, componentId }));
+      const actions = (installedMap.get(productId) ?? [])
+        .map((placement) => ({ type: "REMOVE_COMPONENT" as const, componentId: placement.componentId }));
       commitDomainActions(actions, "Removed RAM kit");
       setStatusMessage(t("catalog.ramRemoved"));
       setErrorMessage(null);
@@ -466,14 +469,18 @@ export function ComponentPalette() {
           }}
         >
           {componentsInTab.map((comp) => {
-            const installedMount = installedMap.get(comp.id);
-            const isInstalled = !!installedMount;
+            const installations = installedMap.get(comp.id) ?? [];
+            const installedPlacement = installations[0];
+            const installedMount = installedPlacement?.mountId;
+            const isInstalled = installations.length > 0;
             const compatibleMounts = getCompatibleMountsForComponent(comp);
             const selectedMount = selectedMounts[comp.id];
             const selectedTargetMount = selectedMount && compatibleMounts.includes(selectedMount)
               ? selectedMount
               : compatibleMounts.find((m) => !occupiedMounts.has(m)) ?? compatibleMounts[0];
-            const fanConfig = state.fanConfigs.find((c) => c.componentId === comp.id);
+            const canInstallAnother = installations.length < (comp.maxPerBuild ?? 1) &&
+              compatibleMounts.some((mountId) => !occupiedMounts.has(mountId));
+            const fanConfig = state.fanConfigs.find((c) => c.componentId === installedPlacement?.componentId);
             const clearanceFit = selectedTargetMount ? checkClearanceFit(comp, selectedTargetMount) : { fits: true, reason: "" };
 
             return (
@@ -569,7 +576,27 @@ export function ComponentPalette() {
                           {comp.power.capacity}W {t("catalog.capacity")}
                         </span>
                       ) : null}
+                      {comp.price ? (
+                        <span
+                          title={`${comp.price.kind} · ${comp.price.source} · ${comp.price.updatedAt}`}
+                          style={{
+                            background: "#0c1320",
+                            padding: "0.15rem 0.45rem",
+                            borderRadius: "4px",
+                            border: "1px solid #1e293b",
+                            color: "#38bdf8",
+                            fontWeight: 800,
+                          }}
+                        >
+                          {formatKrw(comp.price.amount)} · {t("price.estimateShort")}
+                        </span>
+                      ) : null}
                     </div>
+                    {comp.mpn && (
+                      <div style={{ marginTop: "0.3rem", color: "#64748b", fontSize: "0.67rem", fontFamily: "monospace" }}>
+                        {comp.manufacturer} · MPN {comp.mpn}
+                      </div>
+                    )}
                   </div>
 
                   <span
@@ -591,7 +618,7 @@ export function ComponentPalette() {
                     }}
                   >
                     {isInstalled
-                      ? (!clearanceFit.fits ? t("catalog.overfill", { mount: installedMount }) : `✓ ${installedMount}`)
+                      ? (!clearanceFit.fits ? t("catalog.overfill", { mount: installedMount }) : `✓ ${installations.length > 1 ? `${installations.length}×` : installedMount}`)
                       : (!clearanceFit.fits ? t("catalog.inapplicable") : t("catalog.available"))}
                   </span>
                 </div>
@@ -617,12 +644,12 @@ export function ComponentPalette() {
                 )}
 
                 {/* RAM Dual-Channel Kit Action */}
-                {activeTab === "RAM" && ramQuantity === 2 && comp.id === "ram-01" ? (
+                {activeTab === "RAM" && ramQuantity === 2 ? (
                   <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.65rem", flexWrap: "wrap" }}>
-                    {!isDualRamInstalled ? (
+                    {installations.length < 2 ? (
                       <button
                         type="button"
-                        onClick={handleInstallRamDual}
+                        onClick={() => handleInstallRamDual(comp.id)}
                         style={{
                           flex: "1 1 180px",
                           padding: "0.45rem 0.9rem",
@@ -643,7 +670,7 @@ export function ComponentPalette() {
                     ) : (
                       <button
                         type="button"
-                        onClick={handleRemoveRamDual}
+                        onClick={() => handleRemoveRamDual(comp.id)}
                         style={{
                           flex: "1 1 180px",
                           padding: "0.45rem 0.9rem",
@@ -674,7 +701,7 @@ export function ComponentPalette() {
                       width: "100%",
                     }}
                   >
-                    {!isInstalled ? (
+                    {!isInstalled || canInstallAnother ? (
                       <>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", flex: "1 1 140px", minWidth: "120px" }}>
                           <label style={{ fontSize: "0.72rem", color: "#94a3b8", fontWeight: 600, whiteSpace: "nowrap" }}>{t("catalog.mount")}</label>
@@ -724,12 +751,29 @@ export function ComponentPalette() {
                         >
                           {!clearanceFit.fits ? t("catalog.installCollision") : t("catalog.install")}
                         </button>
+                        {isInstalled && installedPlacement && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemove(installations.at(-1)?.componentId ?? installedPlacement.componentId)}
+                            style={{
+                              padding: "0.45rem 0.65rem",
+                              borderRadius: "7px",
+                              background: "#7f1d1d",
+                              color: "#fecaca",
+                              border: "1px solid #dc2626",
+                              fontSize: "0.72rem",
+                              cursor: "pointer",
+                            }}
+                          >
+                            {t("catalog.remove")}
+                          </button>
+                        )}
                       </>
                     ) : (
                       <>
                         <button
                           type="button"
-                          onClick={() => handleRemove(comp.id)}
+                          onClick={() => handleRemove(installedPlacement?.componentId ?? comp.id)}
                           style={{
                             flex: "1 1 90px",
                             padding: "0.45rem 0.75rem",
@@ -750,7 +794,7 @@ export function ComponentPalette() {
                         {compatibleMounts.length > 1 && (
                           <select
                             value={selectedMounts[comp.id] || installedMount}
-                            onChange={(e) => handleMove(comp.id, e.target.value)}
+                            onChange={(e) => handleMove(installedPlacement?.componentId ?? comp.id, e.target.value)}
                             style={{
                               flex: "1 1 140px",
                               minWidth: "120px",
@@ -777,7 +821,7 @@ export function ComponentPalette() {
                     {isInstalled && comp.type === "FAN" && (
                       <button
                         type="button"
-                        onClick={() => handleToggleFan(comp.id)}
+                        onClick={() => handleToggleFan(installedPlacement?.componentId ?? comp.id)}
                         style={{
                           flex: "1 1 120px",
                           padding: "0.45rem 0.75rem",

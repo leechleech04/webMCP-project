@@ -84,7 +84,7 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
     return ids;
   }, [validationIssues]);
 
-  const gpuInstalled = placements.some((placement) => placement.componentId.startsWith("gpu"));
+  const gpuInstalled = placements.some((placement) => componentRegistry[placement.componentId]?.type === "GPU");
   const radiatorPlacement = placements.find((placement) => componentRegistry[placement.componentId]?.type === "RADIATOR");
 
   const [appearanceMode, setAppearanceMode] = useState<SceneAppearanceMode>("STUDIO");
@@ -127,7 +127,7 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
         } else if (isFullscreen) {
           setIsFullscreen(false);
         }
-      } else if ((e.key === "m" || e.key === "M") && selectedComponentId && selectedComponentId !== "case-01") {
+      } else if ((e.key === "m" || e.key === "M") && selectedComponentId && componentRegistry[selectedComponentId]?.type !== "CASE") {
         setIsMoveArmed((prev) => !prev);
       }
     };
@@ -136,7 +136,7 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
   }, [isMoveArmed, selectedComponentId, isFullscreen]);
 
   const handleSelectComponent = (componentId: string) => {
-    if (componentId.startsWith("case-")) return;
+    if (componentRegistry[componentId]?.type === "CASE") return;
     setSelectedComponentId((prev) => (prev === componentId ? null : componentId));
     setIsMoveArmed(false);
   };
@@ -171,7 +171,7 @@ export function PcScene({ highlightedComponentIds = [] }: PcSceneProps) {
   };
 
   const handleToggleFanDirection = () => {
-    if (!selectedPlacement || !selectedComponentId?.startsWith("fan-")) return;
+    if (!selectedPlacement || !selectedComponentId || componentRegistry[selectedComponentId]?.type !== "FAN") return;
     const currentCfg = state.fanConfigs.find((c) => c.componentId === selectedComponentId);
     const nextDir = currentCfg?.direction === "EXHAUST" ? "INTAKE" : "EXHAUST";
     setFanDirection({ componentId: selectedComponentId, direction: nextDir });

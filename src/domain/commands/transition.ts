@@ -22,6 +22,7 @@ import { getRecommendedFanDirection } from "../cases/caseProfiles";
 import { getActiveCaseProfile } from "../cases/getActiveCase";
 import { generateAutoFillRecipe } from "../recipes/autoFillRecipe";
 import { assessBuildState } from "../constraints/buildAssessment";
+import { getProductId } from "../data/components";
 
 export interface DomainTransitionOptions extends ActivitySource {
   componentRegistry?: ComponentRegistry;
@@ -142,10 +143,15 @@ export const applyDomainAction = (
       const component = getComponentOrThrow(action.componentId, components);
       const mount = getMountOrThrow(action.mountId, mounts);
 
-      if (state.placements.some((item) => item.componentId === action.componentId)) {
+      const productId = getProductId(action.componentId);
+      const installedProductInstances = state.placements.filter(
+        (item) => (item.productId ?? getProductId(item.componentId)) === productId,
+      );
+      const maxPerBuild = component.maxPerBuild ?? 1;
+      if (installedProductInstances.length >= maxPerBuild) {
         throw new DomainCommandError(
           "COMPONENT_ALREADY_INSTALLED",
-          `${component.name} is already installed`,
+          `${component.name} already has the maximum ${maxPerBuild} instance(s) installed`,
         );
       }
       if (state.placements.some((item) => item.mountId === action.mountId)) {
@@ -154,14 +160,24 @@ export const applyDomainAction = (
 
       assertComponentFitsActiveCase(state, component, mount);
       assertCoolingZoneAvailable(state, component, mount);
-      const placement = { componentId: action.componentId, mountId: action.mountId };
+      let instanceId = productId;
+      if (state.placements.some((item) => item.componentId === instanceId)) {
+        let sequence = 2;
+        while (state.placements.some((item) => item.componentId === `${productId}#${sequence}`)) sequence += 1;
+        instanceId = `${productId}#${sequence}`;
+      }
+      const placement = {
+        componentId: instanceId,
+        ...(instanceId === productId ? {} : { productId }),
+        mountId: action.mountId,
+      };
 
       let nextFanConfigs = state.fanConfigs;
       if (component.type === "FAN") {
         const defaultDir = getRecommendedFanDirection(action.mountId);
         nextFanConfigs = [
-          ...state.fanConfigs.filter((c) => c.componentId !== action.componentId),
-          { componentId: action.componentId, direction: defaultDir, mountId: action.mountId },
+          ...state.fanConfigs.filter((c) => c.componentId !== instanceId),
+          { componentId: instanceId, direction: defaultDir, mountId: action.mountId },
         ];
       }
 

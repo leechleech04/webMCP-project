@@ -1,4 +1,5 @@
 import type { ComponentDefinition } from "../types/component";
+import { realProductIds, realProductOverrides } from "./realProductCatalog";
 
 // Cases
 const case01: ComponentDefinition = {
@@ -411,9 +412,7 @@ const fan140Argb: ComponentDefinition = {
   visualAsset: { mode: "GLB", assetId: "FAN_140_ARGB", url: "/assets/fan-140-argb/lod0.glb", license: "Original procedural asset — CC0-1.0", attributionPath: "assets/fan-140-argb/ATTRIBUTION.md", nativeDimensions: { width: 1, height: 1, depth: 1 } },
 };
 
-export const componentRegistry: Readonly<
-  Record<string, ComponentDefinition>
-> = {
+const legacyComponentRegistry: Record<string, ComponentDefinition> = {
   [case01.id]: case01,
   [caseMiniPc01.id]: caseMiniPc01,
   [caseSff01.id]: caseSff01,
@@ -464,4 +463,32 @@ export const componentRegistry: Readonly<
   [fan140Argb.id]: fan140Argb,
 };
 
-export const components = Object.values(componentRegistry);
+/** The 30-SKU public catalog. Legacy definitions remain resolvable for v1 build imports. */
+export const components: ComponentDefinition[] = realProductIds.map((id) => {
+  const base = legacyComponentRegistry[id];
+  const override = realProductOverrides[id];
+  if (!base || !override) throw new Error(`Real product override has no base component: ${id}`);
+  return { ...base, ...override, id: base.id, type: base.type };
+});
+
+const productRegistry = Object.fromEntries([
+  ...Object.values(legacyComponentRegistry).map((component) => [component.id, component] as const),
+  ...components.map((component) => [component.id, component] as const),
+]);
+
+/**
+ * Instance-aware read facade. Mounted duplicates use ids such as `fan-top-01#2`
+ * while all specification lookups resolve to the same purchasable product.
+ */
+export const componentRegistry: Readonly<Record<string, ComponentDefinition>> = new Proxy(productRegistry, {
+  get(target, property, receiver) {
+    if (typeof property !== "string") return Reflect.get(target, property, receiver);
+    return target[property] ?? target[property.split("#", 1)[0]];
+  },
+});
+
+export const getProductId = (componentInstanceId: string): string => componentInstanceId.split("#", 1)[0];
+
+export const getComponentProduct = (componentInstanceId: string): ComponentDefinition | undefined => (
+  componentRegistry[componentInstanceId]
+);

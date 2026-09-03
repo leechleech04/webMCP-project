@@ -1,7 +1,7 @@
 import { getBuildState } from "../store/buildStore";
 import { assessBuildState } from "../domain/constraints/buildAssessment";
 import type { DomainAction } from "../domain/types/action";
-import { componentRegistry } from "../domain/data/components";
+import { componentRegistry, components, getProductId } from "../domain/data/components";
 import { installComponent } from "../domain/commands/installComponent";
 import { moveComponent } from "../domain/commands/moveComponent";
 import { removeComponent } from "../domain/commands/removeComponent";
@@ -42,14 +42,14 @@ export interface BuildStateToolResult extends BuildState {
 
 export const getBuildStateTool = (): BuildStateToolResult => {
   const state = getBuildState();
-  const placements = new Map(state.placements.map((placement) => [placement.componentId, placement.mountId]));
+  const placements = new Map(state.placements.map((placement) => [placement.productId ?? getProductId(placement.componentId), placement.mountId]));
   return {
     ...state,
     revision: getTopologyRevision(),
     canUndoLastAgentAction: canUndoLastAgentAction(),
     canUndoLastAction: canUndoLastAction(),
     canRedoLastAction: canRedoLastAction(),
-    components: Object.values(componentRegistry).map((component) => ({
+    components: components.map((component) => ({
       id: component.id,
       type: component.type,
       installed: placements.has(component.id),
@@ -126,10 +126,10 @@ export const getAvailableMountsTool = (input: { componentId?: string } = {}) => 
   const supportedByCase = new Set(profile.supportedMountIds);
   if (component) {
     const currentMountId = state.placements.find(
-      (placement) => placement.componentId === component.id,
+      (placement) => placement.componentId === input.componentId,
     )?.mountId ?? "";
     const candidates = getCompatibleMountCandidates({
-      componentId: component.id,
+      componentId: input.componentId ?? component.id,
       currentMountId,
       state,
       caseProfile: profile,
@@ -146,7 +146,7 @@ export const getAvailableMountsTool = (input: { componentId?: string } = {}) => 
 };
 
 export const getComponentCatalogTool = (input: { componentType?: ComponentType } = {}) => {
-  return Object.values(componentRegistry)
+  return components
     .filter((component) => !input.componentType || component.type === input.componentType)
     .map((component) => ({
       id: component.id,
@@ -156,13 +156,19 @@ export const getComponentCatalogTool = (input: { componentType?: ComponentType }
       power: component.power ? { ...component.power } : undefined,
       compatibility: component.compatibility ? { ...component.compatibility } : undefined,
       connectors: component.connectors?.map((connector) => ({ ...connector })) ?? [],
+      manufacturer: component.manufacturer,
+      model: component.model,
+      mpn: component.mpn,
+      officialUrl: component.officialUrl,
+      price: component.price ? { ...component.price } : undefined,
     }));
 };
 
 export const getCaseProfilesTool = () => {
   const state = getBuildState();
   const active = getActiveCaseProfile(state);
-  return caseProfiles.map((profile) => ({
+  const publicCaseIds = new Set(components.filter((component) => component.type === "CASE").map((component) => component.id));
+  return caseProfiles.filter((profile) => publicCaseIds.has(profile.componentId)).map((profile) => ({
     id: profile.id,
     componentId: profile.componentId,
     label: profile.label,

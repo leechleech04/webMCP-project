@@ -107,15 +107,14 @@ export const assessBuildState = (
   if (psuPlacements.length > 0 && gpuPlacements.length > 0) {
     for (const gpu of gpuPlacements) {
       const gpuDef = components[gpu.componentId];
-      const hasGpuPowerInput = gpuDef?.connectors?.some(
-        (c) =>
-          (c.type === "12V_2X6" || c.type === "PCIE_8PIN") &&
-          c.direction === "INPUT",
-      );
-      if (hasGpuPowerInput) {
+      const gpuPowerInputs = gpuDef?.connectors?.filter(
+        (connector) => (connector.type === "12V_2X6" || connector.type === "PCIE_8PIN") && connector.direction === "INPUT",
+      ) ?? [];
+      for (const powerInput of gpuPowerInputs) {
         const hasGpuLink = state.connections.some(
           (c) =>
             c.to.componentId === gpu.componentId &&
+            c.to.connectorId === powerInput.id &&
             components[c.from.componentId]?.type === "PSU" &&
             components[c.from.componentId]?.connectors?.some(
               (connector) => connector.id === c.from.connectorId &&
@@ -127,7 +126,7 @@ export const assessBuildState = (
             ),
         );
         if (!hasGpuLink) {
-          missingPowerConnections.push(`GPU PCIe/12V Power to ${gpuDef.name}`);
+          missingPowerConnections.push(`${powerInput.type} (${powerInput.id}) to ${gpuDef?.name ?? gpu.componentId}`);
         }
       }
     }

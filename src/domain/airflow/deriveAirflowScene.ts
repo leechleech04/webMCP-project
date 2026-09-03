@@ -14,7 +14,7 @@ export const deriveAirflowScene = (
   profile?: CaseProfile
 ): AirflowScene => {
   const activeProfile = profile ?? getActiveCaseProfile(state);
-  const fanPlacements = (state?.placements ?? []).filter((p) => p.componentId.startsWith("fan-"));
+  const fanPlacements = (state?.placements ?? []).filter((p) => componentRegistry[p.componentId]?.type === "FAN");
   const fanConfigs = state?.fanConfigs ?? [];
 
   const streams: AirflowStream[] = [];

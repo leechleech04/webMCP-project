@@ -83,8 +83,8 @@ const MINI_TRANSFORMS: Record<string, SceneTransform> = {
   ...accessoryTransforms(DIM_MINI, -1.0, 1.5),
 };
 
-// 2. SFF (210 x 350 x 340 mm -> 4.2 x 7.0 x 6.8 units)
-const DIM_SFF = { width: 210, height: 350, depth: 340 };
+// 2. Cooler Master NR200P V2 (185 x 292 x 372 mm)
+const DIM_SFF = { width: 185, height: 292, depth: 372 };
 const SFF_FAN_IDS = ["fan-top-1", "fan-top-2", "fan-rear-1", "fan-front-1", "fan-front-2"];
 const SFF_RADIATOR_TRANSFORMS = createRadiatorMountTransforms(DIM_SFF);
 const SFF_TRANSFORMS: Record<string, SceneTransform> = {
@@ -153,7 +153,7 @@ const MATX_TRANSFORMS: Record<string, SceneTransform> = {
   ...accessoryTransforms(DIM_MATX_AIR, -1.2, 0.3),
 };
 
-const DIM_DUAL = { width: 285, height: 466, depth: 456 };
+const DIM_DUAL = { width: 290, height: 471, depth: 478 };
 const DUAL_FAN_IDS = ["fan-top-1", "fan-top-2", "fan-top-3", "fan-side-1", "fan-front-1", "fan-front-2", "fan-rear-1", "fan-bottom-1"];
 const DUAL_TRANSFORMS: Record<string, SceneTransform> = {
   ...MFF_TRANSFORMS,
@@ -180,7 +180,7 @@ export const caseProfiles: CaseProfile[] = [
     clearanceLimits: {
       "motherboard-tray": { maxDepth: 175, maxWidth: 175, maxHeight: 45 },
       "pcie-slot-1": { maxDepth: 180, maxWidth: 165, maxHeight: 45 },
-      "psu-bay": { maxDepth: 110, maxWidth: 130, maxHeight: 70 },
+      "psu-bay": { maxDepth: 130, maxWidth: 130, maxHeight: 70 },
       "radiator-top": { maxDepth: 160, maxWidth: 125, maxHeight: 35 },
       "radiator-front": { maxDepth: 160, maxWidth: 125, maxHeight: 35 },
       "cpu-cooler-1": { maxDepth: 95, maxWidth: 130, maxHeight: 95 },
@@ -194,16 +194,16 @@ export const caseProfiles: CaseProfile[] = [
   {
     id: "case-profile-sff",
     componentId: "case-sff-01",
-    label: "SFF — Mini Tower (Internal Demo)",
-    formFactor: "Micro-ATX (Internal Demo)",
+    label: "Cooler Master MasterBox NR200P V2",
+    formFactor: "Mini-ITX",
     dimensionsMm: DIM_SFF,
     supportedMountIds: ["case-root", "motherboard-tray", "cpu-socket-1", "dimm-a1", "dimm-b1", "storage-m2-1", "pcie-slot-1", "radiator-top", "radiator-front", "psu-bay", ...accessoryMountIds, ...SFF_FAN_IDS],
-    supportedMotherboardFormFactors: ["MINI_ITX", "MICRO_ATX"],
+    supportedMotherboardFormFactors: ["MINI_ITX"],
     mountTransforms: SFF_TRANSFORMS,
     clearanceLimits: {
-      "motherboard-tray": { maxDepth: 250, maxWidth: 250, maxHeight: 55 },
-      "pcie-slot-1": { maxDepth: 280, maxWidth: 150, maxHeight: 60 },
-      "psu-bay": { maxDepth: 160, maxWidth: 150, maxHeight: 86 },
+      "motherboard-tray": { maxDepth: 175, maxWidth: 175, maxHeight: 55 },
+      "pcie-slot-1": { maxDepth: 356, maxWidth: 160, maxHeight: 73 },
+      "psu-bay": { maxDepth: 130, maxWidth: 130, maxHeight: 70 },
       "radiator-top": { maxDepth: 280, maxWidth: 130, maxHeight: 35 },
       "radiator-front": { maxDepth: 280, maxWidth: 130, maxHeight: 35 },
       "cpu-cooler-1": { maxDepth: 130, maxWidth: 145, maxHeight: 160 },
@@ -217,8 +217,8 @@ export const caseProfiles: CaseProfile[] = [
   {
     id: "case-profile-mff",
     componentId: "case-01",
-    label: "MFF — Lian Li Lancool 216 (GLB)",
-    formFactor: "Mid Tower (Internal Demo)",
+    label: "Lian Li LANCOOL 216",
+    formFactor: "ATX Mid Tower",
     dimensionsMm: DIM_MFF,
     supportedMountIds: ["case-root", "motherboard-tray", "cpu-socket-1", "dimm-a1", "dimm-b1", "storage-m2-1", "pcie-slot-1", "radiator-front", "radiator-top", "psu-bay", ...accessoryMountIds, ...MFF_FAN_IDS],
     supportedMotherboardFormFactors: ["MINI_ITX", "MICRO_ATX", "ATX"],
@@ -227,8 +227,8 @@ export const caseProfiles: CaseProfile[] = [
       "motherboard-tray": { maxDepth: 310, maxWidth: 250, maxHeight: 65 },
       "pcie-slot-1": { maxDepth: 392, maxWidth: 160, maxHeight: 75 },
       "psu-bay": { maxDepth: 220, maxWidth: 150, maxHeight: 86 },
-      "radiator-front": { maxDepth: 397, maxWidth: 130, maxHeight: 40 },
-      "radiator-top": { maxDepth: 397, maxWidth: 130, maxHeight: 40 },
+      "radiator-front": { maxDepth: 400, maxWidth: 130, maxHeight: 40 },
+      "radiator-top": { maxDepth: 400, maxWidth: 130, maxHeight: 40 },
       "cpu-cooler-1": { maxDepth: 165, maxWidth: 165, maxHeight: 180 },
       "storage-2-5-1": { maxDepth: 105, maxWidth: 75, maxHeight: 15 },
       "storage-3-5-1": { maxDepth: 150, maxWidth: 105, maxHeight: 30 },
@@ -291,7 +291,7 @@ export const caseProfiles: CaseProfile[] = [
   {
     id: "case-profile-dual-chamber",
     componentId: "case-dual-chamber-atx",
-    label: "MFF — Dual-Chamber Panoramic ATX",
+    label: "Lian Li O11D EVO RGB",
     formFactor: "ATX Dual Chamber",
     dimensionsMm: DIM_DUAL,
     supportedMountIds: ["case-root", "motherboard-tray", "cpu-socket-1", "dimm-a1", "dimm-b1", "storage-m2-1", "pcie-slot-1", "radiator-front", "radiator-top", "psu-bay", ...accessoryMountIds, ...DUAL_FAN_IDS],
@@ -301,8 +301,8 @@ export const caseProfiles: CaseProfile[] = [
       "motherboard-tray": { maxDepth: 310, maxWidth: 250, maxHeight: 65 },
       "pcie-slot-1": { maxDepth: 400, maxWidth: 165, maxHeight: 85 },
       "psu-bay": { maxDepth: 220, maxWidth: 150, maxHeight: 86 },
-      "radiator-front": { maxDepth: 397, maxWidth: 145, maxHeight: 45 },
-      "radiator-top": { maxDepth: 397, maxWidth: 145, maxHeight: 45 },
+      "radiator-front": { maxDepth: 400, maxWidth: 145, maxHeight: 45 },
+      "radiator-top": { maxDepth: 400, maxWidth: 145, maxHeight: 45 },
       "cpu-cooler-1": { maxDepth: 165, maxWidth: 165, maxHeight: 180 },
       "storage-2-5-1": { maxDepth: 105, maxWidth: 75, maxHeight: 15 },
       "storage-3-5-1": { maxDepth: 150, maxWidth: 105, maxHeight: 30 },

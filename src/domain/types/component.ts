@@ -32,10 +32,27 @@ export interface ConnectorDefinition {
   direction: "INPUT" | "OUTPUT";
 }
 
+export interface ProductPrice {
+  amount: number;
+  currency: "KRW";
+  kind: "ESTIMATE" | "LIVE";
+  source: string;
+  updatedAt: string;
+  /** PRODUCT prices a multi-module kit once; INSTANCE prices every installed unit. */
+  billingUnit?: "PRODUCT" | "INSTANCE";
+}
+
 export interface ComponentDefinition {
   id: string;
   type: ComponentType;
   name: string;
+  manufacturer?: string;
+  model?: string;
+  mpn?: string;
+  officialUrl?: string;
+  price?: ProductPrice;
+  /** Maximum number of separately mounted instances allowed in one build. */
+  maxPerBuild?: number;
   dimensions: Dimensions;
   power?: {
     consumption?: number;
@@ -59,5 +76,8 @@ export interface ComponentDefinition {
     nativeDimensions?: Dimensions;
   };
 }
+
+/** ProductDefinition is the purchasable SKU; placements are its mounted instances. */
+export type ProductDefinition = ComponentDefinition;
 
 export type ComponentRegistry = Readonly<Record<string, ComponentDefinition>>;

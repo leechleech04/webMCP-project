@@ -141,7 +141,7 @@ describe("WebMCP tool boundary", () => {
 
   it("exposes discoverable component connectors and case capabilities", () => {
     expect(getComponentCatalogTool({ componentType: "PSU" })).toContainEqual(expect.objectContaining({
-      id: "psu-01",
+      id: "psu-atx-650",
       connectors: expect.arrayContaining([
         expect.objectContaining({ id: "psu-gpu-01", type: "12V_2X6", direction: "OUTPUT" }),
       ]),

@@ -5,6 +5,9 @@ import { selectCase } from "../../domain/commands/selectCase";
 import { useBuildStore } from "../../store/buildStore";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { useTimeoutQueue } from "../useTimeoutQueue";
+import { componentRegistry, components } from "../../domain/data/components";
+
+const publicCaseIds = new Set(components.filter((component) => component.type === "CASE").map((component) => component.id));
 
 export function CasePicker({ dragging }: { dragging?: boolean }) {
   const { t, caseName } = useLanguage();
@@ -81,15 +84,16 @@ export function CasePicker({ dragging }: { dragging?: boolean }) {
             wordBreak: "break-word",
           }}
         >
-          {caseName(active.formFactor)} ({active.dimensionsMm.width}×{active.dimensionsMm.height}×{active.dimensionsMm.depth}mm)
+          {componentRegistry[active.componentId]?.name ?? caseName(active.formFactor)} ({active.dimensionsMm.width}×{active.dimensionsMm.height}×{active.dimensionsMm.depth}mm)
         </span>
       </div>
 
       {/* 2x2 Clean Grid for Spacious Button Fitting */}
       <div className="case-options" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.45rem" }}>
-        {caseProfiles.map((p) => {
+        {caseProfiles.filter((profile) => publicCaseIds.has(profile.componentId)).map((p) => {
           const isActive = p.componentId === active.componentId;
-          const shortName = caseName(p.label).split(" —")[0];
+          const publicName = componentRegistry[p.componentId]?.name ?? caseName(p.label);
+          const shortName = publicName.split(" —")[0];
           return (
             <button
               key={p.id}
@@ -111,7 +115,7 @@ export function CasePicker({ dragging }: { dragging?: boolean }) {
                 overflowWrap: "break-word",
                 wordBreak: "break-word",
               }}
-              title={`${caseName(p.label)} · ${p.dimensionsMm.width}×${p.dimensionsMm.height}×${p.dimensionsMm.depth} mm`}
+              title={`${publicName} · ${p.dimensionsMm.width}×${p.dimensionsMm.height}×${p.dimensionsMm.depth} mm`}
             >
               <div
                 style={{

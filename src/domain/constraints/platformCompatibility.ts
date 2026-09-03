@@ -38,7 +38,7 @@ export const validatePlatformCompatibility = (
         affectedComponentIds: [component.id],
       });
     }
-    if (component.type === "CPU_COOLER" && motherboard &&
+    if ((component.type === "CPU_COOLER" || component.type === "RADIATOR") && motherboard &&
         component.compatibility?.supportedCpuSockets &&
         !component.compatibility.supportedCpuSockets.includes(motherboard.compatibility?.cpuSocket ?? "")) {
       issues.push({

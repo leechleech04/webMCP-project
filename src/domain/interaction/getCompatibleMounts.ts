@@ -31,7 +31,7 @@ export const getCompatibleMountCandidates = ({
 
   const occupiedMounts = new Set(
     state.placements
-      .filter((p) => p.componentId !== componentId)
+      .filter((p) => p.mountId !== currentMountId)
       .map((p) => p.mountId)
   );
 

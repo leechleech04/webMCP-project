@@ -10,22 +10,24 @@ export function ConnectionPanel() {
   const placements = useBuildStore((state) => state.placements);
   const connections = useBuildStore((state) => state.connections);
   const [error, setError] = useState<string | null>(null);
-  const installedIds = useMemo(() => new Set(placements.map((placement) => placement.componentId)), [placements]);
   const occupiedInputs = useMemo(() => new Set(connections.map((connection) => `${connection.to.componentId}:${connection.to.connectorId}`)), [connections]);
   const occupiedOutputs = useMemo(() => new Set(connections.map((connection) => `${connection.from.componentId}:${connection.from.connectorId}`)), [connections]);
 
   const suggestions = useMemo(() => {
-    const installed = Object.values(componentRegistry).filter((component) => installedIds.has(component.id));
+    const installed = placements.flatMap((placement) => {
+      const component = componentRegistry[placement.componentId];
+      return component ? [{ component, instanceId: placement.componentId }] : [];
+    });
     return installed.flatMap((source) =>
-      (source.connectors ?? []).filter((connector) => connector.direction === "OUTPUT" && !occupiedOutputs.has(`${source.id}:${connector.id}`)).flatMap((output) =>
+      (source.component.connectors ?? []).filter((connector) => connector.direction === "OUTPUT" && !occupiedOutputs.has(`${source.instanceId}:${connector.id}`)).flatMap((output) =>
         installed.flatMap((target) =>
-          (target.connectors ?? [])
-            .filter((input) => input.direction === "INPUT" && input.type === output.type && !occupiedInputs.has(`${target.id}:${input.id}`))
+          (target.component.connectors ?? [])
+            .filter((input) => input.direction === "INPUT" && input.type === output.type && !occupiedInputs.has(`${target.instanceId}:${input.id}`))
             .map((input) => ({ source, output, target, input })),
         ),
       ),
     );
-  }, [installedIds, occupiedInputs, occupiedOutputs]);
+  }, [placements, occupiedInputs, occupiedOutputs]);
 
   return (
     <section className="connection-panel" aria-labelledby="connection-title">
@@ -39,13 +41,13 @@ export function ConnectionPanel() {
           <button
             type="button"
             className="secondary connection-action"
-            key={`${source.id}:${output.id}:${target.id}:${input.id}`}
+            key={`${source.instanceId}:${output.id}:${target.instanceId}:${input.id}`}
             onClick={() => {
               try {
                 connectComponents({
-                  fromComponentId: source.id,
+                  fromComponentId: source.instanceId,
                   fromConnectorId: output.id,
-                  toComponentId: target.id,
+                  toComponentId: target.instanceId,
                   toConnectorId: input.id,
                 });
                 setError(null);
@@ -54,7 +56,7 @@ export function ConnectionPanel() {
               }
             }}
           >
-            <span>{componentName(source.id, source.name)} → {componentName(target.id, target.name)}</span>
+            <span>{componentName(source.component.id, source.component.name)} → {componentName(target.component.id, target.component.name)}</span>
             <small>{output.type}</small>
           </button>
         ))}
