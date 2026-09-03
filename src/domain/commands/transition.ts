@@ -23,6 +23,7 @@ import { getActiveCaseProfile } from "../cases/getActiveCase";
 import { generateAutoFillRecipe } from "../recipes/autoFillRecipe";
 import { assessBuildState } from "../constraints/buildAssessment";
 import { getProductId } from "../data/components";
+import { validateSpatialCollisions } from "../constraints/spatialCollisions";
 
 export interface DomainTransitionOptions extends ActivitySource {
   componentRegistry?: ComponentRegistry;
@@ -127,6 +128,11 @@ export const applyDomainAction = (
         ...state.placements.filter((p) => p.mountId !== "case-root"),
         { componentId: action.componentId, mountId: "case-root" },
       ];
+      const nextCaseState = { ...state, placements: nextPlacements };
+      const spatialIssues = validateSpatialCollisions(nextCaseState, { componentRegistry: components });
+      if (spatialIssues.length > 0) {
+        throw new DomainCommandError("SPATIAL_COLLISION", spatialIssues.map((issue) => issue.message).join(" "));
+      }
 
       const placement = { componentId: action.componentId, mountId: "case-root" };
       return {
@@ -171,6 +177,11 @@ export const applyDomainAction = (
         ...(instanceId === productId ? {} : { productId }),
         mountId: action.mountId,
       };
+      const nextPlacementState = { ...state, placements: [...state.placements, placement] };
+      const spatialIssues = validateSpatialCollisions(nextPlacementState, { componentRegistry: components });
+      if (spatialIssues.length > 0) {
+        throw new DomainCommandError("SPATIAL_COLLISION", spatialIssues.map((issue) => issue.message).join(" "));
+      }
 
       let nextFanConfigs = state.fanConfigs;
       if (component.type === "FAN") {
@@ -183,7 +194,7 @@ export const applyDomainAction = (
 
       return {
         state: withActivity(
-          { ...state, placements: [...state.placements, placement], fanConfigs: nextFanConfigs },
+          { ...nextPlacementState, fanConfigs: nextFanConfigs },
           `${component.name} installed at ${mountLabel(action.mountId)}`,
           options,
         ),
@@ -214,6 +225,14 @@ export const applyDomainAction = (
       assertComponentFitsActiveCase(state, component, mount);
       assertCoolingZoneAvailable(state, component, mount);
       const placement = { componentId: action.componentId, mountId: action.mountId };
+      const movedState = {
+        ...state,
+        placements: state.placements.map((item) => item.componentId === action.componentId ? placement : item),
+      };
+      const spatialIssues = validateSpatialCollisions(movedState, { componentRegistry: components });
+      if (spatialIssues.length > 0) {
+        throw new DomainCommandError("SPATIAL_COLLISION", spatialIssues.map((issue) => issue.message).join(" "));
+      }
 
       let nextFanConfigs = state.fanConfigs;
       if (component.type === "FAN") {
@@ -232,9 +251,7 @@ export const applyDomainAction = (
         state: withActivity(
           {
             ...state,
-            placements: state.placements.map((item) =>
-              item.componentId === action.componentId ? placement : item,
-            ),
+            placements: movedState.placements,
             fanConfigs: nextFanConfigs,
           },
           `${component.name} moved to ${mountLabel(action.mountId)}`,

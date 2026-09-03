@@ -260,6 +260,40 @@ function LffChassisStructure({ profile }: { profile: CaseProfile }) {
   );
 }
 
+/** Dimension-driven shell used by compact products with very different aspect
+ * ratios. Rails remain on the envelope boundary and do not conceal components
+ * inside an oversized generic PSU shroud. */
+function PhysicalEnvelopeChassis({ profile }: { profile: CaseProfile }) {
+  const [width, height, depth] = profile.proceduralFallback.envelopeScale;
+  const rail = Math.min(0.1, width * 0.045);
+  const halfWidth = width / 2;
+  const halfDepth = depth / 2;
+  const x = halfWidth - rail / 2;
+  const z = halfDepth - rail / 2;
+  return (
+    <group name={`${profile.id}-physical-chassis`}>
+      <mesh position={[0, height / 2, 0]} receiveShadow>
+        <boxGeometry args={[width, height, depth]} />
+        <meshStandardMaterial color={profile.proceduralFallback.color} opacity={0.1} transparent wireframe />
+      </mesh>
+      {([[-x, -z], [-x, z], [x, -z], [x, z]] as const).map(([px, pz]) => (
+        <mesh key={`${px}:${pz}`} position={[px, height / 2, pz]}>
+          <boxGeometry args={[rail, height - rail * 2, rail]} />
+          <meshStandardMaterial color="#646b74" metalness={0.5} roughness={0.45} />
+        </mesh>
+      ))}
+      <mesh position={[0, rail / 2, 0]} receiveShadow>
+        <boxGeometry args={[width - rail * 2, rail, depth - rail * 2]} />
+        <meshStandardMaterial color="#858c95" metalness={0.42} roughness={0.52} />
+      </mesh>
+      <mesh position={[halfWidth - rail * 0.25, height / 2, 0]}>
+        <boxGeometry args={[rail * 0.4, height - rail * 2, depth - rail * 2]} />
+        <meshStandardMaterial color="#c2c8d0" opacity={0.1} transparent depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
+
 export function CaseModel() {
   const state = useBuildStore((s) => s);
   const activeProfile = useMemo(() => getActiveCaseProfile(state), [state]);
@@ -268,8 +302,7 @@ export function CaseModel() {
 
   const procedural = (
     <>
-      {activeProfile.id === "case-profile-mini-pc" && <MiniPcChassisStructure profile={activeProfile} />}
-      {(activeProfile.id === "case-sff-01" || activeProfile.id === "case-profile-sff") && <SffChassisStructure profile={activeProfile} />}
+      {(activeProfile.id === "case-profile-mini-pc" || activeProfile.id === "case-profile-terra" || activeProfile.id === "case-profile-sff") && <PhysicalEnvelopeChassis profile={activeProfile} />}
       {(activeProfile.id === "case-01" || activeProfile.id === "case-profile-mff") && <MffChassisStructure profile={activeProfile} />}
       {(activeProfile.id === "case-lff-01" || activeProfile.id === "case-profile-lff") && <LffChassisStructure profile={activeProfile} />}
     </>

@@ -9,12 +9,12 @@ import { buildStore, resetBuildStore } from "../../store/buildStore";
 describe("real product catalog and installed instances", () => {
   beforeEach(() => resetBuildStore());
 
-  it("publishes exactly 30 purchasable SKUs with stable MPN and estimated KRW prices", () => {
-    expect(components).toHaveLength(30);
-    expect(new Set(components.map((product) => product.id)).size).toBe(30);
+  it("publishes every purchasable SKU with stable MPN and estimated KRW prices", () => {
+    expect(components).toHaveLength(33);
+    expect(new Set(components.map((product) => product.id)).size).toBe(33);
     expect(Object.fromEntries([...new Set(components.map((product) => product.type))].map((type) => [
       type, components.filter((product) => product.type === type).length,
-    ]))).toEqual({ CASE: 3, MOTHERBOARD: 4, CPU: 4, GPU: 5, RAM: 2, STORAGE: 3, CPU_COOLER: 2, RADIATOR: 2, PSU: 3, FAN: 2 });
+    ]))).toEqual({ CASE: 5, MOTHERBOARD: 4, CPU: 4, GPU: 5, RAM: 2, STORAGE: 3, CPU_COOLER: 3, RADIATOR: 2, PSU: 3, FAN: 2 });
     for (const product of components) {
       expect(product.manufacturer).toBeTruthy();
       expect(product.model).toBeTruthy();
@@ -52,6 +52,13 @@ describe("real product catalog and installed instances", () => {
     expect(summary.selectedLines.find((line) => line.productId === "fan-top-01")).toMatchObject({ quantity: 2, total: 98000 });
     expect(summary.selectedTotal).toBe(396000);
     expect(summary.completionEstimate).toBeGreaterThan(summary.selectedTotal);
+  });
+
+  it("does not project a discrete GPU or second PSU for the Chopin MAX", () => {
+    selectCase({ componentId: "case-mini-pc-01" });
+    const summary = derivePriceSummary(buildStore.getState());
+    expect(summary.projectedMissingProducts.some((product) => product.type === "GPU")).toBe(false);
+    expect(summary.projectedMissingProducts.some((product) => product.type === "PSU")).toBe(false);
   });
 
   it("requires both 8-pin GPU power inputs for actual dual-connector cards", () => {

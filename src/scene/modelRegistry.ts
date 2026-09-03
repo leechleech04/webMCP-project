@@ -11,6 +11,7 @@ import type { SceneTransform } from "./mountTransforms";
 import type { ComponentDefinition, ComponentType as DomainComponentType } from "../domain/types/component";
 import { componentRegistry } from "../domain/data/components";
 import { SharedGlbModel } from "../components/scene/SharedGlbModel";
+import { AirCoolerModel } from "../components/scene/AirCoolerModel";
 
 export interface SceneModelProps {
   transform: SceneTransform;
@@ -78,12 +79,14 @@ const proceduralModelByType: Readonly<
   RADIATOR: RadiatorModel,
   FAN: FanModel,
   PSU: PsuModel,
+  CPU_COOLER: AirCoolerModel,
 };
 
 export const getSceneModel = (
   componentId: string,
 ): ComponentType<SceneModelProps> | undefined => {
   const component = componentRegistry[componentId];
+  if (component?.type === "CPU_COOLER") return AirCoolerModel;
   if (component?.visualAsset?.mode === "GLB" && component.visualAsset.url) {
     return SharedGlbModel;
   }

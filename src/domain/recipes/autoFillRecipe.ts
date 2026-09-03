@@ -85,7 +85,8 @@ export const generateAutoFillRecipe = (state: BuildState): AutoFillPlan => {
       .filter((component) => fitsMount(component, "cpu-cooler-1")).sort((a, b) => (a.price?.amount ?? Infinity) - (b.price?.amount ?? Infinity))[0];
     if (cooler) reserve(cooler, "cpu-cooler-1");
   }
-  if (!occupiedMounts.has("psu-bay")) {
+  const activeCaseHasIntegratedPsu = componentRegistry[profile.componentId]?.integratedPsu !== undefined;
+  if (!activeCaseHasIntegratedPsu && !occupiedMounts.has("psu-bay") && profile.supportedMountIds.includes("psu-bay")) {
     const load = allPlacements().reduce((total, placement) => total + (definitionFor(placement)?.power?.consumption ?? 0), 0);
     const gpuPlacement = installedOfType("GPU");
     const gpuTypes = gpuPlacement ? (definitionFor(gpuPlacement)?.connectors ?? []).filter((connector) => connector.direction === "INPUT").map((connector) => connector.type) : [];
@@ -95,9 +96,14 @@ export const generateAutoFillRecipe = (state: BuildState): AutoFillPlan => {
     if (psu) reserve(psu, "psu-bay");
   }
   const radiatorPlacement = installedOfType("RADIATOR");
+  const installedGpuPlacement = installedOfType("GPU");
   const blockedFanLocation = radiatorPlacement?.mountId.includes("top") ? "top" : radiatorPlacement?.mountId.includes("front") ? "front" : undefined;
   for (const fanMount of profile.fanMounts) {
     if (occupiedMounts.has(fanMount.mountId) || fanMount.location === blockedFanLocation) continue;
+    // Terra exposes one optional bottom fan. Auto-installing that lone fan
+    // creates a knowingly unbalanced layout, so leave it as an explicit choice.
+    if (profile.id === "case-profile-terra") continue;
+    if (profile.id === "case-profile-sff" && installedGpuPlacement && fanMount.location === "bottom") continue;
     const fan = candidates("FAN").filter((component) => fitsMount(component, fanMount.mountId))
       .sort((a, b) => Math.abs(a.dimensions.width - fanMount.sizeMm) - Math.abs(b.dimensions.width - fanMount.sizeMm))[0];
     if (!fan) continue;

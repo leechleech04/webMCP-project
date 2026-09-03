@@ -10,6 +10,7 @@ import { validateGpuRadiatorClearance } from "./gpuRadiatorClearance";
 import { validatePsu } from "./psuPower";
 import { validatePlatformCompatibility } from "./platformCompatibility";
 import type { ConstraintIssue } from "../types/constraint";
+import { validateSpatialCollisions } from "./spatialCollisions";
 
 export interface ValidationContext {
   componentRegistry?: ComponentRegistry;
@@ -22,6 +23,7 @@ export const validateBuild = (
 ): ConstraintIssue[] => [
   ...validatePlatformCompatibility(state, context),
   ...validateCaseClearance(state, context),
+  ...validateSpatialCollisions(state, context),
   ...validateGpuRadiatorClearance(state, context),
   ...validateGpuCable(state, context),
   ...validatePsu(state, context),

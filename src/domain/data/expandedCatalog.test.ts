@@ -23,13 +23,14 @@ const blank = (caseId: string): BuildState => ({
 });
 
 describe("expanded component catalog", () => {
-  it("contains the original 26 plus all 22 requested definitions", () => {
-    expect(Object.keys(componentRegistry)).toHaveLength(48);
+  it("contains the expanded registry and new compact products", () => {
+    expect(Object.keys(componentRegistry)).toHaveLength(50);
     for (const id of addedIds) expect(componentRegistry[id], id).toBeDefined();
+    for (const id of ["case-terra-01", "cooler-low-profile-am5"]) expect(componentRegistry[id], id).toBeDefined();
   });
 
-  it("has six selectable case profiles with complete mount transforms", () => {
-    expect(caseProfiles).toHaveLength(6);
+  it("has seven selectable case profiles with complete mount transforms", () => {
+    expect(caseProfiles).toHaveLength(7);
     for (const profile of caseProfiles) {
       expect(componentRegistry[profile.componentId]?.type).toBe("CASE");
       for (const mountId of profile.supportedMountIds) {

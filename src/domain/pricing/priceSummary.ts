@@ -1,6 +1,8 @@
 import { componentRegistry, components, getProductId } from "../data/components";
 import type { BuildState } from "../types/build";
 import type { ComponentDefinition, ComponentType, ProductPrice } from "../types/component";
+import { getActiveCaseProfile } from "../cases/getActiveCase";
+import { getCompatibleMountCandidates } from "../interaction/getCompatibleMounts";
 
 export interface PriceLine {
   productId: string;
@@ -87,12 +89,16 @@ export const derivePriceSummary = (
   const installed = state.placements
     .map((placement) => componentRegistry[placement.productId ?? getProductId(placement.componentId)])
     .filter((definition): definition is ComponentDefinition => Boolean(definition));
+  const activeProfile = getActiveCaseProfile(state);
+  const installedCase = installed.find((definition) => definition.type === "CASE");
 
   const projectedMissingProducts = COMPLETION_GROUPS.flatMap((group) => {
     if (installed.some((definition) => group.types.includes(definition.type))) return [];
+    if (group.types.includes("PSU") && installedCase?.integratedPsu) return [];
     const candidate = catalog
       .filter((definition) => group.types.includes(definition.type) && definition.price)
       .filter((definition) => compatibleProjectionCandidate(definition, installed))
+      .filter((definition) => getCompatibleMountCandidates({ componentId: definition.id, currentMountId: "", state, caseProfile: activeProfile }).some((mount) => mount.isValidSnap))
       .sort((a, b) => (a.price?.amount ?? Infinity) - (b.price?.amount ?? Infinity))[0];
     return candidate ? [candidate] : [];
   });

@@ -58,6 +58,11 @@ export interface ComponentDefinition {
     consumption?: number;
     capacity?: number;
   };
+  /** Power supply bundled inside an ultra-compact chassis. */
+  integratedPsu?: {
+    capacity: number;
+    connectors: ConnectorDefinition[];
+  };
   connectors?: ConnectorDefinition[];
   compatibility?: {
     motherboardFormFactor?: "MINI_ITX" | "MICRO_ATX" | "ATX" | "E_ATX";

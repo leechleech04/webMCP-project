@@ -10,6 +10,7 @@ import { caseProfiles, getRecommendedFanDirection } from "./cases/caseProfiles";
 import { getActiveCaseProfile } from "./cases/getActiveCase";
 import { generateAutoFillRecipe } from "./recipes/autoFillRecipe";
 import { executeWebMcpTool } from "../webmcp/registerTools";
+import { componentRegistry } from "./data/components";
 
 describe("Stage 19 — Fan Reliability, Auto Fill, Clear Build, and WebMCP Tools", () => {
   beforeEach(() => {
@@ -84,17 +85,15 @@ describe("Stage 19 — Fan Reliability, Auto Fill, Clear Build, and WebMCP Tools
       expect(() => autoFillBuild()).toThrow(/AUTO_FILL_NO_CHANGES/);
     });
 
-    it("fits compact GPU and Mini-ITX components when auto-filling MINI_PC case", () => {
+    it("honors the GPU-less, integrated-PSU layout when auto-filling the real Mini PC case", () => {
       selectCase({ componentId: "case-mini-pc-01" });
       const outcome = autoFillBuild();
       const st = buildStore.getState();
 
-      expect(outcome.appliedPlacements.some((p) => p.componentId === "gpu-1fan-01")).toBe(true);
-      expect(outcome.appliedPlacements).toContainEqual({
-        componentId: "radiator-120-01",
-        mountId: "radiator-top",
-      });
-      expect(outcome.appliedPlacements.some((p) => p.componentId === "radiator-240-01")).toBe(false);
+      expect(outcome.appliedPlacements.some((p) => componentRegistry[p.componentId]?.type === "GPU")).toBe(false);
+      expect(outcome.appliedPlacements).toContainEqual({ componentId: "cooler-low-profile-am5", mountId: "cpu-cooler-1" });
+      expect(outcome.appliedPlacements.some((p) => componentRegistry[p.componentId]?.type === "PSU")).toBe(false);
+      expect(componentRegistry["case-mini-pc-01"].integratedPsu?.capacity).toBe(200);
       expect(st.placements.some((p) => p.mountId.startsWith("fan-top-"))).toBe(false);
       expect(outcome.validation).toMatchObject({ status: "READY", valid: true });
     });

@@ -6,6 +6,7 @@ import { installComponent } from "../../domain/commands/installComponent";
 import { moveComponent } from "../../domain/commands/moveComponent";
 import { removeComponent } from "../../domain/commands/removeComponent";
 import { buildStore, resetBuildStore } from "../../store/buildStore";
+import { getCaseProfile } from "../../domain/cases/caseProfiles";
 
 vi.mock("@react-three/fiber", () => ({
   useFrame: vi.fn(),
@@ -91,6 +92,10 @@ const GPU_MOUNT_ID = "pcie-slot-1";
 const RADIATOR_ID = "radiator-01";
 const RADIATOR_FRONT_MOUNT_ID = "radiator-front";
 const RADIATOR_TOP_MOUNT_ID = "radiator-top";
+const mffProfile = getCaseProfile("case-01")!;
+const gpuTransform = mffProfile.mountTransforms[GPU_MOUNT_ID];
+const frontRadiatorTransform = mffProfile.mountTransforms[RADIATOR_FRONT_MOUNT_ID];
+const topRadiatorTransform = mffProfile.mountTransforms[RADIATOR_TOP_MOUNT_ID];
 
 // Zustand's useStore uses getInitialState during server rendering. Point that
 // read at the current shared store state for this SSR-only integration check;
@@ -128,8 +133,8 @@ describe("PcScene mount-based placement", () => {
     const html = renderScene();
 
     expect([...html.matchAll(/data-scene-object="gpu-01"/g)]).toHaveLength(1);
-    expect(html).toContain('data-mount-position="-0.5,3,0"');
-    expect(html).toContain('data-mount-rotation="0,0,0"');
+    expect(html).toContain(`data-mount-position="${gpuTransform.position.join(",")}"`);
+    expect(html).toContain(`data-mount-rotation="${gpuTransform.rotation.join(",")}"`);
     expect(html).toContain("GPU is installed");
   });
 
@@ -168,7 +173,7 @@ describe("PcScene mount-based placement", () => {
     const frontHtml = renderScene();
 
     expect(frontHtml).toContain('data-scene-object="radiator-01"');
-    expect(frontHtml).toContain('data-mount-position="0,4.917,4.349"');
+    expect(frontHtml).toContain(`data-mount-position="${frontRadiatorTransform.position.join(",")}"`);
     expect(frontHtml).toContain(
       `data-mount-rotation="0,${Math.PI},0"`,
     );
@@ -185,7 +190,7 @@ describe("PcScene mount-based placement", () => {
     const topHtml = renderScene();
 
     expect([...topHtml.matchAll(/data-scene-object="radiator-01"/g)]).toHaveLength(1);
-    expect(topHtml).toContain('data-mount-position="0,9.374,0"');
+    expect(topHtml).toContain(`data-mount-position="${topRadiatorTransform.position.join(",")}"`);
     expect(topHtml).toContain(
       `data-mount-rotation="${Math.PI / 2},0,0"`,
     );
@@ -197,8 +202,8 @@ describe("PcScene mount-based placement", () => {
     installComponent({ componentId: RADIATOR_ID, mountId: RADIATOR_FRONT_MOUNT_ID });
 
     const html = renderScene({ highlightedComponentIds: [GPU_ID, RADIATOR_ID] });
-    expect(html).toContain('data-scene-object="gpu-01" data-mount-position="-0.5,3,0" data-mount-rotation="0,0,0" data-highlight="true"');
-    expect(html).toContain(`data-scene-object="radiator-01" data-mount-position="0,4.917,4.349" data-mount-rotation="0,${Math.PI},0" data-highlight="true"`);
+    expect(html).toContain(`data-scene-object="gpu-01" data-mount-position="${gpuTransform.position.join(",")}" data-mount-rotation="${gpuTransform.rotation.join(",")}" data-highlight="true"`);
+    expect(html).toContain(`data-scene-object="radiator-01" data-mount-position="${frontRadiatorTransform.position.join(",")}" data-mount-rotation="${frontRadiatorTransform.rotation.join(",")}" data-highlight="true"`);
 
     const gpuOnly = renderScene({ highlightedComponentIds: [GPU_ID] });
     expect(gpuOnly).toContain('data-scene-object="gpu-01"');

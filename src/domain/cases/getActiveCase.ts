@@ -4,12 +4,12 @@ import { caseProfiles } from "./caseProfiles";
 
 export const getActiveCaseProfile = (state?: BuildState): CaseProfile => {
   if (!state || !state.placements) {
-    return caseProfiles[2];
+    return caseProfiles.find((profile) => profile.id === "case-profile-mff")!;
   }
   const root = state.placements.find((p) => p.mountId === "case-root");
   if (root) {
     const matched = caseProfiles.find((c) => c.componentId === root.componentId);
     if (matched) return matched;
   }
-  return caseProfiles[2];
+  return caseProfiles.find((profile) => profile.id === "case-profile-mff")!;
 };

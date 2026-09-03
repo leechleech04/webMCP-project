@@ -30,6 +30,12 @@ const psuOutputs = (gpuType: "PCIE_8PIN" | "12V_2X6") => [
 export const realProductOverrides: Readonly<Record<string, ProductOverride>> = {
   "case-01": { name: "Lian Li Lancool 216", manufacturer: "Lian Li", model: "LANCOOL 216", mpn: "LAN216X", officialUrl: "https://lian-li.com/product/lancool-216/", price: estimated(149000) },
   "case-sff-01": { name: "Cooler Master MasterBox NR200P V2", manufacturer: "Cooler Master", model: "MasterBox NR200P V2", mpn: "NR200PV2-KCNN-S00", officialUrl: "https://www.coolermaster.com/en-global/products/masterbox-nr200p-v2.html", dimensions: { width: 185, height: 292, depth: 372 }, price: estimated(139000) },
+  "case-terra-01": { name: "Fractal Design Terra", manufacturer: "Fractal Design", model: "Terra Silver", mpn: "FD-C-TER1N-02", officialUrl: "https://www.fractal-design.com/products/cases/terra-series/terra/terra-silver/", dimensions: { width: 153, height: 218, depth: 343 }, price: estimated(289000) },
+  "case-mini-pc-01": {
+    name: "InWin Chopin MAX (200W PSU Included)", manufacturer: "InWin", model: "Chopin MAX", mpn: "IW-CS-CHOPINMAXSIL-PS200W",
+    officialUrl: "https://www.in-win.com/en/gaming-chassis/chopin-max", dimensions: { width: 84, height: 244, depth: 217 },
+    integratedPsu: { capacity: 200, connectors: psuOutputs("PCIE_8PIN") }, price: estimated(179000),
+  },
   "case-dual-chamber-atx": { name: "Lian Li O11D EVO RGB", manufacturer: "Lian Li", model: "O11D EVO RGB", mpn: "O11DERGBX", officialUrl: "https://lian-li.com/product/o11d-evo-rgb/", dimensions: { width: 290, height: 471, depth: 478 }, price: estimated(239000) },
 
   "motherboard-01": { name: "ASUS TUF GAMING B850-PLUS WIFI", manufacturer: "ASUS", model: "TUF GAMING B850-PLUS WIFI", mpn: "90MB1J90-M0EAY0", officialUrl: "https://www.asus.com/us/motherboards-components/motherboards/tuf-gaming/tuf-gaming-b850-plus-wifi/techspec/", compatibility: { motherboardFormFactor: "ATX", cpuSocket: "AM5", memoryType: "DDR5" }, connectors: atxInputs, price: estimated(279000) },
@@ -57,6 +63,7 @@ export const realProductOverrides: Readonly<Record<string, ProductOverride>> = {
 
   "cooler-single-tower": { name: "Noctua NH-U12S redux", manufacturer: "Noctua", model: "NH-U12S redux", mpn: "NH-U12S-REDUX", officialUrl: "https://www.noctua.at/en/products/nh-u12s-redux/specifications", dimensions: { width: 125, height: 158, depth: 71 }, compatibility: { supportedCpuSockets: ["AM5", "LGA1851"] }, price: estimated(79000) },
   "cooler-dual-tower": { name: "Noctua NH-D15 G2", manufacturer: "Noctua", model: "NH-D15 G2", mpn: "NH-D15-G2", officialUrl: "https://noctua.at/en/products/cpu-cooler-retail/nh-d15-g2/specification", dimensions: { width: 150, height: 168, depth: 152 }, compatibility: { supportedCpuSockets: ["AM5", "LGA1851"] }, price: estimated(189000) },
+  "cooler-low-profile-am5": { name: "Noctua NH-L9a-AM5", manufacturer: "Noctua", model: "NH-L9a-AM5", mpn: "NH-L9A-AM5", officialUrl: "https://www.noctua.at/en/products/nh-l9a-am5/specifications", dimensions: { width: 114, height: 37, depth: 92 }, compatibility: { supportedCpuSockets: ["AM5"] }, price: estimated(69000) },
   "radiator-240-01": { name: "ARCTIC Liquid Freezer III Pro 240", manufacturer: "ARCTIC", model: "Liquid Freezer III Pro 240", mpn: "ACFRE00178A", officialUrl: "https://www.arctic.de/en/Liquid-Freezer-III-Pro-240/", dimensions: { width: 120, height: 38, depth: 277 }, compatibility: { supportedCpuSockets: ["AM5", "LGA1851"] }, price: estimated(139000) },
   "radiator-01": { name: "ARCTIC Liquid Freezer III Pro 360", manufacturer: "ARCTIC", model: "Liquid Freezer III Pro 360", mpn: "ACFRE00180A", officialUrl: "https://www.arctic.de/en/Liquid-Freezer-III-Pro-360/", dimensions: { width: 120, height: 38, depth: 398 }, compatibility: { supportedCpuSockets: ["AM5", "LGA1851"] }, price: estimated(169000) },
 

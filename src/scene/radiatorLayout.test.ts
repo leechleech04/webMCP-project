@@ -48,8 +48,8 @@ describe("radiator layout and mount contracts", () => {
 
   it("only permits radiator lengths that fit each case envelope", () => {
     for (const profile of caseProfiles) {
-      const topLimit = profile.clearanceLimits["radiator-top"].maxDepth ?? 0;
-      const frontLimit = profile.clearanceLimits["radiator-front"].maxDepth ?? 0;
+      const topLimit = profile.clearanceLimits["radiator-top"]?.maxDepth ?? 0;
+      const frontLimit = profile.clearanceLimits["radiator-front"]?.maxDepth ?? 0;
 
       expect(topLimit).toBeLessThanOrEqual(profile.dimensionsMm.depth);
       expect(frontLimit).toBeLessThanOrEqual(profile.dimensionsMm.height);

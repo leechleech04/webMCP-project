@@ -37,6 +37,13 @@ const caseLff01: ComponentDefinition = {
   dimensions: { width: 270, height: 560, depth: 580 },
 };
 
+const caseTerra01: ComponentDefinition = {
+  id: "case-terra-01",
+  type: "CASE",
+  name: "Fractal Design Terra",
+  dimensions: { width: 153, height: 218, depth: 343 },
+};
+
 const caseMatxAirflow: ComponentDefinition = {
   id: "case-matx-airflow",
   type: "CASE",
@@ -278,6 +285,14 @@ const coolerDualTower: ComponentDefinition = {
   id: "cooler-dual-tower", type: "CPU_COOLER", name: "Dual-Tower 140mm Air Cooler (165mm)", dimensions: { width: 150, height: 165, depth: 135 }, compatibility: { supportedCpuSockets: ["AM5", "LGA1851"] },
   visualAsset: { mode: "GLB", assetId: "COOLER_DUAL_TOWER", url: "/assets/cooler-dual-tower/lod0.glb", license: "Original procedural asset — CC0-1.0", attributionPath: "assets/cooler-dual-tower/ATTRIBUTION.md", nativeDimensions: { width: 1, height: 1, depth: 1 } },
 };
+const coolerLowProfileAm5: ComponentDefinition = {
+  id: "cooler-low-profile-am5",
+  type: "CPU_COOLER",
+  name: "Noctua NH-L9a-AM5",
+  dimensions: { width: 114, height: 37, depth: 92 },
+  compatibility: { supportedCpuSockets: ["AM5"] },
+  visualAsset: coolerSingleTower.visualAsset,
+};
 
 // PSUs
 const psu01: ComponentDefinition = {
@@ -415,6 +430,7 @@ const fan140Argb: ComponentDefinition = {
 const legacyComponentRegistry: Record<string, ComponentDefinition> = {
   [case01.id]: case01,
   [caseMiniPc01.id]: caseMiniPc01,
+  [caseTerra01.id]: caseTerra01,
   [caseSff01.id]: caseSff01,
   [caseLff01.id]: caseLff01,
   [caseMatxAirflow.id]: caseMatxAirflow,
@@ -449,6 +465,7 @@ const legacyComponentRegistry: Record<string, ComponentDefinition> = {
   [radiator280.id]: radiator280,
   [coolerSingleTower.id]: coolerSingleTower,
   [coolerDualTower.id]: coolerDualTower,
+  [coolerLowProfileAm5.id]: coolerLowProfileAm5,
   [psu01.id]: psu01,
   [psuSfx01.id]: psuSfx01,
   [psuAtx650.id]: psuAtx650,
@@ -463,7 +480,7 @@ const legacyComponentRegistry: Record<string, ComponentDefinition> = {
   [fan140Argb.id]: fan140Argb,
 };
 
-/** The 30-SKU public catalog. Legacy definitions remain resolvable for v1 build imports. */
+/** Public product catalog. Legacy definitions remain resolvable for v1 build imports. */
 export const components: ComponentDefinition[] = realProductIds.map((id) => {
   const base = legacyComponentRegistry[id];
   const override = realProductOverrides[id];

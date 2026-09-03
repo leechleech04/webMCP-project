@@ -43,9 +43,12 @@ export const assessBuildState = (
     }
   }
 
+  const integratedPsuCase = state.placements
+    .map((placement) => components[placement.componentId])
+    .find((component) => component?.type === "CASE" && component.integratedPsu);
   const missingComponentTypes = ESSENTIAL_TYPES.filter(
     (type) => !installedTypes.has(type),
-  );
+  ).filter((type) => type !== "PSU" || !integratedPsuCase);
 
   const missingPowerConnections: string[] = [];
 
@@ -58,6 +61,13 @@ export const assessBuildState = (
   const gpuPlacements = state.placements.filter(
     (p) => components[p.componentId]?.type === "GPU",
   );
+
+  // A bundled chassis PSU is already wired inside the enclosure. It satisfies
+  // the essential power requirement without inventing a second visible PSU or
+  // synthetic cable endpoints in the build state.
+  if (integratedPsuCase) {
+    installedTypes.add("PSU");
+  }
 
   if (psuPlacements.length > 0 && mbPlacements.length > 0) {
     for (const mb of mbPlacements) {

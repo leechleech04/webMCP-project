@@ -34,7 +34,7 @@ export function ValidationPanel({ onSelectionChange }: ValidationPanelProps) {
       : issues[0]?.id ?? null;
     if (nextId !== selectedIssueId) setSelectedIssueId(nextId);
     const selected = issues.find((issue) => issue.id === nextId);
-    onSelectionChange?.(selected?.affectedComponentIds ?? []);
+    onSelectionChange?.(selected?.severity === "ERROR" ? selected.affectedComponentIds : []);
   }, [issues, onSelectionChange, selectedIssueId]);
 
   return (

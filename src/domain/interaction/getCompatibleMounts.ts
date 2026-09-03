@@ -6,6 +6,7 @@ import {
   assertComponentFitsActiveCase,
   assertCoolingZoneAvailable,
 } from "../commands/commandGuards";
+import { validateSpatialCollisions } from "../constraints/spatialCollisions";
 
 export interface CompatibleMountCandidate {
   mountId: string;
@@ -42,6 +43,12 @@ export const getCompatibleMountCandidates = ({
       try {
         assertComponentFitsActiveCase(state, component, mount);
         assertCoolingZoneAvailable(state, component, mount);
+        const candidateId = currentMountId ? componentId : `${component.id}#candidate`;
+        const placements = [
+          ...state.placements.filter((placement) => placement.componentId !== componentId),
+          { componentId: candidateId, ...(candidateId === component.id ? {} : { productId: component.id }), mountId },
+        ];
+        if (validateSpatialCollisions({ ...state, placements }).some((issue) => issue.affectedComponentIds.includes(candidateId))) return false;
         return true;
       } catch {
         return false;

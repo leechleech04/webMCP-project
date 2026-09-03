@@ -23,17 +23,24 @@ export const validatePsu = (state: BuildState, context: PsuContext = {}) => {
   const installedPsus = [...ids]
     .map((id) => components[id])
     .filter((component) => component?.type === "PSU");
-  if (installedPsus.length === 0) {
+  const installedCase = [...ids]
+    .map((id) => components[id])
+    .find((component) => component?.type === "CASE" && component.integratedPsu);
+  const integratedPsu = installedCase?.integratedPsu;
+  if (installedPsus.length === 0 && !integratedPsu) {
     if (!shouldCheckMissing) return [];
     return [{ id: "PSU_MISSING", type: "POWER" as const, severity: "ERROR" as const, message: "A PSU is required for the installed powered components.", affectedComponentIds: [...powered] }];
   }
 
   const psu = installedPsus[0];
+  const provider = psu
+    ? { id: psu.id, capacity: psu.power?.capacity ?? 0, connectors: psu.connectors ?? [] }
+    : { id: installedCase!.id, capacity: integratedPsu!.capacity, connectors: integratedPsu!.connectors };
   const load = [...ids].reduce((total, id) => total + (components[id]?.power?.consumption ?? 0), 0);
   const required = load * (1 + PSU_RESERVE_RATIO);
   const issues: Array<{ id: string; type: "POWER" | "CONNECTOR"; severity: "ERROR"; message: string; affectedComponentIds: string[] }> = [];
-  if ((psu.power?.capacity ?? 0) < required) {
-    issues.push({ id: "PSU_INSUFFICIENT_CAPACITY", type: "POWER", severity: "ERROR", message: `PSU capacity: ${psu.power?.capacity ?? 0} W; required with ${PSU_RESERVE_RATIO * 100}% reserve: ${required} W`, affectedComponentIds: [...powered, psu.id] });
+  if (provider.capacity < required) {
+    issues.push({ id: "PSU_INSUFFICIENT_CAPACITY", type: "POWER", severity: "ERROR", message: `PSU capacity: ${provider.capacity} W; required with ${PSU_RESERVE_RATIO * 100}% reserve: ${required} W`, affectedComponentIds: [...powered, provider.id] });
   }
 
   const installedGpus = [...ids]
@@ -45,9 +52,9 @@ export const validatePsu = (state: BuildState, context: PsuContext = {}) => {
       requiredByType.set(connector.type, (requiredByType.get(connector.type) ?? 0) + 1);
     }
     for (const [connectorType, requiredCount] of requiredByType) {
-      const availableCount = psu.connectors?.filter((connector) => connector.direction === "OUTPUT" && connector.type === connectorType).length ?? 0;
+      const availableCount = provider.connectors.filter((connector) => connector.direction === "OUTPUT" && connector.type === connectorType).length;
       if (availableCount < requiredCount) {
-        issues.push({ id: gpu.id === "gpu-01" ? "PSU_GPU_CONNECTOR_MISMATCH" : `PSU_GPU_CONNECTOR_MISMATCH:${gpu.id}`, type: "CONNECTOR", severity: "ERROR", message: `PSU exposes ${availableCount} compatible ${connectorType} output(s), but ${gpu.name} requires ${requiredCount}.`, affectedComponentIds: [gpu.id, psu.id] });
+        issues.push({ id: gpu.id === "gpu-01" ? "PSU_GPU_CONNECTOR_MISMATCH" : `PSU_GPU_CONNECTOR_MISMATCH:${gpu.id}`, type: "CONNECTOR", severity: "ERROR", message: `PSU exposes ${availableCount} compatible ${connectorType} output(s), but ${gpu.name} requires ${requiredCount}.`, affectedComponentIds: [gpu.id, provider.id] });
       }
     }
   }

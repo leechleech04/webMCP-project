@@ -156,10 +156,10 @@ describe("WebMCP tool boundary", () => {
   it("filters available mounts by the active case, occupancy, type, and clearance", () => {
     selectCaseTool({ componentId: "case-mini-pc-01" });
     const allIds = getAvailableMountsTool().map((mount) => mount.id);
-    expect(allIds).toContain("fan-top-1");
+    expect(allIds).not.toContain("fan-top-1");
     expect(allIds).not.toContain("fan-bottom-1");
     expect(getAvailableMountsTool({ componentId: "gpu-01" })).toEqual([]);
-    expect(getAvailableMountsTool({ componentId: "gpu-1fan-01" }).map((mount) => mount.id)).toEqual(["pcie-slot-1"]);
+    expect(getAvailableMountsTool({ componentId: "gpu-1fan-01" })).toEqual([]);
     expect(() => getAvailableMountsTool({ componentId: "missing" })).toThrow("Unknown component");
   });
 
@@ -266,8 +266,8 @@ describe("WebMCP tool boundary", () => {
     // 1. MINI_PC
     selectCaseTool({ componentId: "case-mini-pc-01" });
     const miniMounts = getAvailableMountsTool().map((m) => m.id);
-    expect(miniMounts).toContain("fan-top-1");
-    expect(miniMounts).toContain("fan-front-1");
+    expect(miniMounts).not.toContain("fan-top-1");
+    expect(miniMounts).not.toContain("fan-front-1");
     expect(miniMounts).not.toContain("fan-bottom-1");
     expect(miniMounts).not.toContain("fan-top-2");
     expect(miniMounts).not.toContain("fan-side-1");
@@ -277,9 +277,9 @@ describe("WebMCP tool boundary", () => {
     const sffMounts = getAvailableMountsTool().map((m) => m.id);
     expect(sffMounts).toContain("fan-top-1");
     expect(sffMounts).toContain("fan-top-2");
-    expect(sffMounts).toContain("fan-rear-1");
+    expect(sffMounts).not.toContain("fan-rear-1");
     expect(sffMounts).not.toContain("fan-top-3");
-    expect(sffMounts).not.toContain("fan-bottom-1");
+    expect(sffMounts).toContain("fan-bottom-1");
     expect(sffMounts).not.toContain("fan-side-1");
 
     // 3. MFF (Standard Lian Li Lancool 216)
